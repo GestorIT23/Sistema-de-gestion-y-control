@@ -1,0 +1,153 @@
+{
+  "entities": {
+    "BitacoraInventarios": {
+      "title": "Bitácora de Inventarios e Insumos",
+      "description": "Registro de control de inventarios e insumos",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "filas": { "type": "array" }
+      }
+    },
+    "BitacoraEntregaContenedores": {
+      "title": "Bitácora de Entrega de Contenedores",
+      "description": "Registro de entrega de contenedores rojos",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "filas": { "type": "array" }
+      }
+    },
+    "BitacoraDisposicionPirolisis": {
+      "title": "Bitácora de Disposición a Pirólisis",
+      "description": "Control de disposición de pacas a pirólisis",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "filas": { "type": "array" }
+      }
+    },
+    "BitacoraDisposicionVertedero": {
+      "title": "Bitácora de Disposición a Vertedero",
+      "description": "Control de disposición de pacas a vertedero",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "filas": { "type": "array" }
+      }
+    },
+    "BitacoraControlIncineracion": {
+      "title": "Bitácora de Control de Incineración",
+      "description": "Control de incineración de RPBI",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "filas": { "type": "array" }
+      }
+    },
+    "BitacoraCuartoFrio": {
+      "title": "Bitácora de Cuarto Frío",
+      "description": "Control de temperaturas y limpieza en cuarto frío",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" }
+      }
+    },
+    "BitacoraReduccionVolumen": {
+      "title": "Bitácora de Reducción de Volumen",
+      "description": "Control de trituradora shredder",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" }
+      }
+    },
+    "BitacoraControlAutoclaves": {
+      "title": "Bitácora de Control de Autoclaves",
+      "description": "Control químico y biológico de autoclaves",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" }
+      }
+    },
+    "BitacoraGeneracionAlmacenamiento": {
+      "title": "Bitácora de Ingreso y Almacenamiento",
+      "description": "Ingreso y almacenamiento temporal de RPBI",
+      "type": "object",
+      "properties": {
+        "fecha": { "type": "string" },
+        "responsable": { "type": "string" },
+        "observaciones": { "type": "string" }
+      }
+    },
+    "Usuario": {
+      "title": "Colaborador del Sistema SGC",
+      "description": "Usuarios autorizados con roles operacionales en el SGC",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "nombre": { "type": "string" },
+        "rol": { "type": "string", "enum": ["Administrador", "Supervisor", "Operador/Llenador"] },
+        "fechaCreacion": { "type": "string" }
+      },
+      "required": ["email", "nombre", "rol"]
+    }
+  },
+  "firestore": {
+    "usuarios": {
+      "schema": "Usuario",
+      "description": "Colaboradores con roles específicos para control de acceso"
+    },
+    "bitacora_inventarios": {
+      "schema": "BitacoraInventarios",
+      "description": "Collección de bitácoras de inventario"
+    },
+    "bitacora_entrega_contenedores": {
+      "schema": "BitacoraEntregaContenedores",
+      "description": "Collección de entrega de contenedores"
+    },
+    "bitacora_disposicion_pirolisis": {
+      "schema": "BitacoraDisposicionPirolisis",
+      "description": "Collección de disposición final pirolisis"
+    },
+    "bitacora_disposicion_vertedero": {
+      "schema": "BitacoraDisposicionVertedero",
+      "description": "Collección de disposición final vertedero"
+    },
+    "bitacora_control_incineracion": {
+      "schema": "BitacoraControlIncineracion",
+      "description": "Collección de control de incineracion"
+    },
+    "bitacora_cuarto_frio": {
+      "schema": "BitacoraCuartoFrio",
+      "description": "Collección de control cuarto frío"
+    },
+    "bitacora_reduccion_volumen": {
+      "schema": "BitacoraReduccionVolumen",
+      "description": "Collección de reducción de volumen"
+    },
+    "bitacora_control_autoclaves": {
+      "schema": "BitacoraControlAutoclaves",
+      "description": "Collección de control químico-biológico autoclaves"
+    },
+    "bitacora_generacion_almacenamiento": {
+      "schema": "BitacoraGeneracionAlmacenamiento",
+      "description": "Collección de ingreso y almacenamiento RPBI"
+    }
+  }
+}
