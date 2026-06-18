@@ -509,22 +509,10 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                       {/* Detailed View Expanded Panel */}
                       {isExpanded && (
                         <div className="mt-3 bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded text-xs font-mono text-[#1E293B] space-y-2 animate-fade-in">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] border-b border-[#F1F5F9] pb-2">
+                          <div className="grid grid-cols-1 gap-3 text-[10px] border-b border-[#F1F5F9] pb-2">
                             <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">FECHA REGISTRO:</span>
-                              <span className="font-bold">{log.fechaRegistro || 'N/A'}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">ESTADO FIRMA ELABORÓ:</span>
-                              <span className="font-bold text-emerald-600">{log.elaboro || 'No firmado'}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">REVISÓ:</span>
-                              <span className="font-bold text-indigo-600">{log.reviso || 'No firmado'}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">APROBÓ:</span>
-                              <span className="font-bold text-sky-600">{log.aprobo || 'No firmado'}</span>
+                              <span className="text-gray-400 block font-bold uppercase text-[8px]">FECHA REGISTRO SGC:</span>
+                              <span className="font-bold text-slate-800">{log.fechaRegistro || 'N/A'}</span>
                             </div>
                           </div>
 

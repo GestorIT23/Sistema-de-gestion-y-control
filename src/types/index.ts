@@ -14,9 +14,9 @@ export interface BaseBitacora {
   fecha: string; // Fecha del proceso/formulario
   responsable: string;
   observaciones: string;
-  elaboro: string; // e.g., "Gerente Comercial Industrial"
-  reviso: string; // e.g., "Comité ISO"
-  aprobo: string; // e.g., "Gerente General"
+  elaboro?: string; // e.g., "Gerente Comercial Industrial"
+  reviso?: string; // e.g., "Comité ISO"
+  aprobo?: string; // e.g., "Gerente General"
   cambioControl: {
     version: string;
     fecha: string;

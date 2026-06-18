@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface FormFooterProps {
   elaboroCargo?: string;
@@ -15,99 +15,12 @@ interface FormFooterProps {
 }
 
 export default function FormFooter({
-  elaboroCargo = 'Gerente Comercial Industrial',
-  revisoCargo = 'Comité ISO',
-  aproboCargo = 'Gerente General',
-  onSignaturesChange,
   cambios = [
     { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación del formato inicial bajo norma ISO 14001', solicitante: 'Comité de Calidad' }
   ]
 }: FormFooterProps) {
-  const [elaboroNombre, setElaboroNombre] = useState('Ing. Alejandro Vega');
-  const [revisoNombre, setRevisoNombre] = useState('Comité de Gestión ISO');
-  const [aproboNombre, setAproboNombre] = useState('Lic. Francisco Solís');
-
-  const handleElaboro = (val: string) => {
-    setElaboroNombre(val);
-    if (onSignaturesChange) onSignaturesChange({ elaboro: val, reviso: revisoNombre, aprobo: aproboNombre });
-  };
-
-  const handleReviso = (val: string) => {
-    setRevisoNombre(val);
-    if (onSignaturesChange) onSignaturesChange({ elaboro: elaboroNombre, reviso: val, aprobo: aproboNombre });
-  };
-
-  const handleAprobo = (val: string) => {
-    setAproboNombre(val);
-    if (onSignaturesChange) onSignaturesChange({ elaboro: elaboroNombre, reviso: revisoNombre, aprobo: val });
-  };
-
   return (
     <div id="form-footer-container" className="mt-6 space-y-4 text-xs">
-      {/* Signatures Panel */}
-      <div id="signatures-panel" className="border border-[#E2E8F0] bg-white shadow-sm overflow-hidden rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E2E8F0]">
-          
-          {/* Elaboró */}
-          <div className="p-3 flex flex-col justify-between h-28">
-            <div>
-              <span className="block text-[9px] uppercase font-bold text-[#64748B] tracking-wider mb-1">Elaboró</span>
-              <span className="font-semibold text-[#1E293B] block text-xs">{elaboroCargo}</span>
-            </div>
-            <div className="mt-2">
-              <input
-                id="firma-elaboro-input"
-                type="text"
-                value={elaboroNombre}
-                onChange={(e) => handleElaboro(e.target.value)}
-                placeholder="Firma / Nombre"
-                className="w-full bg-[#F8FAFC] border-b border-dashed border-[#E2E8F0] focus:border-[#3B82F6] focus:bg-white text-xs px-2 py-0.5 outline-none transition font-medium text-[#1E293B] italic text-center rounded-sm"
-              />
-              <span className="block text-[8px] text-[#94A3B8] text-center mt-1">Autorización Digital</span>
-            </div>
-          </div>
-
-          {/* Revisó */}
-          <div className="p-3 flex flex-col justify-between h-28">
-            <div>
-              <span className="block text-[9px] uppercase font-bold text-[#64748B] tracking-wider mb-1">Revisó</span>
-              <span className="font-semibold text-[#1E293B] block text-xs">{revisoCargo}</span>
-            </div>
-            <div className="mt-2">
-              <input
-                id="firma-reviso-input"
-                type="text"
-                value={revisoNombre}
-                onChange={(e) => handleReviso(e.target.value)}
-                placeholder="Firma / Nombre"
-                className="w-full bg-[#F8FAFC] border-b border-dashed border-[#E2E8F0] focus:border-[#3B82F6] focus:bg-white text-xs px-2 py-0.5 outline-none transition font-medium text-[#1E293B] italic text-center rounded-sm"
-              />
-              <span className="block text-[8px] text-[#94A3B8] text-center mt-1">Autorización Digital</span>
-            </div>
-          </div>
-
-          {/* Aprobó */}
-          <div className="p-3 flex flex-col justify-between h-28">
-            <div>
-              <span className="block text-[9px] uppercase font-bold text-[#64748B] tracking-wider mb-1">Aprobó</span>
-              <span className="font-semibold text-[#1E293B] block text-xs">{aproboCargo}</span>
-            </div>
-            <div className="mt-2">
-              <input
-                id="firma-aprobo-input"
-                type="text"
-                value={aproboNombre}
-                onChange={(e) => handleAprobo(e.target.value)}
-                placeholder="Firma / Nombre"
-                className="w-full bg-[#F8FAFC] border-b border-dashed border-[#E2E8F0] focus:border-[#3B82F6] focus:bg-white text-xs px-2 py-0.5 outline-none transition font-medium text-[#1E293B] italic text-center rounded-sm"
-              />
-              <span className="block text-[8px] text-[#94A3B8] text-center mt-1">Autorización Digital</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
       {/* Control de Cambios table */}
       <div id="change-control-panel" className="border border-[#E2E8F0] bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[#F8FAFC] border-b border-[#E2E8F0] px-3 py-1.5 flex items-center justify-between">
