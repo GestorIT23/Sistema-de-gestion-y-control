@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraCuartoFrio } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Snowflake, AlertTriangle, CheckSquare, FileText } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Snowflake, AlertTriangle, CheckSquare, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -136,26 +137,8 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
     }
   };
 
-  const handleExportCSV = (registro: BitacoraCuartoFrio) => {
-    let csv = `BIOTRASH - Bitacora de Control de Cuarto Frio y Congeladores\n`;
-    csv += `Cuarto Frio,Fecha,Hora,Nombre Responsable,Congeladores Activos\n`;
-    csv += `"${registro.cuartoFrio}",${registro.fecha},${registro.horaInspeccion},${registro.responsable},${registro.cantidadCongeladoresActivos}\n`;
-    csv += `Temp Entrada C,Temp Salida C,Congelador 01 C,Congelador 02 C,Congelador 03 C,Congelador 04 C,Congelador 05 C,Congelador 06 C\n`;
-    csv += `${registro.tempEntrada},${registro.tempSalida},${registro.tempCongeladores.congelador01},${registro.tempCongeladores.congelador02},${registro.tempCongeladores.congelador03},${registro.tempCongeladores.congelador04},${registro.tempCongeladores.congelador05},${registro.tempCongeladores.congelador06}\n\n`;
-    csv += `Inspeccion,Estado\n`;
-    csv += `Limpieza paredes ext,${registro.inspeccion.limpiezaParedesExteriores ? 'APROBADO' : 'FALLA'}\n`;
-    csv += `Limpieza paredes int,${registro.inspeccion.limpiezaParedesInteriores ? 'APROBADO' : 'FALLA'}\n`;
-    csv += `Limpieza piso,${registro.inspeccion.limpiezaPiso ? 'APROBADO' : 'FALLA'}\n`;
-    csv += `Funcionamiento evaporadores,${registro.inspeccion.funcionamientoEvaporadores ? 'APROBADO' : 'FALLA'}\n`;
-    csv += `Funcionamiento condensadores,${registro.inspeccion.funcionamientoCondensadores ? 'APROBADO' : 'FALLA'}\n`;
-    csv += `Residuo ordenado,${registro.inspeccion.residuoOrdenado ? 'APROBADO' : 'FALLA'}\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `cuarto_frio_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraCuartoFrio) => {
+    generateAndDownloadExcel('cuarto_frio', registro);
   };
 
   return (
@@ -429,10 +412,10 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-sky-700 hover:text-sky-900 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-sky-700 hover:text-sky-900 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

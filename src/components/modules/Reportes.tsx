@@ -15,9 +15,11 @@ import {
   ArrowLeft,
   ChevronRight,
   Filter,
-  Info
+  Info,
+  FileSpreadsheet
 } from 'lucide-react';
 import FormHeader from '../FormHeader';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -35,6 +37,10 @@ const BITACORAS_INFO = [
   { id: 'reduccion_volumen', title: 'Reducción de Volumen Shredder', col: 'bitacora_reduccion_volumen', code: 'F-OPR-000-7' },
   { id: 'control_autoclaves', title: 'Control Químico/Biológico Autoclaves', col: 'bitacora_control_autoclaves', code: 'F-OPR-000-8' },
   { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento RPBI', col: 'bitacora_generacion_almacenamiento', code: 'F-OPR-000-9' },
+  { id: 'lavado_banos', title: 'Sanitización de Baños y Oficinas', col: 'bitacora_lavado_banos', code: 'F-OPR-000-10' },
+  { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', col: 'bitacora_insumos_quimicos', code: 'F-OPR-000-11' },
+  { id: 'inventarios_sgc', title: 'Inventario General SGC', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
+  { id: 'control_uniformes', title: 'Control de Uniformes de Planta', col: 'bitacora_control_uniformes', code: 'F-OPR-000-13' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {
@@ -63,6 +69,63 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearConfirmText, setClearConfirmText] = useState('');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+
+  // Custom Logo Configuration state
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUrlInput, setLogoUrlInput] = useState<string>('');
+
+  // Load custom logo settings on mount
+  useEffect(() => {
+    const savedBase64 = localStorage.getItem('sgc_logo_base64');
+    const savedUrl = localStorage.getItem('sgc_logo_url');
+    if (savedBase64) {
+      setLogoPreview(savedBase64);
+    } else if (savedUrl) {
+      setLogoPreview(savedUrl);
+    }
+    if (savedUrl) {
+      setLogoUrlInput(savedUrl);
+    }
+  }, []);
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 500000) { // ~500kb limit
+      setMsg({ text: 'El archivo excede el tamaño sugerido de 500KB para almacenamiento local.', type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      localStorage.setItem('sgc_logo_base64', base64);
+      localStorage.removeItem('sgc_logo_url');
+      setLogoPreview(base64);
+      setMsg({ text: 'Se ha guardado el logotipo local del SGC para la exportación de PDFs.', type: 'success' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveLogoUrl = () => {
+    if (!logoUrlInput.trim()) {
+      handleResetLogo();
+      return;
+    }
+    localStorage.setItem('sgc_logo_url', logoUrlInput.trim());
+    localStorage.removeItem('sgc_logo_base64');
+    setLogoPreview(logoUrlInput.trim());
+    setMsg({ text: 'Enlace del logotipo SGC guardado con éxito.', type: 'success' });
+  };
+
+  const handleResetLogo = () => {
+    localStorage.removeItem('sgc_logo_base64');
+    localStorage.removeItem('sgc_logo_url');
+    setLogoPreview(null);
+    setLogoUrlInput('');
+    setMsg({ text: 'Se ha restablecido al logotipo vectorial por defecto de BIOTRASH.', type: 'success' });
+  };
 
   // Load week initialization
   useEffect(() => {
@@ -189,50 +252,12 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (results.length === 0) {
       setMsg({ text: 'No hay datos en el reporte para exportar.', type: 'error' });
       return;
     }
-
-    let csv = `BIOTRASH - Reporte SGC ISO 14001 / ISO 9001\n`;
-    csv += `Generado por,${userEmail},Fecha de Descarga,${new Date().toLocaleString()}\n`;
-    csv += `Filtro,${filterType.toUpperCase()},Bitacora,${selectedBitacora.toUpperCase()}\n\n`;
-    
-    csv += `Fecha Proceso,Tipo Bitacora,Codigo Formato,Responsable SGC,Observaciones / Atributos\n`;
-    
-    results.forEach(item => {
-      const fecha = item.fecha || '';
-      const tipo = item.tipoTitulo || '';
-      const codigo = item.codigoFormato || '';
-      const resp = item.responsable || '';
-      
-      // Build brief summary string for attributes
-      let attrs = '';
-      if (item.turno) attrs += `Turno: ${item.turno} | `;
-      if (item.totalContenedores) attrs += `Total Contenederes: ${item.totalContenedores} | `;
-      if (item.totalLibras) attrs += `Libras Tratadas: ${item.totalLibras} | `;
-      if (item.totalPacas) attrs += `Pacas: ${item.totalPacas} | `;
-      if (item.tempCombustion) attrs += `Temp Combustion: ${item.tempCombustion}°C | `;
-      if (item.cuartoFrio) attrs += `Cuarto Frio: ${item.cuartoFrio} | `;
-      if (item.pesoEntrada) attrs += `Peso In: ${item.pesoEntrada} Lbs / Out: ${item.pesoSalida} Lbs | `;
-      if (item.noAutoclave) attrs += `Autoclave: ${item.noAutoclave} / Indicador: ${item.resultadoIndicador} | `;
-      if (item.totalPesoTickets) attrs += `Boletas Peso Total: ${item.totalPesoTickets} Lbs | `;
-      
-      const cleanObs = (item.observaciones || '').replace(/"/g, '""');
-      attrs += `Obs: ${cleanObs}`;
-
-      csv += `"${fecha}","${tipo}","${codigo}","${resp}","${attrs.replace(/"/g, '""')}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `BIOTRASH_REPORTE_SGC_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    generateAndDownloadExcel('reporte_general', { results });
   };
 
   const formatWeekSelectionRange = () => {
@@ -273,11 +298,11 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             <Trash2 className="w-3.5 h-3.5" /> Vaciar Todo
           </button>
           <button
-            onClick={handleExportCSV}
+            onClick={handleExportExcel}
             disabled={results.length === 0}
             className="bg-[#1A1C1E] hover:bg-[#2D2F31] disabled:opacity-50 text-white text-[11px] font-bold px-4 py-1.5 rounded flex items-center gap-1.5 transition"
           >
-            <Download className="w-3.5 h-3.5" /> Exportar CSV
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Exportar Excel
           </button>
         </div>
       </div>
@@ -441,6 +466,89 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             <p className="leading-relaxed">
               Los registros filtrados y exportados por este módulo constituyen evidencia documental para la trazabilidad operativa. No altere el control de cambios de los formatos emitidos ni destruya información de respaldo sin autorización escrita del Comité de Gestión Ambiental.
             </p>
+          </div>
+
+          {/* SGC LOGO CONFIGURATION CENTER */}
+          <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-sm p-4 space-y-3.5 text-left">
+            <div className="flex items-center gap-1.5 border-b border-[#F1F5F9] pb-2">
+              <div className="p-1 bg-[#3B82F6]/10 rounded">
+                <FileText className="w-4 h-4 text-[#3B82F6]" />
+              </div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">Logotipo del SGC en PDF</h2>
+            </div>
+
+            <p className="text-[10px] text-slate-500 leading-normal">
+              Administre el logotipo para la cabecera de todas las bitácoras operacionales PDF. Puede arrastrar un archivo local o pegar un enlace compartido.
+            </p>
+
+            {/* Current preview */}
+            <div className="border border-dashed border-[#E2E8F0] rounded p-3 bg-[#F8FAFC] flex flex-col items-center justify-center min-h-[90px] relative">
+              <span className="absolute top-1 right-1 text-[8px] font-mono text-gray-400 uppercase font-semibold">Carga actual</span>
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo SGC" className="max-h-[60px] object-contain" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#3B82F6] p-1.5 rounded">
+                    <span className="text-white font-bold text-xs font-mono">BIO</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold tracking-tight text-[#1E293B] text-sm leading-none">BIOTRASH</span>
+                    <span className="text-[8px] font-mono font-bold text-[#3B82F6] tracking-widest leading-none mt-0.5">SGC ISO 14001</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Upload File area */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-gray-500 uppercase">1. Subir Archivo de Logo (Local)</label>
+              <div className="relative group cursor-pointer border border-dashed border-[#CBD5E1] hover:border-[#3B82F6] rounded p-2.5 bg-slate-50 hover:bg-blue-50/20 text-center transition">
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+                  onChange={handleLogoFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <span className="text-[10px] font-bold text-[#3B82F6] group-hover:underline block">
+                  Examinar imagen
+                </span>
+                <span className="text-[8px] text-gray-450 block mt-0.5">
+                  PNG, JPG o SVG (Compresión sugerida, max 500KB)
+                </span>
+              </div>
+            </div>
+
+            {/* Link Text Area */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-gray-500 uppercase">2. O utilizar Enlace Compartido (URL)</label>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  placeholder="https://ejemplo.com/mi_logo.png"
+                  value={logoUrlInput}
+                  onChange={(e) => setLogoUrlInput(e.target.value)}
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded px-2.5 py-1 text-[10px] font-mono focus:border-[#3B82F6] focus:outline-none placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveLogoUrl}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] px-2.5 py-1 rounded transition"
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+
+            {/* Clear option */}
+            {logoPreview && (
+              <button
+                type="button"
+                onClick={handleResetLogo}
+                className="w-full border border-red-100 hover:bg-red-50 text-red-650 font-bold text-[10px] py-1 rounded transition text-center block"
+              >
+                Restablecer a Vector SGC
+              </button>
+            )}
           </div>
         </div>
 

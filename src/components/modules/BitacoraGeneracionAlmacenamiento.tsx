@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraGeneracionAlmacenamiento, FilaGeneracionTicket } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, MapPin, ArrowLeft, Download, Database, Plus, Trash2, LayoutList, Scale, FileText } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Download, Database, Plus, Trash2, LayoutList, Scale, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -151,27 +152,8 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
     }
   };
 
-  const handleExportCSV = (registro: BitacoraGeneracionAlmacenamiento) => {
-    let csv = `BIOTRASH - Bitacora de Generacion y Almacenamiento Temporal de RPBI\n`;
-    csv += `Ente Generador,Fecha Recoleccion,Peso Bascula Official,Ubicacion,No Ticket Bascula\n`;
-    csv += `"${registro.enteGenerador}",${registro.fecha},${registro.pesoTicketBascula},"${registro.ubicacion}","${registro.noTicketBascula}"\n\n`;
-    csv += `Tipo de Residuo\n`;
-    csv += `Inorganico: ${registro.tipoResiduo?.inorganico ? 'SÍ' : 'NO'}, Punzo Cortante: ${registro.tipoResiduo?.punzoCortante ? 'SÍ' : 'NO'}, Patologico: ${registro.tipoResiduo?.patologico ? 'SÍ' : 'NO'}\n`;
-    csv += `Tipo de Embalaje\n`;
-    csv += `Contenedor: ${registro.tipoEmbalaje?.contenedor ? 'SÍ' : 'NO'}, Tonel Metalico: ${registro.tipoEmbalaje?.tonelMetalico ? 'SÍ' : 'NO'}, Congelador: ${registro.tipoEmbalaje?.congelador ? 'SÍ' : 'NO'}\n\n`;
-    csv += `Ticket Interno,Peso\n`;
-    const allRows = [...(registro.filasLeft || []), ...(registro.filasRight || [])];
-    allRows.forEach(f => {
-      csv += `"${f.noTicketInterno}",${f.peso}\n`;
-    });
-    csv += `Total Peso Tickets,${registro.totalPesoTickets}\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `recepcion_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraGeneracionAlmacenamiento) => {
+    generateAndDownloadExcel('generacion_almacenamiento', registro);
   };
 
   return (
@@ -539,10 +521,10 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-cyan-600 hover:text-cyan-900 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-cyan-600 hover:text-cyan-900 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

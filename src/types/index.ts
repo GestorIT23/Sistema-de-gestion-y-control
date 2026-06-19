@@ -200,6 +200,78 @@ export interface BitacoraGeneracionAlmacenamiento extends BaseBitacora {
   totalPesoTickets: number;
 }
 
+// 10. Bitacora de Lavado de Baños y Area Administrativa
+export interface BitacoraLavadoBanos extends BaseBitacora {
+  turno: string;
+  ubicacionBanos: string; // e.g. "Planta Alta", "Planta Baja", "Oficinas"
+  checklistBanos: {
+    lavadoSanitarios: boolean;
+    lavadoLavamanos: boolean;
+    barridoTrapeado: boolean;
+    limpiezaEspejos: boolean;
+    limpiezaVidrios: boolean;
+    desinfeccionSuperficies: boolean;
+    vaciadoPapeleras: boolean;
+  };
+  abastecimientoBanos: {
+    papelHigienico: boolean;
+    jabonManos: boolean;
+    toallasPapel: boolean;
+    sanitizante: boolean;
+  };
+  desinfectanteUsado: string;
+}
+
+// 11. Insumos Quimicos y Plasticos
+export interface FilaInsumoQuimico {
+  producto: string;
+  unidadMedida: string;
+  stockInicial: number;
+  unidadesRecibidas: number;
+  unidadesConsumidas: number;
+  stockFinal: number;
+  noLoteProveedor: string;
+}
+
+export interface BitacoraInsumosQuimicos extends BaseBitacora {
+  turno: string;
+  filas: FilaInsumoQuimico[];
+}
+
+// 12. Bitáco Inventarios e Insumos SGC
+export interface FilaInventarioSGC {
+  codigoInsmo: string;
+  descripcion: string;
+  medida: string;
+  stockMinimo: number;
+  existenciaReal: number;
+  estadoEmpaque: 'Buen estado' | 'Dañado' | 'Por vencer';
+}
+
+export interface BitacoraInventariosSGC extends BaseBitacora {
+  areaFisica: string;
+  filas: FilaInventarioSGC[];
+}
+
+// 13. Bitacora Control de Uniformes de Planta
+export interface FilaControlUniforme {
+  colaborador: string;
+  puesto: string;
+  tallaCamisa: string;
+  tallaPantalon: string;
+  tallaBotas: string;
+  tieneMandil: boolean;
+  tieneGuantes: boolean;
+  tieneCareta: boolean;
+  motivoDotacion: string;
+  firmaRecibido: string;
+}
+
+export interface BitacoraControlUniformes extends BaseBitacora {
+  responsableEntrega: string;
+  filas: FilaControlUniforme[];
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -210,4 +282,8 @@ export type BitacoraEntry =
   | { tipo: 'cuarto_frio'; data: BitacoraCuartoFrio }
   | { tipo: 'reduccion_volumen'; data: BitacoraReduccionVolumen }
   | { tipo: 'control_autoclaves'; data: BitacoraControlAutoclaves }
-  | { tipo: 'generacion_almacenamiento'; data: BitacoraGeneracionAlmacenamiento };
+  | { tipo: 'generacion_almacenamiento'; data: BitacoraGeneracionAlmacenamiento }
+  | { tipo: 'lavado_banos'; data: BitacoraLavadoBanos }
+  | { tipo: 'insumos_quimicos'; data: BitacoraInsumosQuimicos }
+  | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGC }
+  | { tipo: 'control_uniformes'; data: BitacoraControlUniformes };

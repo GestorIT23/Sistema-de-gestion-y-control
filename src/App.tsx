@@ -13,6 +13,10 @@ import BitacoraCuartoFrioModule from './components/modules/BitacoraCuartoFrio';
 import BitacoraReduccionVolumenModule from './components/modules/BitacoraReduccionVolumen';
 import BitacoraControlAutoclavesModule from './components/modules/BitacoraControlAutoclaves';
 import BitacoraGeneracionAlmacenamientoModule from './components/modules/BitacoraGeneracionAlmacenamiento';
+import BitacoraLavadoBanosModule from './components/modules/BitacoraLavadoBanos';
+import BitacoraInsumosQuimicosModule from './components/modules/BitacoraInsumosQuimicos';
+import BitacoraInventariosSGCModule from './components/modules/BitacoraInventariosSGC';
+import BitacoraControlUniformesModule from './components/modules/BitacoraControlUniformes';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
 
@@ -197,6 +201,34 @@ export default function App() {
       case 'generacion_almacenamiento':
         return (
           <BitacoraGeneracionAlmacenamientoModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'lavado_banos':
+        return (
+          <BitacoraLavadoBanosModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'insumos_quimicos':
+        return (
+          <BitacoraInsumosQuimicosModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'inventarios_sgc':
+        return (
+          <BitacoraInventariosSGCModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'control_uniformes':
+        return (
+          <BitacoraControlUniformesModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />

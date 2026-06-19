@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraEntregaContenedores as IBitacoraEntregaContenedores, FilaEntregaContenedor } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, CheckSquare, Plus, Trash2, ArrowLeft, Download, Database, LayoutGrid, FileText } from 'lucide-react';
+import { Calendar, User, CheckSquare, Plus, Trash2, ArrowLeft, Download, Database, LayoutGrid, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -135,25 +136,8 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
     }
   };
 
-  const handleExportCSV = (registro: IBitacoraEntregaContenedores) => {
-    let csv = `BIOTRASH - Bitacora de Entrega de Contenedores Rojos al Dpto de Logistica\n`;
-    csv += `Fecha,Nombre Responsable,Total Contenedores\n`;
-    csv += `${registro.fecha},${registro.responsable},${registro.totalContenedores}\n`;
-    csv += `Tapadera Buen Estado: ${registro.estadoGeneral.tapaderaBuenEstado ? 'SI' : 'NO'}, `;
-    csv += `Cuerpo Buen Estado: ${registro.estadoGeneral.cuerpoBuenEstado ? 'SI' : 'NO'}, `;
-    csv += `Llantas Buen Estado: ${registro.estadoGeneral.llantasBuenEstado ? 'SI' : 'NO'}, `;
-    csv += `Halador Buen Estado: ${registro.estadoGeneral.haladorBuenEstado ? 'SI' : 'NO'}\n\n`;
-    csv += `Ruta,Cantidad,Firma Recibe\n`;
-    registro.filas.forEach(f => {
-      csv += `"${f.ruta}",${f.cantidad},${f.firmaRecibe}\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `bitacora_contenedores_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: IBitacoraEntregaContenedores) => {
+    generateAndDownloadExcel('entrega_contenedores', registro);
   };
 
   return (
@@ -459,10 +443,10 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-[#0284c7] hover:text-sky-800 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-[#0284c7] hover:text-sky-800 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

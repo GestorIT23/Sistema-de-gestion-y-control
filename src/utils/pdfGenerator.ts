@@ -4,7 +4,29 @@ import { jsPDF } from 'jspdf';
  * Highly polished PDF generation utility for SGC BIOTRASH S.A.
  * Translates SGC operation data into elegant, official corporate documents.
  */
-export function generateAndDownloadPDF(tipo: string, data: any): void {
+export async function generateAndDownloadPDF(tipo: string, data: any): Promise<void> {
+  // Load logo from localStorage if available
+  const savedBase64 = typeof window !== 'undefined' ? localStorage.getItem('sgc_logo_base64') : null;
+  const savedUrl = typeof window !== 'undefined' ? localStorage.getItem('sgc_logo_url') : null;
+  const logoSource = savedBase64 || savedUrl;
+
+  let logoImage: HTMLImageElement | null = null;
+  if (logoSource) {
+    try {
+      logoImage = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = logoSource;
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        // Timeout after 2.5 seconds to avoid locking pdf generation if network is slow
+        setTimeout(() => reject(new Error('Timeout loading image')), 2500);
+      });
+    } catch (err) {
+      console.warn('Error loading custom SGC logo, falling back to SGC vector logo:', err);
+    }
+  }
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -34,7 +56,11 @@ export function generateAndDownloadPDF(tipo: string, data: any): void {
     cuarto_frio: { code: 'F-OPR-06', name: 'BITÁCORA DE CONTROL DE CUARTO FRÍO Y CONGELADORES' },
     reduccion_volumen: { code: 'F-OPR-07', name: 'BITÁCORA DE REDUCCIÓN DE VOLUMEN Y CONTROL DE PACAS' },
     control_autoclaves: { code: 'F-OPR-08', name: 'BITÁCORA DE CONTROL QUÍMICO / BIOLÓGICO DE AUTOCLAVES' },
-    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' }
+    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' },
+    lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
+    insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
+    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGC' },
+    control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGC', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGC' };
@@ -50,18 +76,23 @@ export function generateAndDownloadPDF(tipo: string, data: any): void {
     doc.line(pageWidth - marginX, 12, pageWidth - marginX, pageHeight - 12);
     doc.line(marginX, pageHeight - 12, pageWidth - marginX, pageHeight - 12);
 
-    // Corporate Logo Band
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    // Corporate Logo Band (Custom SGC Graphical Logo matching FormHeader.tsx)
+    // Draw white background for logo block
+    doc.setFillColor(255, 255, 255);
     doc.rect(marginX + 1, 13, 35, 24, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('BIOTRASH', marginX + 6, 23);
-    doc.setFontSize(6);
-    doc.text('SISTEMAS SGC', marginX + 6, 28);
-    doc.setFont('Helvetica', 'normal');
-    doc.text('PLANTA CENTRAL', marginX + 6, 32);
+    doc.rect(marginX + 1, 13, 35, 24, 'S');
+
+    if (logoImage) {
+      // Draw loaded image scaled to fit inside the 33 x 22 box
+      try {
+        doc.addImage(logoImage, 'PNG', marginX + 2, 14, 33, 22);
+      } catch (imgError) {
+        console.warn('doc.addImage failed, falling back to SGC vector logo:', imgError);
+        drawFallbackVectorLogo(doc, marginX);
+      }
+    } else {
+      drawFallbackVectorLogo(doc, marginX);
+    }
 
     // Title Block
     doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
@@ -519,6 +550,119 @@ export function generateAndDownloadPDF(tipo: string, data: any): void {
     doc.setFontSize(8);
     doc.text(`Suma total calculada de tickets: ${data.totalPesoTickets || 0} lbs`, marginX + 4, y);
     y += 8;
+  } else if (tipo === 'lavado_banos') {
+    // 10. Lavado de Baños
+    drawSectionHeader('I. INFORMACIÓN GENERAL DE SANITIZACIÓN');
+    drawGridInfo([
+      { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Turno Operativo', value: data.turno },
+      { key: 'Ubicación General', value: data.ubicacionBanos },
+      { key: 'Responsable', value: data.responsable },
+      { key: 'Desinfectante', value: data.desinfectanteUsado }
+    ]);
+
+    if (data.observaciones) {
+      drawSectionHeader('II. NOVEDADES REPORTADAS');
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      doc.text(data.observaciones, marginX + 4, y);
+      y += 8;
+    }
+
+    drawSectionHeader('III. CUMPLIMIENTO DE ACTIVIDADES HIGIÉNICAS');
+    const chk = data.checklistBanos || {};
+    const ab = data.abastecimientoBanos || {};
+    drawGridInfo([
+      { key: 'Lavado de Sanitarios', value: chk.lavadoSanitarios ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Lavado de Lavamanos', value: chk.lavadoLavamanos ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Barrido y Trapeado', value: chk.barridoTrapeado ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Limpieza de Espejos', value: chk.limpiezaEspejos ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Limpieza de Vidrios', value: chk.limpiezaVidrios ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Desinfección Superficies', value: chk.desinfeccionSuperficies ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Vaciado Papeleras', value: chk.vaciadoPapeleras ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
+      { key: 'Papel Higiénico Surtido', value: ab.papelHigienico ? 'CON STOCK (✓)' : 'SIN STOCK' },
+      { key: 'Jabón Surtido', value: ab.jabonManos ? 'CON STOCK (✓)' : 'SIN STOCK' },
+      { key: 'Toallas de Papel', value: ab.toallasPapel ? 'CON STOCK (✓)' : 'SIN STOCK' }
+    ]);
+
+  } else if (tipo === 'insumos_quimicos') {
+    // 11. Insumos Químicos y Plásticos
+    drawSectionHeader('I. INFORMACIÓN DEL AUDITOR DE ALMACÉN');
+    drawGridInfo([
+      { key: 'Fecha Auditoría', value: data.fecha },
+      { key: 'Turno Operativo', value: data.turno },
+      { key: 'Auditor SGC', value: data.responsable }
+    ]);
+
+    if (data.observaciones) {
+      drawSectionHeader('II. OBSERVACIONES DEL INVENTARIO');
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      doc.text(data.observaciones, marginX + 4, y);
+      y += 8;
+    }
+
+    drawSectionHeader('III. STOCK DE INSUMOS DE PLANTA');
+    const tableHeaders = ['PRODUCTO / MATERIAL', 'UD', 'STD INIC', 'ENTRADAS', 'SALIDAS', 'STOCK FINAL', 'LOTE'];
+    const tableWidths = [60, 15, 20, 20, 20, 22, 23];
+    const tableRows = (data.filas || []).map((f: any) => [
+      f.producto, f.unidadMedida, String(f.stockInicial), String(f.unidadesRecibidas), String(f.unidadesConsumidas), String(f.stockFinal), f.noLoteProveedor
+    ]);
+    drawDataTable(tableHeaders, tableWidths, tableRows);
+
+  } else if (tipo === 'inventarios_sgc') {
+    // 12. Inventario SGC
+    drawSectionHeader('I. INFORMACIÓN GENERAL DE AUDITORÍA');
+    drawGridInfo([
+      { key: 'Fecha Auditoría', value: data.fecha },
+      { key: 'Área Auditora', value: data.areaFisica },
+      { key: 'Auditor Responsable', value: data.responsable }
+    ]);
+
+    if (data.observaciones) {
+      drawSectionHeader('II. OBSERVACIONES DE LA AUDITORÍA');
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      doc.text(data.observaciones, marginX + 4, y);
+      y += 8;
+    }
+
+    drawSectionHeader('III. EVALUACIÓN DE EXISTENCIAS SGC');
+    const tableHeaders = ['SKU', 'DESCRIPCIÓN', 'UNIDAD', 'STOCK MÍN', 'EXISTENCIA REAL', 'ESTADO', 'ALERTA RECORTE'];
+    const tableWidths = [22, 53, 17, 20, 25, 20, 23];
+    const tableRows = (data.filas || []).map((f: any) => [
+      f.codigoInsmo, f.descripcion, f.medida, String(f.stockMinimo), String(f.existenciaReal), f.estadoEmpaque, f.existenciaReal < f.stockMinimo ? 'BAJO REQUERIDO' : 'SUFICIENTE'
+    ]);
+    drawDataTable(tableHeaders, tableWidths, tableRows);
+
+  } else if (tipo === 'control_uniformes') {
+    // 13. Control de Uniformes
+    drawSectionHeader('I. INFORMACIÓN DE REGISTRO');
+    drawGridInfo([
+      { key: 'Fecha Inspección', value: data.fecha },
+      { key: 'Inspector EPP / Coordinador', value: data.responsableEntrega }
+    ]);
+
+    if (data.observaciones) {
+      drawSectionHeader('II. ACUERDOS DE HIGIENE Y PROTECCIÓN');
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      doc.text(data.observaciones, marginX + 4, y);
+      y += 8;
+    }
+
+    drawSectionHeader('III. CONTROL DE DOTACIONES DE EPP');
+    const tableHeaders = ['COLABORADOR', 'PUESTO OPERACIONAL', 'FILIP', 'PANT', 'BOTAS', 'EPP OK?', 'FIRMA RECIBIDO'];
+    const tableWidths = [45, 45, 12, 12, 12, 18, 36];
+    const tableRows = (data.filas || []).map((f: any) => [
+      f.colaborador, f.puesto.split(' ')[0], f.tallaCamisa, f.tallaPantalon, f.tallaBotas,
+      [f.tieneMandil, f.tieneGuantes, f.tieneCareta].filter(Boolean).length + '/3', f.firmaRecibido
+    ]);
+    drawDataTable(tableHeaders, tableWidths, tableRows);
   }
 
   // Draw Control de Cambios table at page limit if fit, otherwise fallback
@@ -542,4 +686,27 @@ export function generateAndDownloadPDF(tipo: string, data: any): void {
   // Save / Action Download trigger
   const escapedFileName = `${meta.code}_${tipo}_${data.fecha.replace(/\//g, '-')}.pdf`;
   doc.save(escapedFileName);
+}
+
+function drawFallbackVectorLogo(doc: any, marginX: number): void {
+  // Draw the blue square (represented in SGC logo)
+  doc.setFillColor(59, 130, 246); // #3B82F6
+  doc.roundedRect(marginX + 12.5, 15.5, 10, 10, 1.2, 1.2, 'F');
+
+  // Draw "BIO" in white inside the blue square
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('BIO', marginX + 14.5, 22.5);
+
+  // Draw "BIOTRASH" and "SGC ISO 14001" below it
+  doc.setTextColor(30, 41, 59); // Charcoal #1E293B
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('BIOTRASH', marginX + 10.5, 29.5);
+
+  doc.setTextColor(59, 130, 246); // Blue #3B82F6
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(4.5);
+  doc.text('SGC ISO 14001', marginX + 12, 33.5);
 }

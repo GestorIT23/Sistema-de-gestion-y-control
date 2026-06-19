@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraControlAutoclaves } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -120,23 +121,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
     }
   };
 
-  const handleExportCSV = (registro: BitacoraControlAutoclaves) => {
-    let csv = `BIOTRASH - Bitacora de Control Quimico/Biologico de Auto Claves\n`;
-    csv += `No Autoclave,Fecha Proceso,Peso Proceso Lbs,Nombre Responsable,No Proceso\n`;
-    csv += `"${registro.noAutoclave}",${registro.fecha},${registro.pesoProceso},"${registro.responsable}","${registro.noProceso}"\n`;
-    csv += `Identificacion Vial,Resultado Vial,Lote Fabricante,Temp Incubacion\n`;
-    csv += `"${registro.identificacionIndicador}","${registro.resultadoIndicador}","${registro.noLoteFabricante}","${registro.tempIncubacion}"\n`;
-    csv += `Firma Supervisor,Firma Coordinador,Observaciones Parametros,Observaciones Generales\n`;
-    csv += `"${registro.firmaSupervisor}","${registro.firmaCoordinador}","${registro.observacionesGeneralesProceso}","${registro.observaciones}"\n\n`;
-    csv += `Prueba Biologica,Prueba Quimica,Temp SGC,Presion SGC,Tiempo SGC\n`;
-    csv += `${registro.tipoIndicador?.biologico ? 'SÍ' : 'NO'},${registro.tipoIndicador?.quimico ? 'SÍ' : 'NO'},${registro.parametrosOperacion?.temperatura ? 'SÍ' : 'NO'},${registro.parametrosOperacion?.presion ? 'SÍ' : 'NO'},${registro.parametrosOperacion?.tiempoProceso ? 'SÍ' : 'NO'}\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `autoclaves_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraControlAutoclaves) => {
+    generateAndDownloadExcel('control_autoclaves', registro);
   };
 
   return (
@@ -475,10 +461,10 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                        <div className="flex gap-2">
                          <button
                            type="button"
-                           onClick={() => handleExportCSV(reg)}
-                           className="text-emerald-700 hover:text-emerald-950 font-bold text-[10px] cursor-pointer"
+                           onClick={() => handleExportExcel(reg)}
+                           className="text-emerald-700 hover:text-emerald-950 font-bold text-[10px] cursor-pointer flex items-center gap-0.5"
                          >
-                           CSV
+                           <FileSpreadsheet className="w-3 h-3 text-emerald-600" /> Excel
                          </button>
                          <span className="text-slate-300 font-mono text-[10px]">|</span>
                          <button

@@ -6,6 +6,7 @@ import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Download, Database, Flame, FileSpreadsheet, FileText } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -105,21 +106,8 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
     }
   };
 
-  const handleExportCSV = (registro: IBitacoraDisposicionPirolisis) => {
-    let csv = `BIOTRASH - Bitacora de Disposicion Final de RPBI a Pirolisis\n`;
-    csv += `Fecha,Nombre Responsable,Total Pacas,Total Libras Trasladadas\n`;
-    csv += `${registro.fecha},${registro.responsable},${registro.totalPacas},${registro.totalLibras}\n\n`;
-    csv += `Proceso,Cantidad Pacas,No Pase Traslado,Firma de Recibido\n`;
-    registro.filas.forEach(f => {
-      csv += `${f.proceso},${f.pacas},${f.noPaseTraslado},"${f.firmaRecibe}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `pirolisis_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: IBitacoraDisposicionPirolisis) => {
+    generateAndDownloadExcel('disposicion_pirolisis', registro);
   };
 
   return (
@@ -320,10 +308,10 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-rose-600 hover:text-rose-800 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-rose-600 hover:text-rose-800 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

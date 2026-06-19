@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraReduccionVolumen } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Settings, ToggleLeft, Gauge, FileText } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Settings, ToggleLeft, Gauge, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -122,26 +123,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
     }
   };
 
-  const handleExportCSV = (registro: BitacoraReduccionVolumen) => {
-    let csv = `BIOTRASH - Bitacora de Proceso de Reduccion de Volumen y Control de Pacas\n`;
-    csv += `No Trituradora,Fecha Proceso,Tiempo Proceso,Nombre Responsable,No Proceso\n`;
-    csv += `"${registro.noTrituradora}",${registro.fecha},"${registro.tiempoProceso}",${registro.responsable},"${registro.noProceso}"\n`;
-    csv += `Peso Entrada Lbs,Peso Salida Lbs,Cantidad Pacas Realizadas,Anotaciones Especiales\n`;
-    csv += `${registro.pesoEntrada},${registro.pesoSalida},${registro.cantidadPacas},"${registro.anotacionesEspeciales}"\n\n`;
-    csv += `Sistema Diagnostico,Aprobado\n`;
-    csv += `Trituradora Shredder,${registro.estadoTrituradora ? 'SANO' : 'FALLA'}\n`;
-    csv += `Cajas Reductoras,${registro.estadoCajasReductoras ? 'SANO' : 'FALLA'}\n`;
-    csv += `Fajas Motor,${registro.estadoFajas ? 'SANO' : 'FALLA'}\n`;
-    csv += `Elevador de Carros,${registro.estadoElevadorCarros ? 'SANO' : 'FALLA'}\n`;
-    csv += `Banda Transportadora,${registro.estadoBandaTransportadora ? 'SANO' : 'FALLA'}\n`;
-    csv += `Compactadora Hidraulica,${registro.estadoCompactadora ? 'SANO' : 'FALLA'}\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `reduccion_volumen_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraReduccionVolumen) => {
+    generateAndDownloadExcel('reduccion_volumen', registro);
   };
 
   return (
@@ -406,10 +389,10 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-emerald-700 hover:text-emerald-900 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-emerald-700 hover:text-emerald-900 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

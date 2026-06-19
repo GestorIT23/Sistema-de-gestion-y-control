@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraControlIncineracion, FilaControlIncineracion } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Flame, Timer, Activity, FileText } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Flame, Timer, Activity, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -133,23 +134,8 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
     }
   };
 
-  const handleExportCSV = (registro: BitacoraControlIncineracion) => {
-    let csv = `BIOTRASH - Bitacora de Control de Incineracion de RPBI\n`;
-    csv += `Incinerador,Fecha Proceso,Nombre Responsable,Duracion,Total Libras Ingresadas\n`;
-    csv += `"${registro.incinerador}",${registro.fecha},${registro.responsable},"${registro.duracionProceso}",${registro.totalLibras}\n`;
-    csv += `Hora Inicio,Hora Fin,Temp Combustion C,Temp Post Combustion C,Combustible Usado,Cantidad Gls,Polvo Fin Lbs\n`;
-    csv += `${registro.horaInicio},${registro.horaFin},${registro.tempCombustion},${registro.tempPostCombustion},"${registro.combustibleUsado}",${registro.combustibleCantidad},${registro.cantidadPolvoFin}\n\n`;
-    csv += `Ingreso,Libras Recibidas\n`;
-    registro.filas.forEach(f => {
-      csv += `${f.ingreso},${f.libras}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `incineracion_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraControlIncineracion) => {
+    generateAndDownloadExcel('control_incineracion', registro);
   };
 
   return (
@@ -432,10 +418,10 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-orange-700 hover:text-orange-900 font-bold text-[10px] cursor-pointer"
+                        onClick={() => handleExportExcel(reg)}
+                        className="text-orange-700 hover:text-orange-900 font-bold text-[10px] cursor-pointer flex items-center gap-1"
                       >
-                        Descargar CSV
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Descargar Excel
                       </button>
                       <button
                         type="button"

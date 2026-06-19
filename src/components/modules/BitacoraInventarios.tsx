@@ -4,8 +4,9 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraInventarios, FilaInventario } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, Clock, Plus, Trash2, ArrowLeft, Download, CheckCircle, Database, FileText } from 'lucide-react';
+import { Calendar, Clock, Plus, Trash2, ArrowLeft, Download, CheckCircle, Database, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
 interface Props {
   onBack: () => void;
@@ -124,21 +125,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
     }
   };
 
-  const handleExportCSV = (registro: BitacoraInventarios) => {
-    let csv = `BIOTRASH - Bitacora de Inventarios e Insumos\n`;
-    csv += `Fecha,Turno,Area,Responsable,Observaciones\n`;
-    csv += `${registro.fecha},${registro.turno},${registro.area},${registro.responsable},"${registro.observaciones}"\n\n`;
-    csv += `Hora,Producto,Cantidad,Firma\n`;
-    registro.filas.forEach(f => {
-      csv += `${f.hora},${f.producto},${f.cantidad},${f.firma}\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `bitacora_inventario_${registro.fecha}.csv`);
-    link.click();
+  const handleExportExcel = (registro: BitacoraInventarios) => {
+    generateAndDownloadExcel('inventarios', registro);
   };
 
   return (
@@ -474,10 +462,10 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => handleExportCSV(reg)}
+                          onClick={() => handleExportExcel(reg)}
                           className="text-slate-500 hover:text-emerald-700 flex items-center gap-1 font-semibold text-[10px] cursor-pointer"
                         >
-                          <Download className="w-3 h-3" /> Descargar CSV
+                          <FileSpreadsheet className="w-3 h-3 text-emerald-600" /> Descargar Excel
                         </button>
                         <span className="text-slate-300">|</span>
                         <button

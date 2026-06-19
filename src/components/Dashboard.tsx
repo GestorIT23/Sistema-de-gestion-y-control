@@ -16,7 +16,11 @@ import {
   RefreshCcw, 
   Zap,
   LayoutGrid,
-  Users
+  Users,
+  Sparkles,
+  Pocket,
+  PackageOpen,
+  ShieldCheck
 } from 'lucide-react';
 import { Usuario } from '../types';
 
@@ -35,7 +39,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     cuarto_frio: 0,
     reduccion_volumen: 0,
     control_autoclaves: 0,
-    generacion_almacenamiento: 0
+    generacion_almacenamiento: 0,
+    lavado_banos: 0,
+    insumos_quimicos: 0,
+    inventarios_sgc: 0,
+    control_uniformes: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -59,6 +67,10 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'reduccion_volumen', col: 'bitacora_reduccion_volumen' },
         { key: 'control_autoclaves', col: 'bitacora_control_autoclaves' },
         { key: 'generacion_almacenamiento', col: 'bitacora_generacion_almacenamiento' },
+        { key: 'lavado_banos', col: 'bitacora_lavado_banos' },
+        { key: 'insumos_quimicos', col: 'bitacora_insumos_quimicos' },
+        { key: 'inventarios_sgc', col: 'bitacora_inventarios_sgc' },
+        { key: 'control_uniformes', col: 'bitacora_control_uniformes' }
       ];
 
       const newCounts = {
@@ -70,7 +82,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         cuarto_frio: 0,
         reduccion_volumen: 0,
         control_autoclaves: 0,
-        generacion_almacenamiento: 0
+        generacion_almacenamiento: 0,
+        lavado_banos: 0,
+        insumos_quimicos: 0,
+        inventarios_sgc: 0,
+        control_uniformes: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -204,6 +220,46 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-indigo-200 hover:border-indigo-400 focus:ring-indigo-500',
       tag: 'Recepción',
       stats: `${counts.generacion_almacenamiento} ingresos`
+    },
+    {
+      id: 'lavado_banos',
+      title: 'Sanitización de Baños y Oficinas',
+      subtitle: 'Limpieza higiénica operacional',
+      code: 'BIOTRASH 4.0. F-OPR-000-10',
+      icon: <Sparkles className="w-5 h-5 text-teal-600" />,
+      color: 'border-teal-200 hover:border-teal-400 focus:ring-teal-500',
+      tag: 'Higiene',
+      stats: `${counts.lavado_banos} registros`
+    },
+    {
+      id: 'insumos_quimicos',
+      title: 'Insumos Químicos y Plásticos',
+      subtitle: 'Control y stock de bolsas y reactivos',
+      code: 'BIOTRASH 4.0. F-OPR-000-11',
+      icon: <PackageOpen className="w-5 h-5 text-indigo-600" />,
+      color: 'border-indigo-200 hover:border-indigo-400 focus:ring-indigo-500',
+      tag: 'Almacén',
+      stats: `${counts.insumos_quimicos} registros`
+    },
+    {
+      id: 'inventarios_sgc',
+      title: 'Inventario General SGC',
+      subtitle: 'Auditoría física de equipos y consumibles',
+      code: 'BIOTRASH 4.0. F-OPR-000-12',
+      icon: <Database className="w-5 h-5 text-amber-600" />,
+      color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
+      tag: 'Calidad SGC',
+      stats: `${counts.inventarios_sgc} registros`
+    },
+    {
+      id: 'control_uniformes',
+      title: 'Control de Uniformes de Planta',
+      subtitle: 'Dotación de uniformes y EPP',
+      code: 'BIOTRASH 4.0. F-OPR-000-13',
+      icon: <Pocket className="w-5 h-5 text-cyan-600" />,
+      color: 'border-cyan-200 hover:border-cyan-400 focus:ring-cyan-500',
+      tag: 'Seguridad',
+      stats: `${counts.control_uniformes} registros`
     }
   ];
 
