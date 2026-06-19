@@ -4,7 +4,8 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraEntregaContenedores as IBitacoraEntregaContenedores, FilaEntregaContenedor } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, CheckSquare, Plus, Trash2, ArrowLeft, Download, Database, LayoutGrid } from 'lucide-react';
+import { Calendar, User, CheckSquare, Plus, Trash2, ArrowLeft, Download, Database, LayoutGrid, FileText } from 'lucide-react';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 
 interface Props {
   onBack: () => void;
@@ -116,7 +117,8 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
 
     try {
       await addDoc(collection(db, 'bitacora_entrega_contenedores'), nuevoRegistro);
-      setMsg({ text: 'La entrega de contenedores rojos se ha guardado exitosamente.', type: 'success' });
+      generateAndDownloadPDF('entrega_contenedores', nuevoRegistro);
+      setMsg({ text: 'La entrega de contenedores rojos se ha guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGC.', type: 'success' });
       setObservaciones('');
       setFilas([]);
       setTotalContenedores(0);
@@ -126,7 +128,8 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
       const updatedList = [nuevoRegistro, ...registros];
       setRegistros(updatedList);
       localStorage.setItem('biotrash_cont_bk', JSON.stringify(updatedList));
-      setMsg({ text: 'Guardado de contingencia local activado.', type: 'warning' });
+      generateAndDownloadPDF('entrega_contenedores', nuevoRegistro);
+      setMsg({ text: 'Guardado localmente y PDF generado con éxito. La base de datos no está disponible temporalmente.', type: 'warning' });
     } finally {
       setSaving(false);
     }
@@ -453,13 +456,22 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${reg.estadoGeneral?.cuerpoBuenEstado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>Cuerpo</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${reg.estadoGeneral?.llantasBuenEstado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>Llantas</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleExportCSV(reg)}
-                      className="text-[#0284c7] hover:text-sky-800 font-bold block mt-3 text-[10px] text-right w-full"
-                    >
-                      Descargar CSV
-                    </button>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
+                      <button
+                        type="button"
+                        onClick={() => handleExportCSV(reg)}
+                        className="text-[#0284c7] hover:text-sky-800 font-bold text-[10px] cursor-pointer"
+                      >
+                        Descargar CSV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => generateAndDownloadPDF('entrega_contenedores', reg)}
+                        className="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 text-[10px] cursor-pointer"
+                      >
+                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -4,7 +4,8 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraGeneracionAlmacenamiento, FilaGeneracionTicket } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, MapPin, ArrowLeft, Download, Database, Plus, Trash2, LayoutList, Scale } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Download, Database, Plus, Trash2, LayoutList, Scale, FileText } from 'lucide-react';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 
 interface Props {
   onBack: () => void;
@@ -134,7 +135,8 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
 
     try {
       await addDoc(collection(db, 'bitacora_generacion_almacenamiento'), nuevoRegistro);
-      setMsg({ text: 'El reporte de recepción y almacenamiento se guardó exitosamente.', type: 'success' });
+      generateAndDownloadPDF('generacion_almacenamiento', nuevoRegistro);
+      setMsg({ text: 'El reporte de recepción y almacenamiento se guardó exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {
@@ -142,7 +144,8 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
       const updatedList = [nuevoRegistro, ...registros];
       setRegistros(updatedList);
       localStorage.setItem('biotrash_gen_bk', JSON.stringify(updatedList));
-      setMsg({ text: 'Guardado offline localmente.', type: 'warning' });
+      generateAndDownloadPDF('generacion_almacenamiento', nuevoRegistro);
+      setMsg({ text: 'Guardado offline localmente y PDF generado con éxito.', type: 'warning' });
     } finally {
       setSaving(false);
     }
@@ -533,13 +536,22 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                       <span className="text-cyan-700 font-bold">{reg.totalPesoTickets.toFixed(1)} lbs</span>
                     </div>
                     <div className="text-slate-500 mt-1 font-mono text-[9px] truncate">Ente: {reg.enteGenerador}</div>
-                    <button
-                      type="button"
-                      onClick={() => handleExportCSV(reg)}
-                      className="text-cyan-600 hover:text-cyan-900 font-bold block mt-3 text-[10px] text-right w-full"
-                    >
-                      Descargar CSV
-                    </button>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
+                      <button
+                        type="button"
+                        onClick={() => handleExportCSV(reg)}
+                        className="text-cyan-600 hover:text-cyan-900 font-bold text-[10px] cursor-pointer"
+                      >
+                        Descargar CSV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => generateAndDownloadPDF('generacion_almacenamiento', reg)}
+                        className="text-rose-600 hover:text-rose-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
+                      >
+                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

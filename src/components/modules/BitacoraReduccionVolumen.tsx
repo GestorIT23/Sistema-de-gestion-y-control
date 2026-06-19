@@ -4,7 +4,8 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraReduccionVolumen } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Settings, ToggleLeft, Gauge } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Settings, ToggleLeft, Gauge, FileText } from 'lucide-react';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 
 interface Props {
   onBack: () => void;
@@ -104,7 +105,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
 
     try {
       await addDoc(collection(db, 'bitacora_reduccion_volumen'), nuevoRegistro);
-      setMsg({ text: 'El registro de reducción de volumen se archivó exitosamente.', type: 'success' });
+      generateAndDownloadPDF('reduccion_volumen', nuevoRegistro);
+      setMsg({ text: 'El registro de reducción de volumen se archivó exitosamente en Firestore y se ha generado el PDF oficial SGC.', type: 'success' });
       setObservaciones('');
       setAnotacionesEspeciales('');
       fetchRegistros();
@@ -113,7 +115,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
       const updatedList = [nuevoRegistro, ...registros];
       setRegistros(updatedList);
       localStorage.setItem('biotrash_red_bk', JSON.stringify(updatedList));
-      setMsg({ text: 'Fallo de red, guardado de emergencia localmente.', type: 'warning' });
+      generateAndDownloadPDF('reduccion_volumen', nuevoRegistro);
+      setMsg({ text: 'Fallo de red, guardado localmente y PDF generado con éxito.', type: 'warning' });
     } finally {
       setSaving(false);
     }
@@ -400,13 +403,22 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                     <div className="italic mt-1 font-mono text-[10px] text-slate-400">
                       I: {reg.pesoEntrada} lbs / O: {reg.pesoSalida} lbs
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleExportCSV(reg)}
-                      className="text-emerald-700 hover:text-emerald-900 font-bold block mt-3 text-[10px] text-right w-full"
-                    >
-                      Descargar CSV
-                    </button>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
+                      <button
+                        type="button"
+                        onClick={() => handleExportCSV(reg)}
+                        className="text-emerald-700 hover:text-emerald-900 font-bold text-[10px] cursor-pointer"
+                      >
+                        Descargar CSV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => generateAndDownloadPDF('reduccion_volumen', reg)}
+                        className="text-indigo-600 hover:text-indigo-850 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
+                      >
+                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGC)
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

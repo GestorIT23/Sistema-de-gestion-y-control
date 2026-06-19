@@ -4,7 +4,8 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraControlAutoclaves } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText } from 'lucide-react';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 
 interface Props {
   onBack: () => void;
@@ -103,7 +104,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
     try {
       await addDoc(collection(db, 'bitacora_control_autoclaves'), nuevoRegistro);
-      setMsg({ text: 'Los resultados de control químico/biológico se han archivado exitosamente.', type: 'success' });
+      generateAndDownloadPDF('control_autoclaves', nuevoRegistro);
+      setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {
@@ -111,7 +113,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       const updatedList = [nuevoRegistro, ...registros];
       setRegistros(updatedList);
       localStorage.setItem('biotrash_auto_bk', JSON.stringify(updatedList));
-      setMsg({ text: 'Archivado offline temporario en local.', type: 'warning' });
+      generateAndDownloadPDF('control_autoclaves', nuevoRegistro);
+      setMsg({ text: 'Guardado localmente y PDF generado con éxito. La base de datos no está disponible temporalmente.', type: 'warning' });
     } finally {
       setSaving(false);
     }
@@ -465,18 +468,28 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                       <span className="text-emerald-700 font-bold">{reg.pesoProceso} Lbs</span>
                     </div>
                     <div className="text-slate-500 mt-1 font-mono text-[9px] truncate">Máq: {reg.noAutoclave}</div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-mono ${reg.resultadoIndicador.includes('NEGATIVO') ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-850'}`}>
-                        {reg.resultadoIndicador.includes('NEGATIVO') ? 'LIBERADO' : 'RETENIDO'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleExportCSV(reg)}
-                        className="text-emerald-700 hover:text-emerald-950 font-bold text-[10px]"
-                      >
-                        CSV
-                      </button>
-                    </div>
+                     <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/50">
+                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-mono ${reg.resultadoIndicador.includes('NEGATIVO') ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-850'}`}>
+                         {reg.resultadoIndicador.includes('NEGATIVO') ? 'LIBERADO' : 'RETENIDO'}
+                       </span>
+                       <div className="flex gap-2">
+                         <button
+                           type="button"
+                           onClick={() => handleExportCSV(reg)}
+                           className="text-emerald-700 hover:text-emerald-950 font-bold text-[10px] cursor-pointer"
+                         >
+                           CSV
+                         </button>
+                         <span className="text-slate-300 font-mono text-[10px]">|</span>
+                         <button
+                           type="button"
+                           onClick={() => generateAndDownloadPDF('control_autoclaves', reg)}
+                           className="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
+                         >
+                           <FileText className="w-2.5 h-2.5 text-rose-500" /> PDF SGC
+                         </button>
+                       </div>
+                     </div>
                   </div>
                 ))}
               </div>
