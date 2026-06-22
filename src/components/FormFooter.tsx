@@ -16,7 +16,7 @@ interface FormFooterProps {
 
 export default function FormFooter({
   cambios = [
-    { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación del formato inicial bajo norma ISO 14001', solicitante: 'Comité de Calidad' }
+    { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación del formato inicial bajo norma ISO 14001 y 9001', solicitante: 'Comité de Calidad' }
   ]
 }: FormFooterProps) {
   return (
@@ -24,7 +24,7 @@ export default function FormFooter({
       {/* Control de Cambios table */}
       <div id="change-control-panel" className="border border-[#E2E8F0] bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[#F8FAFC] border-b border-[#E2E8F0] px-3 py-1.5 flex items-center justify-between">
-          <h4 className="font-bold text-[10px] text-[#1E293B] uppercase tracking-wide">Control de cambios (SGC ISO 14001)</h4>
+          <h4 className="font-bold text-[10px] text-[#1E293B] uppercase tracking-wide">Control de cambios (SGI ISO 9001 / 14001)</h4>
           <span className="text-[9px] bg-green-50 text-green-600 font-bold px-2 py-0.5 rounded-full uppercase">Vigente</span>
         </div>
         <div className="overflow-x-auto">

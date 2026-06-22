@@ -115,7 +115,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Ajuste de límites térmico-sanitarios según norma del cuarto fío (SGC)', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Ajuste de límites térmico-sanitarios según norma del cuarto frío SGI', solicitante: 'Comité de Calidad' }
       ]
     };
 
@@ -381,10 +381,10 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
-              <Snowflake className="w-4 h-4 text-sky-450 animate-spin-slow" /> Control de Vacío Térmico
+              <Snowflake className="w-4 h-4 text-sky-450 animate-spin-slow" /> Control Térmico
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
-              Preservar el RPBI a menos de 4°C inhibe la proliferación bacteriana y la emanación de gases nocivos. Se requiere controles diarios obligatorios de SGC.
+              Preservar el RPBI a 3°C o menos inhibe la proliferación bacteriana y la emanación de gases nocivos. Se requiere controles diarios obligatorios del Sistema de Gestión Integral.
             </p>
           </div>
 

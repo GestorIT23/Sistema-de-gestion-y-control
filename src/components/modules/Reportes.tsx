@@ -491,9 +491,10 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                   <div className="bg-[#3B82F6] p-1.5 rounded">
                     <span className="text-white font-bold text-xs font-mono">BIO</span>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="font-bold tracking-tight text-[#1E293B] text-sm leading-none">BIOTRASH</span>
-                    <span className="text-[8px] font-mono font-bold text-[#3B82F6] tracking-widest leading-none mt-0.5">SGC ISO 14001</span>
+                    <span className="text-[7.5px] font-bold text-[#3B82F6] leading-none mt-1 uppercase tracking-tight">Sistema de Gestión Integral</span>
+                    <span className="text-[6.5px] font-semibold text-slate-500 leading-none mt-0.5">ISO 9001:2015 / ISO 14001:2015</span>
                   </div>
                 </div>
               )}

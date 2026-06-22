@@ -85,15 +85,15 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
       observaciones: observaciones || 'Ninguna anomalía detectada. Área limpia.',
       checklistBanos: checklist,
       abastecimientoBanos: abastecimiento,
-      elaboro: 'Supervisor de Higiene / Operador SGC',
-      reviso: 'Coordinador SGC de Planta',
+      elaboro: 'Supervisor de Higiene / Operador SGI',
+      reviso: 'Coordinador SGI de Planta',
       aprobo: 'Comité de Gestión Ambiental e Inocuidad',
       cambioControl: [
         {
           version: '1.0',
-          fecha: '15/06/2026',
+          fecha: '15/06/2025',
           seccion: 'Todas',
-          cambio: 'Lanzamiento del formato higiénico-sanitario',
+          cambio: 'Lanzamiento del formato higiénico-sanitario SGI',
           solicitante: 'Comité de Calidad'
         }
       ]
@@ -402,15 +402,15 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
       </div>
 
       <FormFooter 
-        elaboroCargo="Supervisor de Higiene / Operador SGC"
-        revisoCargo="Coordinador SGC de Planta"
+        elaboroCargo="Supervisor de Higiene / Operador SGI"
+        revisoCargo="Coordinador SGI de Planta"
         aproboCargo="Comité de Gestión Ambiental e Inocuidad"
         cambios={[
           {
             version: '1.0',
-            fecha: '15/06/2026',
+            fecha: '15/06/2025',
             seccion: 'Todas',
-            cambio: 'Lanzamiento del formato higiénico-sanitario',
+            cambio: 'Lanzamiento del formato higiénico-sanitario SGI',
             solicitante: 'Comité de Calidad'
           }
         ]}

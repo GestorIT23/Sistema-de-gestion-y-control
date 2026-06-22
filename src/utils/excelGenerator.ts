@@ -30,9 +30,9 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
 
   // --- Header metadata ---
   wsRows.push(['BIOTRASH S.A.', '', '', '', '']);
-  wsRows.push(['SISTEMA INTEGRADO DE GESTIÓN DE CALIDAD SGC', '', '', '', '']);
+  wsRows.push(['SISTEMA DE GESTIÓN INTEGRAL (SGI)', '', '', '', '']);
   wsRows.push([`DISEÑO DE INFORME OFICIAL: ${meta.name}`, '', '', '', '']);
-  wsRows.push([`CÓDIGO FORMATO: ${meta.code}`, '', `VERSIÓN SGC: 4.2`, '', '']);
+  wsRows.push([`CÓDIGO FORMATO: ${meta.code}`, '', `VERSIÓN SGI: 4.2`, '', '']);
   wsRows.push([]); // Blank separator
 
   if (tipo === 'reporte_general') {
@@ -407,9 +407,9 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
 
   // Draw Control de Cambios standard at the end of the sheet
   wsRows.push([]); // separator
-  wsRows.push(['--- SISTEMA SGC CONTROL DE CAMBIOS ---']);
+  wsRows.push(['--- SISTEMA SGI CONTROL DE CAMBIOS ---']);
   wsRows.push(['Versión', 'Fecha Modificación', 'Sección Comprometida', 'Motivo del Cambio', 'Solicitante Comité']);
-  wsRows.push(['1.0', '13/06/2026', 'Todas', 'Creación del formato inicial bajo norma ISO 14001', 'Comité de Calidad']);
+  wsRows.push(['1.0', '13/06/2025', 'Todas', 'Creación del formato inicial bajo norma ISO 14001 y 9001', 'Comité de Calidad']);
 
   // Create workbook instance
   const wb = XLSX.utils.book_new();
@@ -430,7 +430,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   ws['!cols'] = colWidths;
 
   // Append Worksheet to workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'SGC FORMATO');
+  XLSX.utils.book_append_sheet(wb, ws, 'SGI FORMATO');
 
   // Write and Save
   const outputFileName = `${meta.code}_${tipo}_${(data.fecha || new Date().toISOString().split('T')[0]).replace(/\//g, '-')}.xlsx`;

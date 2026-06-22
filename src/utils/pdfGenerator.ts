@@ -98,13 +98,13 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text('SISTEMA INTEGRADO DE GESTIÓN DE CALIDAD SGC', marginX + 42, 19);
+    doc.text('SISTEMA DE GESTIÓN INTEGRAL SGI', marginX + 42, 19);
     
     doc.setFontSize(9);
     doc.text(`CÓDIGO: ${meta.code}`, marginX + 42, 25);
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.text('NORMA DE CALIDAD: ISO 9001:2015 & ISO 14001:2015', marginX + 42, 30);
+    doc.text('NORMA DE CALIDAD: ISO 9001:2015 / ISO 14001:2015', marginX + 42, 30);
     doc.text('ESTADO: CONTROLADO Y AUDITADO', marginX + 42, 34);
 
     // Code & Version Block
@@ -116,10 +116,10 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     doc.setFontSize(7.5);
     doc.text('VERSION: 4.2', pageWidth - marginX - 31, 19);
     doc.setFont('Helvetica', 'normal');
-    doc.text('F-OPR VERSION SGC', pageWidth - marginX - 31, 24);
+    doc.text('F-OPR VERSION SGI', pageWidth - marginX - 31, 24);
     doc.setFontSize(6.5);
     doc.text(`REGISTRO #${Math.floor(1000 + Math.random() * 9000)}`, pageWidth - marginX - 31, 30);
-    doc.text('VIGENTE: 2026', pageWidth - marginX - 31, 34);
+    doc.text('VIGENTE: 2025', pageWidth - marginX - 31, 34);
 
     y = 44;
   }
@@ -676,7 +676,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   const modHeaders = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
   const modWidths = [15, 35, 35, 65, 30];
   const modData = [
-    ['1.0', '13/06/2026', 'Todas', 'Creación del formato inicial bajo norma ISO 14001', 'Comité de Calidad']
+    ['1.0', '13/06/2025', 'Todas', 'Creación del formato inicial bajo norma ISO 14001 y 9001', 'Comité de Calidad']
   ];
   drawDataTable(modHeaders, modWidths, modData);
 
@@ -691,22 +691,27 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 function drawFallbackVectorLogo(doc: any, marginX: number): void {
   // Draw the blue square (represented in SGC logo)
   doc.setFillColor(59, 130, 246); // #3B82F6
-  doc.roundedRect(marginX + 12.5, 15.5, 10, 10, 1.2, 1.2, 'F');
+  doc.roundedRect(marginX + 12.5, 14.0, 10, 10, 1.2, 1.2, 'F');
 
   // Draw "BIO" in white inside the blue square
   doc.setTextColor(255, 255, 255);
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text('BIO', marginX + 14.5, 22.5);
+  doc.setFontSize(7.0);
+  doc.text('BIO', marginX + 14.5, 21.0);
 
-  // Draw "BIOTRASH" and "SGC ISO 14001" below it
+  // Draw "BIOTRASH" below it
   doc.setTextColor(30, 41, 59); // Charcoal #1E293B
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.text('BIOTRASH', marginX + 10.5, 29.5);
+  doc.setFontSize(7.5);
+  doc.text('BIOTRASH', marginX + 11.0, 27.5);
 
   doc.setTextColor(59, 130, 246); // Blue #3B82F6
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(4.5);
-  doc.text('SGC ISO 14001', marginX + 12, 33.5);
+  doc.setFontSize(3.3);
+  doc.text('SISTEMA DE GESTIÓN INTEGRAL SGI', marginX + 3.0, 31.0);
+
+  doc.setTextColor(100, 116, 139); // Slate-500
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(3.0);
+  doc.text('ISO 9001:2015 / ISO 14001:2015', marginX + 4.5, 34.5);
 }

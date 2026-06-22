@@ -130,7 +130,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación de bitácora patrón de trazabilidad de tickets internos e ingreso', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación de bitácora patrón de trazabilidad de tickets internos e ingreso', solicitante: 'Comité de Calidad' }
       ]
     };
 
@@ -284,7 +284,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                 <div className="space-y-1 grid grid-cols-1">
                   {[
                     { label: 'Contenedor Rojo Logística', state: contenedor, set: setContenedor },
-                    { label: 'Tonel Metálico Saborizante', state: tonelMetalico, set: setTonelMetalico },
+                    { label: 'Tonel Metálico', state: tonelMetalico, set: setTonelMetalico },
                     { label: 'Congelador Móvil Frío', state: congelador, set: setCongelador },
                   ].map((emb, i) => (
                     <label key={i} className="flex items-center gap-2.5 p-2 bg-white rounded border border-slate-150 hover:border-slate-300 transition cursor-pointer text-xs font-semibold">

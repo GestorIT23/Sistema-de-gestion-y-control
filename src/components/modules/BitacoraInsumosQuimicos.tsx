@@ -34,7 +34,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
   const [stockInicial, setStockInicial] = useState(250);
   const [unidadesRecibidas, setUnidadesRecibidas] = useState(0);
   const [unidadesConsumidas, setUnidadesConsumidas] = useState(35);
-  const [lote, setLote] = useState('LT-2026-XQ4');
+  const [lote, setLote] = useState('LT-2025-XQ4');
 
   useEffect(() => {
     fetchRegistros();
@@ -83,7 +83,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
     setStockInicial(0);
     setUnidadesRecibidas(0);
     setUnidadesConsumidas(0);
-    setLote('LT-2026-X');
+    setLote('LT-2025-X');
     setMsg({ text: '', type: '' });
   };
 
@@ -109,12 +109,12 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
       observaciones: observaciones || 'Control ordinario de consumibles. Inventarios cuadrando.',
       filas,
       elaboro: 'Supervisor de Planta e Inventarios',
-      reviso: 'Coordinador SGC de Operaciones',
+      reviso: 'Coordinador SGI de Operaciones',
       aprobo: 'Gerente General',
       cambioControl: [
         {
           version: '1.0',
-          fecha: '15/06/2026',
+          fecha: '15/06/2025',
           seccion: 'Todas',
           cambio: 'Lanzamiento del formato de control químico-plástico',
           solicitante: 'Comité de Inventarios'
@@ -448,12 +448,12 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
 
       <FormFooter 
         elaboroCargo="Supervisor de Planta e Inventarios"
-        revisoCargo="Coordinador SGC de Operaciones"
+        revisoCargo="Coordinador SGI de Operaciones"
         aproboCargo="Gerente General"
         cambios={[
           {
             version: '1.0',
-            fecha: '15/06/2026',
+            fecha: '15/06/2025',
             seccion: 'Todas',
             cambio: 'Lanzamiento del formato de control químico-plástico',
             solicitante: 'Comité de Inventarios'

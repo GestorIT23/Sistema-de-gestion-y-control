@@ -20,19 +20,19 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [msg, setMsg] = useState({ text: '', type: '' });
 
   // Form Fields
-  const [noAutoclave, setNoAutoclave] = useState('Autoclave de Vapor Directo AV-300');
+  const [noAutoclave, setNoAutoclave] = useState('1');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [pesoProceso, setPesoProceso] = useState(650); // Lbs of waste sterilized
   const [responsable, setResponsable] = useState(userEmail || 'Líder de Control Biológico');
   const [noProceso, setNoProceso] = useState('NPA-9920');
 
   // Indicators Checkboxes
-  const [biologico, setBiologico] = useState(true);
+  const [biologico, setBiologico] = useState(false);
   const [quimico, setQuimico] = useState(true);
   
-  const [identificacionIndicador, setIdentificacionIndicador] = useState('Indicador vial Geobacillus-01');
+  const [identificacionIndicador, setIdentificacionIndicador] = useState('Cinta Testigo Químico Virado');
   const [resultadoIndicador, setResultadoIndicador] = useState('NEGATIVO (SIN CRECIMIENTO - APTO)');
-  const [noLoteFabricante, setNoLoteFabricante] = useState('LOTE-2026-X12');
+  const [noLoteFabricante, setNoLoteFabricante] = useState('LOTE-2025-X12');
   const [tempIncubacion, setTempIncubacion] = useState('56.5 °C (48 horas)');
 
   // Autoclave parameters checks
@@ -46,8 +46,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [firmaSupervisor, setFirmaSupervisor] = useState('Ing. Daniel Marroquín');
   const [firmaCoordinador, setFirmaCoordinador] = useState('Licda. Ana Sofía de León');
 
-  // Verify SGC compliance
-  const isCompliant = biologico && quimico && temperatura && presion && tiempoProceso && resultadoIndicador.includes('NEGATIVO');
+  // Verify SGI compliance
+  const isCompliant = (quimico || biologico) && temperatura && presion && tiempoProceso && (!biologico || (biologico && resultadoIndicador.includes('NEGATIVO')));
 
   useEffect(() => {
     fetchRegistros();
@@ -99,7 +99,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Establecimiento de protocolo químico-biológico para liberación de residuos estériles', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Establecimiento de protocolo químico-biológico para liberación de residuos estériles y virado de cinta testigo SGI', solicitante: 'Comité de Calidad' }
       ]
     };
 
@@ -153,13 +153,16 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
               <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">N° Autoclave:</label>
-                <input
+                <select
                   id="autoclave-val"
-                  type="text"
                   value={noAutoclave}
                   onChange={(e) => setNoAutoclave(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
-                />
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-xs"
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                </select>
               </div>
 
               <div className="space-y-1">
@@ -220,81 +223,91 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
                 <div className="space-y-3 text-xs font-mono">
                   {/* Tipo de Indicador Checkboxes */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-lg border">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        id="chk-biologico"
-                        type="checkbox"
-                        checked={biologico}
-                        onChange={(e) => setBiologico(e.target.checked)}
-                        className="h-4.5 w-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                      />
-                      <div>
-                        <span className="font-bold text-slate-700 block text-[10px]">Indicador Biológico:</span>
-                        <span className="text-[9px] text-slate-400">G. stearothermophilus</span>
-                      </div>
-                    </label>
+                  <div className="p-3 bg-white rounded-lg border space-y-2">
+                    <p className="text-[10px] text-slate-400 leading-tight">Nota SGI: Los indicadores biológicos y químicos pueden ser usados de forma simultánea, indistinta, o seleccionar solo el que esté en uso en este momento (Ej: Cinta Testigo Químico).</p>
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          id="chk-biologico"
+                          type="checkbox"
+                          checked={biologico}
+                          onChange={(e) => setBiologico(e.target.checked)}
+                          className="h-4.5 w-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                        />
+                        <div>
+                          <span className="font-bold text-slate-700 block text-[10px]">Indicador Biológico:</span>
+                          <span className="text-[9px] text-slate-400">G. stearothermophilus</span>
+                        </div>
+                      </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        id="chk-quimico"
-                        type="checkbox"
-                        checked={quimico}
-                        onChange={(e) => setQuimico(e.target.checked)}
-                        className="h-4.5 w-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                      />
-                      <div>
-                        <span className="font-bold text-slate-700 block text-[10px]">Indicador Químico:</span>
-                        <span className="text-[9px] text-slate-400">Integrador Clase 5 / 6</span>
-                      </div>
-                    </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          id="chk-quimico"
+                          type="checkbox"
+                          checked={quimico}
+                          onChange={(e) => setQuimico(e.target.checked)}
+                          className="h-4.5 w-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                        />
+                        <div>
+                          <span className="font-bold text-slate-700 block text-[10px]">Indicador Químico:</span>
+                          <span className="text-[9px] text-slate-400">Integrador o Cinta Testigo</span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-bold text-slate-500 uppercase">Identificación Del Indicador Vial:</label>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase">Identificación Del Indicador:</label>
                       <input
                         id="id-vial"
                         type="text"
                         value={identificacionIndicador}
                         onChange={(e) => setIdentificacionIndicador(e.target.value)}
+                        placeholder="Ej. Cinta testigo Lote A-01 o Ampolleta autococida"
                         className="w-full bg-white border border-slate-300 rounded p-1.5"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-bold text-slate-500 uppercase">Resultado Vial (Incubación):</label>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase">Resultado Microbiológico para Lote:</label>
                       <select
                         id="select-resultado"
                         value={resultadoIndicador}
                         onChange={(e) => setResultadoIndicador(e.target.value)}
                         className={`w-full border rounded p-1.5 font-bold ${resultadoIndicador.includes('NEGATIVO') ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300'}`}
                       >
-                        <option value="NEGATIVO (SIN CRECIMIENTO - APTO)">NEGATIVO (SIN CRECIMIENTO - APTO)</option>
-                        <option value="POSITIVO (FALLA DE STERILIZACIÓN - RETENER LOTE)">POSITIVO (FALLA DE STERILIZACIÓN - RETENER LOTE)</option>
+                        <option value="NEGATIVO (SIN CRECIMIENTO - APTO)">NEGATIVO (SIN CRECIMIENTO - APTO / VIRADO CORRECTO)</option>
+                        <option value="POSITIVO (FALLA DE ESTERILIZACIÓN - RETENER LOTE)">POSITIVO (FALLA DE ESTERILIZACIÓN - RETENER LOTE)</option>
                       </select>
-                      <p className="text-[9px] text-slate-400">El resultado debe dar NEGATIVO (sin turbidez ácida) para liberar el lote.</p>
+                      <p className="text-[9px] text-slate-400">Debe reportar negativo/apto para liberar el lote operado sin inconvenientes.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 bg-[#F1F5F9]/50 p-2 rounded-lg border border-[#E2E8F0]">
                       <div className="space-y-1">
-                        <label className="block text-[9px] font-bold text-slate-500 uppercase">Lote Fabricante:</label>
+                        <label className="block text-[9px] font-bold text-slate-500 uppercase">
+                          Lote Fabricante: {!biologico && <span className="text-amber-600 font-extrabold">(N/A - Solo Biológico)</span>}
+                        </label>
                         <input
                           id="lote-vial"
                           type="text"
-                          value={noLoteFabricante}
+                          disabled={!biologico}
+                          value={biologico ? noLoteFabricante : 'No aplica (Solo Biológico)'}
                           onChange={(e) => setNoLoteFabricante(e.target.value)}
-                          className="w-full bg-white border border-slate-300 rounded p-1 text-xs"
+                          className="w-full bg-white disabled:bg-slate-100 disabled:text-slate-400 border border-slate-300 rounded p-1 text-xs"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="block text-[9px] font-bold text-slate-500 uppercase">Condición de Incubación:</label>
+                        <label className="block text-[9px] font-bold text-slate-500 uppercase">
+                          Condición de Incubación: {!biologico && <span className="text-amber-600 font-extrabold">(N/A - Solo Biológico)</span>}
+                        </label>
                         <input
                           id="temp-incu"
                           type="text"
-                          value={tempIncubacion}
+                          disabled={!biologico}
+                          value={biologico ? tempIncubacion : 'No aplica (Solo Biológico)'}
                           onChange={(e) => setTempIncubacion(e.target.value)}
-                          className="w-full bg-white border border-slate-300 rounded p-1 text-xs"
+                          className="w-full bg-white disabled:bg-slate-100 disabled:text-slate-400 border border-slate-300 rounded p-1 text-xs"
                         />
                       </div>
                     </div>
@@ -311,7 +324,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
                 <div className="space-y-3">
                   {[
-                    { label: 'Temperatura validada (>134°C)', state: temperatura, set: setTemperatura, doc: 'Cámara interior súper calentada.' },
+                    { label: 'Temperatura validada (121°C)', state: temperatura, set: setTemperatura, doc: 'Cámara interior esterilizada a vapor saturado.' },
                     { label: 'Presión validada 0.5 Mpa (75 Psi)', state: presion, set: setPresion, doc: 'Eficacia de vapor saturado.' },
                     { label: 'Tiempo de esterilización (21 minutos)', state: tiempoProceso, set: setTiempoProceso, doc: 'Duración bajo estrés térmico continuo.' },
                   ].map((param, i) => (

@@ -117,7 +117,7 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
       cambioControl: [
         {
           version: '1.0',
-          fecha: '15/06/2026',
+          fecha: '15/06/2025',
           seccion: 'Todas',
           cambio: 'Lanzamiento del formato de uniformes de planta',
           solicitante: 'Comité de Calidad'
@@ -476,7 +476,7 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
         cambios={[
           {
             version: '1.0',
-            fecha: '15/06/2026',
+            fecha: '15/06/2025',
             seccion: 'Todas',
             cambio: 'Lanzamiento del formato de uniformes de planta',
             solicitante: 'Comité de Calidad'

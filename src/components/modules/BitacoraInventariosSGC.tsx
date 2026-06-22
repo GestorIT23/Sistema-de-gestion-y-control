@@ -108,14 +108,14 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
       observaciones: observaciones || 'Inventario revisado. Todos los empaques cuadran.',
       filas,
       elaboro: 'Supervisor de Logística e Insumos',
-      reviso: 'Coordinador SGC de Auditoría',
+      reviso: 'Coordinador SGI de Auditoría',
       aprobo: 'Dirección Operativa de Planta',
       cambioControl: [
         {
           version: '1.0',
-          fecha: '13/06/2026',
+          fecha: '13/06/2025',
           seccion: 'Todas',
-          cambio: 'Creación de la bitácora de inventario SGC bajo norma ISO 14001',
+          cambio: 'Creación de la bitácora de inventario SGI bajo normas ISO 14001 y 9001',
           solicitante: 'Comité de Calidad'
         }
       ]
@@ -463,14 +463,14 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
 
       <FormFooter 
         elaboroCargo="Supervisor de Logística e Insumos"
-        revisoCargo="Coordinador SGC de Auditoría"
+        revisoCargo="Coordinador SGI de Auditoría"
         aproboCargo="Dirección Operativa de Planta"
         cambios={[
           {
             version: '1.0',
-            fecha: '13/06/2026',
+            fecha: '13/06/2025',
             seccion: 'Todas',
-            cambio: 'Creación de la bitácora de inventario SGC bajo norma ISO 14001',
+            cambio: 'Creación de la bitácora de inventario SGI bajo normas ISO 14001 y 9001',
             solicitante: 'Comité de Calidad'
           }
         ]}

@@ -112,7 +112,7 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación de bitácora patrón de temperatura y combustión de incinerador principal', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación de bitácora patrón de temperatura y combustión de incinerador principal', solicitante: 'Comité de Calidad' }
       ]
     };
 
@@ -386,10 +386,10 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
-              <Flame className="w-4 h-4 text-orange-400" /> SGC Thermo-Destrucción
+              <Flame className="w-4 h-4 text-orange-400" /> SGI Thermo-Destrucción
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
-              Incinerar RPBI disminuye su volumen en un 95% y cancela por completo microorganismos patógenos. El SGC audita periódicamente las temperaturas de este módulo.
+              Incinerar RPBI disminuye su volumen en un 95% y elimina por completo microorganismos patógenos. El SGI audita periódicamente las temperaturas de este módulo.
             </p>
           </div>
 

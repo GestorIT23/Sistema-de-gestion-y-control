@@ -100,7 +100,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación de bitácora matriz para reducción de volumen y pacas', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación de bitácora matriz para reducción de volumen y pacas', solicitante: 'Comité de Calidad' }
       ]
     };
 

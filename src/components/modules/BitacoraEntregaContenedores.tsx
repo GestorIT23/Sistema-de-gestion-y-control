@@ -112,7 +112,7 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2026', seccion: 'Todas', cambio: 'Creación del formato inicial - SGC Control de Operación', solicitante: 'Comité de Calidad' }
+        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación del formato inicial - SGI Control de Operación', solicitante: 'Comité de Calidad' }
       ]
     };
 
