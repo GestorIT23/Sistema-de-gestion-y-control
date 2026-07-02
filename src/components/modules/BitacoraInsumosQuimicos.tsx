@@ -202,7 +202,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Encargado SGC</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Encargado SGI</label>
               <div className="relative">
                 <User className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
                 <input
@@ -409,7 +409,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
                   </div>
 
                   <p className="text-[10px] text-slate-500 font-mono mt-1 pt-1.5 border-t border-slate-100">
-                    SGC: {reg.responsable}
+                    SGI: {reg.responsable}
                   </p>
 
                   <div className="mt-3 space-y-1.5 text-[10px] font-mono text-slate-700 bg-slate-50 p-2 rounded border border-slate-100">

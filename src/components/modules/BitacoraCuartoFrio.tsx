@@ -122,7 +122,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
     try {
       await addDoc(collection(db, 'bitacora_cuarto_frio'), nuevoRegistro);
       generateAndDownloadPDF('cuarto_frio', nuevoRegistro);
-      setMsg({ text: 'La bitácora de refrigeración y congelación se ha guardado exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'La bitácora de refrigeración y congelación se ha guardado exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {
@@ -310,7 +310,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
               {/* Right checklist block (Col span 6) */}
               <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
-                  <CheckSquare className="w-4 h-4 text-sky-500" /> Checklist SGC de Preservación
+                  <CheckSquare className="w-4 h-4 text-sky-500" /> Checklist SGI de Preservación
                 </h4>
 
                 <div className="space-y-2 grid grid-cols-1 gap-1">
@@ -422,7 +422,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
                         onClick={() => generateAndDownloadPDF('cuarto_frio', reg)}
                         className="text-[#3B82F6] hover:text-blue-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-blue-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-blue-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

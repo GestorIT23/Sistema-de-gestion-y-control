@@ -298,7 +298,7 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
                 </label>
                 <label className="flex items-center gap-2 bg-white p-2 rounded border border-slate-200 shadow-xs cursor-pointer">
                   <input type="checkbox" checked={tieneCareta} onChange={() => setTieneCareta(!tieneCareta)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
-                  <span className="text-[10px] font-bold text-slate-700">Careta de Protección SGC</span>
+                  <span className="text-[10px] font-bold text-slate-700">Careta de Protección SGI</span>
                 </label>
               </div>
 
@@ -432,7 +432,7 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
                   </div>
 
                   <p className="text-[10px] text-slate-500 font-mono mt-1 pt-1.5 border-t border-slate-100">
-                    SGC: <span className="font-sans text-slate-700 font-bold">{reg.responsableEntrega}</span>
+                    SGI: <span className="font-sans text-slate-700 font-bold">{reg.responsableEntrega}</span>
                   </p>
 
                   <div className="mt-3 space-y-1 text-[10px] font-mono bg-slate-50 p-2 rounded border border-slate-100">

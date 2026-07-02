@@ -108,7 +108,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
     try {
       await addDoc(collection(db, 'bitacora_inventarios'), nuevoRegistro);
       generateAndDownloadPDF('inventarios', nuevoRegistro);
-      setMsg({ text: 'La bitácora se ha guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'La bitácora se ha guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       setFilas([]);
       fetchRegistros();
@@ -473,7 +473,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                           onClick={() => generateAndDownloadPDF('inventarios', reg)}
                           className="text-slate-500 hover:text-rose-700 flex items-center gap-1 font-semibold text-[10px] cursor-pointer"
                         >
-                          <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                          <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGI)
                         </button>
                       </div>
                     </div>

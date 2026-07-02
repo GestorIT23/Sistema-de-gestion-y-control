@@ -493,7 +493,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
-              <Scale className="w-4 h-4 text-cyan-400" /> Control de Balanzas SGC
+              <Scale className="w-4 h-4 text-cyan-400" /> Control de Balanzas SGI
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
               La conciliación obligatoria entre el peso del ticket oficial del camión recolector y la sumatoria manual de los tickets de bolsas en rampa audita fugas y pérdidas invisibles.
@@ -531,7 +531,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                         onClick={() => generateAndDownloadPDF('generacion_almacenamiento', reg)}
                         className="text-rose-600 hover:text-rose-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

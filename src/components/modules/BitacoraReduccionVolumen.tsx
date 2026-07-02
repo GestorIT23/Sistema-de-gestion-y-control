@@ -107,7 +107,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
     try {
       await addDoc(collection(db, 'bitacora_reduccion_volumen'), nuevoRegistro);
       generateAndDownloadPDF('reduccion_volumen', nuevoRegistro);
-      setMsg({ text: 'El registro de reducción de volumen se archivó exitosamente en Firestore y se ha generado el PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'El registro de reducción de volumen se archivó exitosamente en Firestore y se ha generado el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       setAnotacionesEspeciales('');
       fetchRegistros();
@@ -273,7 +273,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
               {/* Right shredder safety diagnostic (Col span 6) */}
               <div className="md:col-span-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b pb-2 text-emerald-700">
-                  <Settings className="w-5 h-5 animate-spin-slow" /> Diagnóstico del Equipo SGC
+                  <Settings className="w-5 h-5 animate-spin-slow" /> Diagnóstico del Equipo SGI
                 </h4>
 
                 <div className="space-y-2">
@@ -358,7 +358,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
-              <Settings className="w-4 h-4 text-emerald-450 animate-spin-slow" /> Reducción SGC Triturado
+              <Settings className="w-4 h-4 text-emerald-450 animate-spin-slow" /> Reducción SGI Triturado
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
               La trituración volumétrica reduce el peso visual y corta cadenas plásticas de jeringas y empaques clínicos para maximizar el cubicaje del transporte final.
@@ -399,7 +399,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                         onClick={() => generateAndDownloadPDF('reduccion_volumen', reg)}
                         className="text-indigo-600 hover:text-indigo-850 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

@@ -308,7 +308,7 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
               disabled={saving}
               className="bg-[#1A1C1E] hover:bg-[#2D2F31] text-white disabled:opacity-50 text-xs font-bold px-6 py-2 rounded transition shadow cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-slate-800"
             >
-              {saving ? 'Guardando...' : 'Guardar en Base de Datos SGC'}
+              {saving ? 'Guardando...' : 'Guardar en Base de Datos SGI'}
             </button>
           </div>
         </form>

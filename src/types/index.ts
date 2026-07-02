@@ -78,11 +78,13 @@ export interface FilaDisposicionVertedero {
   placa: string;
   noPaseSalida: string;
   cantidadPacas: number;
+  pesaje?: number;
 }
 
 export interface BitacoraDisposicionVertedero extends BaseBitacora {
   totalViajes: number;
   totalPacas: number;
+  totalPesaje?: number;
   filas: FilaDisposicionVertedero[];
 }
 

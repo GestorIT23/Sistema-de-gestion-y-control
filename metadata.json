@@ -1,6 +1,6 @@
 {
-  "name": "BIOTRASH SGC Portal",
-  "description": "Portal del Sistema de Gestión de Calidad (SGC) de BIOTRASH para administrar los 9 formatos operacionales de control de residuos peligrosos (RPBI) bajo normas ISO.",
+  "name": "BIOTRASH SGI Portal",
+  "description": "Portal del Sistema de Gestión Integral (SGI) de BIOTRASH para administrar los formatos operacionales de control de residuos peligrosos (RPBI) bajo normas ISO 9001 / ISO 14001.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

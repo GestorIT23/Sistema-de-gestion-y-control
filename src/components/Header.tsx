@@ -20,7 +20,7 @@ export default function Header({ currentUser, allUsers, onSelectUserEmail, onSig
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-bold tracking-tight text-sm uppercase">BIOTRASH SGC</span>
+            <span className="font-bold tracking-tight text-sm uppercase">BIOTRASH SGI</span>
             <span className="text-[10px] text-[#3B82F6] font-mono font-bold tracking-wider uppercase bg-[#3B82F6]/10 px-1.5 py-0.5 rounded">
               v4.2 ROLES
             </span>
@@ -35,7 +35,7 @@ export default function Header({ currentUser, allUsers, onSelectUserEmail, onSig
         {/* Connection status indicator */}
         <div className="hidden lg:flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          <span className="text-gray-400 font-bold uppercase text-[9px]">SGC CENTRAL:</span>
+          <span className="text-gray-400 font-bold uppercase text-[9px]">SGI CENTRAL:</span>
           <span className="text-emerald-400 font-extrabold text-[10px]">CONNECTED</span>
         </div>
 
@@ -54,7 +54,7 @@ export default function Header({ currentUser, allUsers, onSelectUserEmail, onSig
         <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800 border border-slate-700">
           {currentUser.rol === 'Administrador' ? (
             <span className="text-[#3B82F6] font-extrabold text-[9px] flex items-center gap-1 uppercase tracking-wider">
-              <Shield className="w-3 h-3 shrink-0" /> Full SGC
+              <Shield className="w-3 h-3 shrink-0" /> Full SGI
             </span>
           ) : currentUser.rol === 'Supervisor' ? (
             <span className="text-sky-400 font-extrabold text-[9px] flex items-center gap-1 uppercase tracking-wider">

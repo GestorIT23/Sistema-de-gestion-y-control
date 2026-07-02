@@ -119,7 +119,7 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
     try {
       await addDoc(collection(db, 'bitacora_entrega_contenedores'), nuevoRegistro);
       generateAndDownloadPDF('entrega_contenedores', nuevoRegistro);
-      setMsg({ text: 'La entrega de contenedores rojos se ha guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'La entrega de contenedores rojos se ha guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       setFilas([]);
       setTotalContenedores(0);
@@ -434,7 +434,7 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
                       <span>{reg.fecha}</span>
                       <span className="text-sky-600 font-bold">{reg.totalContenedores} Pzas</span>
                     </div>
-                    <div className="text-slate-500 mt-1">SGC Resp: {reg.responsable}</div>
+                    <div className="text-slate-500 mt-1">SGI Resp: {reg.responsable}</div>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${reg.estadoGeneral?.tapaderaBuenEstado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>Tapa</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${reg.estadoGeneral?.cuerpoBuenEstado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>Cuerpo</span>
@@ -453,7 +453,7 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
                         onClick={() => generateAndDownloadPDF('entrega_contenedores', reg)}
                         className="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

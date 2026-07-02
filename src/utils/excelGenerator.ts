@@ -187,17 +187,18 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'disposicion_vertedero') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total Viajes:', data.totalViajes]);
     wsRows.push(['Total Pacas:', data.totalPacas]);
+    wsRows.push(['Total Pesaje:', (data.totalPesaje || 0) + ' lbs']);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
     wsRows.push(['II. DESGLOSE DE CAMIONES Y VIAJES']);
-    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'Cantidad Pacas']);
+    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'Cantidad Pacas', 'Pesaje (LBS)']);
     
     (data.filas || []).forEach((f: any) => {
-      wsRows.push([f.camion, f.placa, f.noPaseSalida, f.cantidadPacas]);
+      wsRows.push([f.camion, f.placa, f.noPaseSalida, f.cantidadPacas, f.pesaje !== undefined ? f.pesaje : 0]);
     });
 
   } else if (tipo === 'control_incineracion') {

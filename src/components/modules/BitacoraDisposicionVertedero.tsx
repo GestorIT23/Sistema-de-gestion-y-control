@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraDisposicionVertedero as IBitacoraDisposicionVertedero, FilaDisposicionVertedero } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Truck, Landmark, FileText, FileSpreadsheet } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Truck, Landmark, FileText, FileSpreadsheet, Plus, Trash } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 
@@ -24,21 +24,34 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
   const [responsable, setResponsable] = useState(userEmail || 'Ing. de Planta');
   const [totalViajes, setTotalViajes] = useState(0);
   const [totalPacas, setTotalPacas] = useState(0);
+  const [totalPesaje, setTotalPesaje] = useState(0);
   const [observaciones, setObservaciones] = useState('');
 
   // 11 trucks pre-populated as seen in PDF
   const [filas, setFilas] = useState<FilaDisposicionVertedero[]>([]);
 
   useEffect(() => {
+    if (filas.length === 0) {
+      const initial: FilaDisposicionVertedero[] = Array.from({ length: 11 }, (_, i) => ({
+        camion: `Camión ${String(i + 1).padStart(2, '0')}`,
+        placa: '',
+        noPaseSalida: '',
+        cantidadPacas: 0,
+        pesaje: 0
+      }));
+      setFilas(initial);
+    }
     fetchRegistros();
   }, []);
 
   // Compute calculated metrics
   useEffect(() => {
-    const activeTrucks = filas.filter(f => f.placa.trim() !== '' && f.cantidadPacas > 0).length;
+    const activeTrucks = filas.filter(f => (f.placa.trim() !== '' || f.camion.trim() !== '') && (f.cantidadPacas > 0 || (f.pesaje && f.pesaje > 0))).length;
     const sumPacas = filas.reduce((a, b) => a + (Number(b.cantidadPacas) || 0), 0);
+    const sumPesaje = filas.reduce((a, b) => a + (Number(b.pesaje) || 0), 0);
     setTotalViajes(activeTrucks);
     setTotalPacas(sumPacas);
+    setTotalPesaje(sumPesaje);
   }, [filas]);
 
   const fetchRegistros = async () => {
@@ -66,6 +79,25 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
     setFilas(updated);
   };
 
+  const handleAddRow = () => {
+    setFilas([
+      ...filas,
+      {
+        camion: `Camión ${String(filas.length + 1).padStart(2, '0')}`,
+        placa: '',
+        noPaseSalida: '',
+        cantidadPacas: 0,
+        pesaje: 0
+      }
+    ]);
+  };
+
+  const handleRemoveRow = (index: number) => {
+    if (filas.length <= 1) return;
+    const updated = filas.filter((_, i) => i !== index);
+    setFilas(updated);
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (totalPacas === 0) {
@@ -82,6 +114,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
       responsable,
       totalViajes,
       totalPacas,
+      totalPesaje,
       filas,
       observaciones,
       elaboro: 'Gerente Comercial Industrial',
@@ -95,8 +128,18 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
     try {
       await addDoc(collection(db, 'bitacora_disposicion_vertedero'), nuevoRegistro);
       generateAndDownloadPDF('disposicion_vertedero', nuevoRegistro);
-      setMsg({ text: 'Los datos de despacho a vertedero se depositaron satisfactoriamente en Firestore y se ha generado el reporte PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'Los datos de despacho a vertedero se depositaron satisfactoriamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
+      
+      // Reset the rows
+      const resetFilas = Array.from({ length: 11 }, (_, i) => ({
+        camion: `Camión ${String(i + 1).padStart(2, '0')}`,
+        placa: '',
+        noPaseSalida: '',
+        cantidadPacas: 0,
+        pesaje: 0
+      }));
+      setFilas(resetFilas);
       fetchRegistros();
     } catch (err) {
       console.error(err);
@@ -169,7 +212,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
               </div>
 
               {/* Real-time counters matching PDF block */}
-              <div className="space-y-1 bg-amber-50 border border-amber-100 rounded-lg p-3 col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+              <div className="space-y-1 bg-amber-50 border border-amber-100 rounded-lg p-3 col-span-1 md:col-span-2 grid grid-cols-3 gap-4">
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-amber-600 tracking-wider">Total de Viajes (Defogue):</span>
                   <span className="text-xl font-extrabold text-amber-800 block">{totalViajes} VIAJES</span>
@@ -177,6 +220,10 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-amber-600 tracking-wider">Total de Pacas Despachadas:</span>
                   <span className="text-xl font-extrabold text-amber-800 block">{totalPacas} PACAS</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase font-bold text-amber-600 tracking-wider">Total de Pesaje (LBS):</span>
+                  <span className="text-xl font-extrabold text-amber-800 block">{totalPesaje.toLocaleString()} LBS</span>
                 </div>
               </div>
             </div>
@@ -187,7 +234,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide flex items-center gap-1.5 text-amber-700">
                   <Truck className="w-4 h-4" /> Registro del Proceso de Disposición Final
                 </h3>
-                <span className="text-[10px] text-slate-400 font-mono font-bold">11 CAMIONES ESTÁNDAR</span>
+                <span className="text-[10px] text-slate-400 font-mono font-bold">{filas.length} REGISTROS ACTIVOS</span>
               </div>
 
               <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
@@ -195,16 +242,27 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                   <thead className="bg-[#fef3c7] text-amber-800 uppercase p-2 font-semibold text-[10px] border-b border-amber-200">
                     <tr>
                       <th className="px-4 py-2.5 border-r border-slate-300 w-1/4">CAMIÓN / TRANSPORTE</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-32 text-center">PLACA</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-36 text-center">N° PASE DE SALIDA</th>
-                      <th className="px-4 py-2.5 text-center">CANTIDAD PACAS DESPACHADAS</th>
+                      <th className="px-4 py-2.5 border-r border-slate-300 w-28 text-center">PLACA</th>
+                      <th className="px-4 py-2.5 border-r border-slate-300 w-28 text-center">N° PASE SALIDA</th>
+                      <th className="px-4 py-2.5 border-r border-slate-300 w-24 text-center">CANTIDAD PACAS</th>
+                      <th className="px-4 py-2.5 border-r border-slate-300 w-24 text-center">PESAJE (LBS)</th>
+                      <th className="px-4 py-2.5 text-center w-12">ACCION</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white font-mono text-center">
                     {filas.map((f, index) => (
                       <tr key={index} className="hover:bg-amber-50/10">
-                        <td className="px-4 py-1.5 border-r border-slate-200 bg-slate-50/50 font-bold text-slate-700 text-left">{f.camion}</td>
-                        <td className="px-3 py-1 border-r border-slate-200">
+                        <td className="px-2 py-1 border-r border-slate-200">
+                          <input
+                            id={`camion-input-${index}`}
+                            type="text"
+                            value={f.camion}
+                            onChange={(e) => handleRowChange(index, 'camion', e.target.value)}
+                            placeholder="Camión XX"
+                            className="bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800 w-full px-2 py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-2 py-1 border-r border-slate-200">
                           <input
                             id={`placa-input-${index}`}
                             type="text"
@@ -214,17 +272,17 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-24 py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-3 py-1 border-r border-slate-200">
+                        <td className="px-2 py-1 border-r border-slate-200">
                           <input
                             id={`salida-input-${index}`}
                             type="text"
                             value={f.noPaseSalida}
                             onChange={(e) => handleRowChange(index, 'noPaseSalida', e.target.value)}
                             placeholder="PS-XXX"
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-28 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-24 py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-3 py-1 text-center">
+                        <td className="px-2 py-1 border-r border-slate-200 text-center">
                           <input
                             id={`pacas-vert-input-${index}`}
                             type="number"
@@ -234,10 +292,44 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-16 py-1 focus:bg-white outline-none"
                           />
                         </td>
+                        <td className="px-2 py-1 border-r border-slate-200 text-center">
+                          <input
+                            id={`pesaje-vert-input-${index}`}
+                            type="number"
+                            value={f.pesaje !== undefined ? f.pesaje : 0}
+                            min={0}
+                            onChange={(e) => handleRowChange(index, 'pesaje', parseInt(e.target.value) || 0)}
+                            placeholder="0 LBS"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-20 py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-2 py-1 text-center">
+                          <button
+                            id={`btn-remove-row-${index}`}
+                            type="button"
+                            onClick={() => handleRemoveRow(index)}
+                            title="Eliminar esta fila"
+                            className="text-red-500 hover:text-red-700 transition cursor-pointer p-1"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Add row button */}
+              <div className="flex justify-start">
+                <button
+                  id="btn-add-row-vertedero"
+                  type="button"
+                  onClick={handleAddRow}
+                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 border border-amber-200 hover:bg-amber-100/50 px-3 py-1.5 rounded-lg font-bold transition focus:outline-none"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Agregar Viaje / Camión
+                </button>
               </div>
             </div>
 
@@ -308,7 +400,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                       <span className="text-amber-700 font-bold">{reg.totalViajes} Viajes</span>
                     </div>
                     <div className="text-slate-500 mt-1 font-mono text-[11px]">Resp: {reg.responsable}</div>
-                    <div className="text-slate-600 font-bold mt-1">{reg.totalPacas} Pacas enviadas</div>
+                    <div className="text-slate-600 font-bold mt-1">
+                      {reg.totalPacas} Pacas | {reg.totalPesaje !== undefined ? reg.totalPesaje.toLocaleString() : 0} LBS
+                    </div>
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200/50">
                       <button
                         type="button"
@@ -322,7 +416,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                         onClick={() => generateAndDownloadPDF('disposicion_vertedero', reg)}
                         className="text-rose-600 hover:text-rose-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-rose-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

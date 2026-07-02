@@ -91,7 +91,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
     try {
       await addDoc(collection(db, 'bitacora_disposicion_pirolisis'), nuevoRegistro);
       generateAndDownloadPDF('disposicion_pirolisis', nuevoRegistro);
-      setMsg({ text: 'Los datos de disposición final a pirólisis se han guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'Los datos de disposición final a pirólisis se han guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {
@@ -277,7 +277,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-gradient-to-br from-rose-950 to-red-950 text-white border border-rose-800/50 rounded-xl p-5 space-y-4 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
-              <Flame className="w-5 h-5 text-rose-400 animate-pulse" /> SGC Pirólisis Industrial
+              <Flame className="w-5 h-5 text-rose-400 animate-pulse" /> SGI Pirólisis Industrial
             </h3>
             <p className="text-xs text-rose-200/80 leading-normal">
               La pirólisis controlada asegura la descomposición térmica libre de oxígeno para residuos infecciosos. Se debe registrar obligatoriamente cada lote de pacas transferidas internamente.
@@ -318,7 +318,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
                         onClick={() => generateAndDownloadPDF('disposicion_pirolisis', reg)}
                         className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

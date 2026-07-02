@@ -1,13 +1,13 @@
 import { jsPDF } from 'jspdf';
 
 /**
- * Highly polished PDF generation utility for SGC BIOTRASH S.A.
- * Translates SGC operation data into elegant, official corporate documents.
+ * Highly polished PDF generation utility for SGI BIOTRASH S.A.
+ * Translates SGI operation data into elegant, official corporate documents.
  */
 export async function generateAndDownloadPDF(tipo: string, data: any): Promise<void> {
   // Load logo from localStorage if available
-  const savedBase64 = typeof window !== 'undefined' ? localStorage.getItem('sgc_logo_base64') : null;
-  const savedUrl = typeof window !== 'undefined' ? localStorage.getItem('sgc_logo_url') : null;
+  const savedBase64 = typeof window !== 'undefined' ? localStorage.getItem('sgi_logo_base64') || localStorage.getItem('sgc_logo_base64') : null;
+  const savedUrl = typeof window !== 'undefined' ? localStorage.getItem('sgi_logo_url') || localStorage.getItem('sgc_logo_url') : null;
   const logoSource = savedBase64 || savedUrl;
 
   let logoImage: HTMLImageElement | null = null;
@@ -23,7 +23,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         setTimeout(() => reject(new Error('Timeout loading image')), 2500);
       });
     } catch (err) {
-      console.warn('Error loading custom SGC logo, falling back to SGC vector logo:', err);
+      console.warn('Error loading custom SGI logo, falling back to SGI vector logo:', err);
     }
   }
 
@@ -59,11 +59,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' },
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
-    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGC' },
+    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' }
   };
 
-  const meta = titles[tipo] || { code: 'F-OPR-SGC', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGC' };
+  const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
 
   // --- DRAW HEADER ---
   function drawHeader() {
@@ -76,7 +76,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     doc.line(pageWidth - marginX, 12, pageWidth - marginX, pageHeight - 12);
     doc.line(marginX, pageHeight - 12, pageWidth - marginX, pageHeight - 12);
 
-    // Corporate Logo Band (Custom SGC Graphical Logo matching FormHeader.tsx)
+    // Corporate Logo Band (Custom SGI Graphical Logo matching FormHeader.tsx)
     // Draw white background for logo block
     doc.setFillColor(255, 255, 255);
     doc.rect(marginX + 1, 13, 35, 24, 'F');
@@ -87,7 +87,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       try {
         doc.addImage(logoImage, 'PNG', marginX + 2, 14, 33, 22);
       } catch (imgError) {
-        console.warn('doc.addImage failed, falling back to SGC vector logo:', imgError);
+        console.warn('doc.addImage failed, falling back to SGI vector logo:', imgError);
         drawFallbackVectorLogo(doc, marginX);
       }
     } else {
@@ -138,7 +138,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text('CONEXIÓN EN VIVO CON FIREBASE SGC', pageWidth - marginX - 58, footY + 6);
+    doc.text('CONEXIÓN EN VIVO CON FIREBASE SGI', pageWidth - marginX - 58, footY + 6);
   }
 
   // --- DRAW SECTION HEADER ---
@@ -306,7 +306,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN DE LA ENTREGA DE CONTENEDORES ROJOS');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
-      { key: 'Responsable SGC', value: data.responsable },
+      { key: 'Responsable SGI', value: data.responsable },
       { key: 'Total Contenedores', value: String(data.totalContenedores || 0) },
       { key: 'Clase Registro', value: 'Disposición Oficial' }
     ]);
@@ -365,7 +365,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Fecha', value: data.fecha },
       { key: 'Responsable', value: data.responsable },
       { key: 'Total Viajes', value: String(data.totalViajes || 0) },
-      { key: 'Total Pacas', value: String(data.totalPacas || 0) }
+      { key: 'Total Pacas', value: String(data.totalPacas || 0) },
+      { key: 'Total Pesaje', value: String(data.totalPesaje || 0) + ' lbs' }
     ]);
 
     if (data.observaciones) {
@@ -377,9 +378,15 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     }
 
     drawSectionHeader('III. DESGLOSE DE CAMIONES Y VIAJES');
-    const tableHeaders = ['CÓDIGO CAMIÓN', 'PLACA REGISTRADA', 'NO. PASE SALIDA', 'CANTIDAD PACAS'];
-    const tableWidths = [45, 45, 45, 45];
-    const tableRows = (data.filas || []).map((f: any) => [f.camion, f.placa, f.noPaseSalida, f.cantidadPacas]);
+    const tableHeaders = ['CÓDIGO CAMIÓN', 'PLACA REGISTRADA', 'NO. PASE SALIDA', 'CANTIDAD PACAS', 'PESAJE (LBS)'];
+    const tableWidths = [36, 36, 36, 36, 36];
+    const tableRows = (data.filas || []).map((f: any) => [
+      f.camion,
+      f.placa,
+      f.noPaseSalida,
+      f.cantidadPacas,
+      f.pesaje !== undefined ? `${f.pesaje} lbs` : '0 lbs'
+    ]);
     drawDataTable(tableHeaders, tableWidths, tableRows);
 
   } else if (tipo === 'control_incineracion') {
@@ -439,7 +446,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Limpieza de Pisos', value: insp.limpiezaPiso ? 'CONFORME (✓)' : 'MAL ESTADO (✗)' },
       { key: 'Funcionamiento Evaporador', value: insp.funcionamientoEvaporadores ? 'CONFORME (✓)' : 'FALLA (✗)' },
       { key: 'Funcionamiento Condensador', value: insp.funcionamientoCondensadores ? 'CONFORME (✓)' : 'FALLA (✗)' },
-      { key: 'Luces Interiores SGC', value: insp.funcionamientoLucesInteriores ? 'CONFORME (✓)' : 'REEMPLAZAR (✗)' },
+      { key: 'Luces Interiores SGI', value: insp.funcionamientoLucesInteriores ? 'CONFORME (✓)' : 'REEMPLAZAR (✗)' },
       { key: 'Residuos Ordenados', value: insp.residuoOrdenado ? 'CONFORME (✓)' : 'DESORDEN (✗)' },
       { key: 'Limpieza de Techos', value: insp.limpiezaTecho ? 'CONFORME (✓)' : 'SUCIO (✗)' }
     ]);
@@ -484,7 +491,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN TÉCNICA DEL CICLO DE AUTOCLAVE');
     drawGridInfo([
       { key: 'Fecha de Proceso', value: data.fecha },
-      { key: 'Responsable SGC', value: data.responsable },
+      { key: 'Responsable SGI', value: data.responsable },
       { key: 'Identificación Autoclave', value: data.noAutoclave },
       { key: 'Número Proceso', value: data.noProceso },
       { key: 'Peso del Proceso', value: String(data.pesoProceso || 0) + ' lbs' },
@@ -592,7 +599,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawGridInfo([
       { key: 'Fecha Auditoría', value: data.fecha },
       { key: 'Turno Operativo', value: data.turno },
-      { key: 'Auditor SGC', value: data.responsable }
+      { key: 'Auditor SGI', value: data.responsable }
     ]);
 
     if (data.observaciones) {
@@ -613,7 +620,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawDataTable(tableHeaders, tableWidths, tableRows);
 
   } else if (tipo === 'inventarios_sgc') {
-    // 12. Inventario SGC
+    // 12. Inventario SGI
     drawSectionHeader('I. INFORMACIÓN GENERAL DE AUDITORÍA');
     drawGridInfo([
       { key: 'Fecha Auditoría', value: data.fecha },
@@ -630,7 +637,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       y += 8;
     }
 
-    drawSectionHeader('III. EVALUACIÓN DE EXISTENCIAS SGC');
+    drawSectionHeader('III. EVALUACIÓN DE EXISTENCIAS SGI');
     const tableHeaders = ['SKU', 'DESCRIPCIÓN', 'UNIDAD', 'STOCK MÍN', 'EXISTENCIA REAL', 'ESTADO', 'ALERTA RECORTE'];
     const tableWidths = [22, 53, 17, 20, 25, 20, 23];
     const tableRows = (data.filas || []).map((f: any) => [
@@ -689,7 +696,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 }
 
 function drawFallbackVectorLogo(doc: any, marginX: number): void {
-  // Draw the blue square (represented in SGC logo)
+  // Draw the blue square (represented in SGI logo)
   doc.setFillColor(59, 130, 246); // #3B82F6
   doc.roundedRect(marginX + 12.5, 14.0, 10, 10, 1.2, 1.2, 'F');
 
