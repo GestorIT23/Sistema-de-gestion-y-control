@@ -23,6 +23,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGC' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
+    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     reporte_general: { code: 'SGC-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGC - ISO 14001 / ISO 9001' }
   };
 
@@ -404,6 +405,57 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     (data.filas || []).forEach((f: any) => {
       wsRows.push([f.colaborador, f.puesto, f.tallaCamisa, f.tallaPantalon, f.tallaBotas, f.tieneMandil ? 'SÍ' : 'NO', f.tieneGuantes ? 'SÍ' : 'NO', f.tieneCareta ? 'SÍ' : 'NO', f.firmaRecibido]);
     });
+  } else if (tipo === 'control_horas_cargador') {
+    wsRows.push(['I. INFORMACIÓN GENERAL Y OPERADOR']);
+    wsRows.push(['Fecha de Turno:', data.fecha || '']);
+    wsRows.push(['Turno:', data.turno || '']);
+    wsRows.push(['Número de Reporte:', data.noReporte || '']);
+    wsRows.push(['Nombre Operador:', data.nombreOperador || '']);
+    wsRows.push(['Código Empleado:', data.codigoEmpleado || '']);
+    wsRows.push(['Área Asignada:', data.areaAsignada || '']);
+    wsRows.push(['Supervisor a Cargo:', data.supervisorCargo || '']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['II. DATOS DEL EQUIPO Y COMBUSTIBLE']);
+    wsRows.push(['Código de Unidad:', data.codigoUnidad || '']);
+    wsRows.push(['Marca y Modelo:', data.marcaModelo || '']);
+    wsRows.push(['Año de Fabricación:', data.anio || '']);
+    wsRows.push(['Nivel Combustible Inicial:', data.nivelCombustibleInicio || '']);
+    wsRows.push(['Litros Combustible Cargados:', data.litrosCargados || 0]);
+    wsRows.push(['Nivel Combustible Final:', data.nivelCombustibleFinal || '']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['III. REGISTRO DE HORÓMETRO Y ACTIVIDAD']);
+    wsRows.push(['Horómetro Inicial (hrs):', data.lecturaInicialHorometro || 0]);
+    wsRows.push(['Horómetro Final (hrs):', data.lecturaFinalHorometro || 0]);
+    wsRows.push(['Total Operado Calculado (hrs):', data.totalOperadoHoras || 0]);
+    wsRows.push(['Hora de Inicio:', data.horaInicio || '']);
+    wsRows.push(['Hora de Término:', data.horaTermino || '']);
+    wsRows.push(['Pausas / Inactividad (hrs):', data.horasPausaInactividad || 0]);
+    wsRows.push(['Actividad Principal:', data.tipoActividadPrincipal || '']);
+    wsRows.push(['Material Trabajado:', data.tipoMaterialTrabajado || '']);
+    wsRows.push(['Descripción de Actividades:', data.descripcionActividades || '']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['IV. CHECKLIST DE INSPECCIÓN PRE-OPERACIONAL']);
+    const chk = data.checklistPrevia || {};
+    wsRows.push(['Nivel de aceite motor:', chk.nivelAceiteMotor ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Nivel de refrigerante:', chk.nivelRefrigerante ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Presión de llantas:', chk.presionLlantas ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Estado de la cuchara/balde:', chk.estadoCucharaBalde ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Luces y señales direccionales:', chk.lucesSenales ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Frenos de servicio y de mano:', chk.frenos ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Cinturón de seguridad:', chk.cinturonSeguridad ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Bocina y alarma de reversa:', chk.bocinaAlarmaReversa ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Extintor a bordo (vigencia):', chk.extintorAbordo ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push(['Documentos y tarjeta de equipo:', chk.documentosEquipo ? 'CONFORME' : 'NO CONFORME']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['V. DIAGNÓSTICO OPERACIONAL Y VALIDACIONES SGI']);
+    wsRows.push(['Estado Operativo General:', data.estadoEquipo || '']);
+    wsRows.push(['Observaciones de Fallas:', data.descripcionFallasObservaciones || '']);
+    wsRows.push(['Firma Operador de Turno:', data.firmaOperador || '']);
+    wsRows.push(['Firma Supervisor de Planta:', data.firmaSupervisor || '']);
   }
 
   // Draw Control de Cambios standard at the end of the sheet

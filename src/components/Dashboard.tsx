@@ -20,7 +20,8 @@ import {
   Sparkles,
   Pocket,
   PackageOpen,
-  ShieldCheck
+  ShieldCheck,
+  Gauge
 } from 'lucide-react';
 import { Usuario } from '../types';
 
@@ -43,7 +44,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     lavado_banos: 0,
     insumos_quimicos: 0,
     inventarios_sgc: 0,
-    control_uniformes: 0
+    control_uniformes: 0,
+    control_horas_cargador: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -70,7 +72,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'lavado_banos', col: 'bitacora_lavado_banos' },
         { key: 'insumos_quimicos', col: 'bitacora_insumos_quimicos' },
         { key: 'inventarios_sgc', col: 'bitacora_inventarios_sgc' },
-        { key: 'control_uniformes', col: 'bitacora_control_uniformes' }
+        { key: 'control_uniformes', col: 'bitacora_control_uniformes' },
+        { key: 'control_horas_cargador', col: 'bitacora_control_horas_cargador' }
       ];
 
       const newCounts = {
@@ -86,7 +89,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         lavado_banos: 0,
         insumos_quimicos: 0,
         inventarios_sgc: 0,
-        control_uniformes: 0
+        control_uniformes: 0,
+        control_horas_cargador: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -260,6 +264,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-cyan-200 hover:border-cyan-400 focus:ring-cyan-500',
       tag: 'Seguridad',
       stats: `${counts.control_uniformes} registros`
+    },
+    {
+      id: 'control_horas_cargador',
+      title: 'Control Horas de Trabajo',
+      subtitle: 'Bitácora y checklist de cargador frontal',
+      code: 'BIOTRASH 4.0. F-OPR-000-14',
+      icon: <Gauge className="w-5 h-5 text-blue-500" />,
+      color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
+      tag: 'Maquinaria',
+      stats: `${counts.control_horas_cargador} registros`
     }
   ];
 

@@ -274,6 +274,63 @@ export interface BitacoraControlUniformes extends BaseBitacora {
   filas: FilaControlUniforme[];
 }
 
+// 14. Bitacora Control de Horas de Trabajo - Cargador Frontal
+export interface BitacoraControlHorasCargador extends BaseBitacora {
+  turno: string;
+  noReporte: string;
+  
+  // Equipo
+  codigoUnidad: string;
+  marcaModelo: string;
+  anio: string;
+
+  // Operador
+  nombreOperador: string;
+  codigoEmpleado: string;
+  areaAsignada: string;
+  supervisorCargo: string;
+
+  // Horas
+  lecturaInicialHorometro: number;
+  lecturaFinalHorometro: number;
+  totalOperadoHoras: number;
+  horaInicio: string;
+  horaTermino: string;
+  horasPausaInactividad: number;
+
+  // Actividades
+  tipoActividadPrincipal: string;
+  tipoMaterialTrabajado: string;
+  descripcionActividades: string;
+
+  // Combustible
+  nivelCombustibleInicio: string;
+  litrosCargados: number;
+  nivelCombustibleFinal: string;
+
+  // Estado Equipo
+  estadoEquipo: 'Bueno — sin novedades' | 'Falla leve — operativo' | 'Falla grave — revisión' | 'Equipo parado';
+  descripcionFallasObservaciones: string;
+
+  // Checklist
+  checklistPrevia: {
+    nivelAceiteMotor: boolean;
+    nivelRefrigerante: boolean;
+    presionLlantas: boolean;
+    estadoCucharaBalde: boolean;
+    lucesSenales: boolean;
+    frenos: boolean;
+    cinturonSeguridad: boolean;
+    bocinaAlarmaReversa: boolean;
+    extintorAbordo: boolean;
+    documentosEquipo: boolean;
+  };
+
+  // Firmas
+  firmaOperador: string;
+  firmaSupervisor: string;
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -288,4 +345,5 @@ export type BitacoraEntry =
   | { tipo: 'lavado_banos'; data: BitacoraLavadoBanos }
   | { tipo: 'insumos_quimicos'; data: BitacoraInsumosQuimicos }
   | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGC }
-  | { tipo: 'control_uniformes'; data: BitacoraControlUniformes };
+  | { tipo: 'control_uniformes'; data: BitacoraControlUniformes }
+  | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador };

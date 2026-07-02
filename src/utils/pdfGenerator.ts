@@ -60,7 +60,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
-    control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' }
+    control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
+    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -670,6 +671,70 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       [f.tieneMandil, f.tieneGuantes, f.tieneCareta].filter(Boolean).length + '/3', f.firmaRecibido
     ]);
     drawDataTable(tableHeaders, tableWidths, tableRows);
+  } else if (tipo === 'control_horas_cargador') {
+    // 14. Control de horas del cargador frontal
+    drawSectionHeader('I. INFORMACIÓN GENERAL Y OPERADOR');
+    drawGridInfo([
+      { key: 'Fecha de Turno', value: data.fecha || '' },
+      { key: 'Turno', value: data.turno || '' },
+      { key: 'No. Reporte', value: data.noReporte || '' },
+      { key: 'Nombre Operador', value: data.nombreOperador || '' },
+      { key: 'Código Empleado', value: data.codigoEmpleado || '' },
+      { key: 'Área Asignada', value: data.areaAsignada || '' },
+      { key: 'Supervisor Cargo', value: data.supervisorCargo || '' }
+    ]);
+
+    drawSectionHeader('II. DATOS DEL EQUIPO Y COMBUSTIBLE');
+    drawGridInfo([
+      { key: 'Código de Unidad', value: data.codigoUnidad || '' },
+      { key: 'Marca y Modelo', value: data.marcaModelo || '' },
+      { key: 'Año de Fabricación', value: data.anio || '' },
+      { key: 'Nivel Combustible Inicial', value: data.nivelCombustibleInicio || '' },
+      { key: 'Litros Combustible Cargados', value: `${data.litrosCargados || 0} L` },
+      { key: 'Nivel Combustible Final', value: data.nivelCombustibleFinal || '' }
+    ]);
+
+    drawSectionHeader('III. REGISTRO DE HORÓMETRO Y ACTIVIDAD');
+    drawGridInfo([
+      { key: 'Horómetro Inicial', value: `${data.lecturaInicialHorometro || 0} hrs` },
+      { key: 'Horómetro Final', value: `${data.lecturaFinalHorometro || 0} hrs` },
+      { key: 'Total Operado (Calculado)', value: `${data.totalOperadoHoras || 0} hrs` },
+      { key: 'Hora de Inicio', value: data.horaInicio || '' },
+      { key: 'Hora de Término', value: data.horaTermino || '' },
+      { key: 'Pausas / Inactividad', value: `${data.horasPausaInactividad || 0} hrs` },
+      { key: 'Actividad Principal', value: data.tipoActividadPrincipal || '' },
+      { key: 'Material Trabajado', value: data.tipoMaterialTrabajado || '' }
+    ]);
+
+    if (data.descripcionActividades) {
+      drawSectionHeader('IV. DESCRIPCIÓN DE ACTIVIDADES');
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      doc.text(data.descripcionActividades, marginX + 4, y);
+      y += 8;
+    }
+
+    drawSectionHeader('V. CHECKLIST DE INSPECCIÓN PRE-OPERACIONAL (10 PUNTOS)');
+    const chk = data.checklistPrevia || {};
+    const tableHeaders = ['COMPONENTE INSPECCIONADO', 'ESTADO (CONFORME?)', 'COMPONENTE INSPECCIONADO', 'ESTADO (CONFORME?)'];
+    const tableWidths = [60, 30, 60, 30];
+    const tableRows = [
+      ['Nivel de aceite motor', chk.nivelAceiteMotor ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Frenos de servicio y de mano', chk.frenos ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
+      ['Nivel de refrigerante', chk.nivelRefrigerante ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Cinturón de seguridad', chk.cinturonSeguridad ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
+      ['Presión de llantas', chk.presionLlantas ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Bocina y alarma de reversa', chk.bocinaAlarmaReversa ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
+      ['Estado de la cuchara/balde', chk.estadoCucharaBalde ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Extintor a bordo (vigencia)', chk.extintorAbordo ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
+      ['Luces y señales direccionales', chk.lucesSenales ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Documentos y tarjeta de equipo', chk.documentosEquipo ? 'OK / CONFORME' : 'REQUIERE REVISIÓN']
+    ];
+    drawDataTable(tableHeaders, tableWidths, tableRows);
+
+    drawSectionHeader('VI. DIAGNÓSTICO OPERACIONAL Y VALIDACIONES SGI');
+    drawGridInfo([
+      { key: 'Estado Operativo General', value: data.estadoEquipo || '' },
+      { key: 'Observaciones de Fallas', value: data.descripcionFallasObservaciones || 'Ninguna' },
+      { key: 'Firma Operador de Turno', value: data.firmaOperador || '' },
+      { key: 'Firma Supervisor de Planta', value: data.firmaSupervisor || '' }
+    ]);
   }
 
   // Draw Control de Cambios table at page limit if fit, otherwise fallback

@@ -41,6 +41,7 @@ const BITACORAS_INFO = [
   { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', col: 'bitacora_insumos_quimicos', code: 'F-OPR-000-11' },
   { id: 'inventarios_sgc', title: 'Inventario General SGC', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
   { id: 'control_uniformes', title: 'Control de Uniformes de Planta', col: 'bitacora_control_uniformes', code: 'F-OPR-000-13' },
+  { id: 'control_horas_cargador', title: 'Control de Horas de Trabajo', col: 'bitacora_control_horas_cargador', code: 'F-OPR-000-14' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {
@@ -695,6 +696,22 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                   <span className="text-gray-400 block text-[8px]">ENTE GENERADOR:</span>
                                   <span className="font-semibold text-[10px] text-[#1E293B]">{log.enteGenerador} (Peso: {log.totalPesoTickets || log.pesoTicketBascula} lbs)</span>
                                 </div>
+                              )}
+                              {log.codigoUnidad && (
+                                <>
+                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
+                                    <span className="text-gray-400 block text-[8px]">CÓDIGO UNIDAD / HORAS OPERADAS:</span>
+                                    <span className="font-semibold text-[10px] text-blue-600">{log.codigoUnidad} ({log.totalOperadoHoras || 0} hrs)</span>
+                                  </div>
+                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
+                                    <span className="text-gray-400 block text-[8px]">OPERADOR / TRABAJO:</span>
+                                    <span className="font-semibold text-[10px] text-[#1E293B]">{log.nombreOperador} ({log.tipoActividadPrincipal})</span>
+                                  </div>
+                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
+                                    <span className="text-gray-400 block text-[8px]">ESTADO EQUIPO / COMBUSTIBLE:</span>
+                                    <span className="font-semibold text-[10px] text-amber-700">{log.estadoEquipo} (Carga: {log.litrosCargados || 0} L)</span>
+                                  </div>
+                                </>
                               )}
                             </div>
 

@@ -17,6 +17,7 @@ import BitacoraLavadoBanosModule from './components/modules/BitacoraLavadoBanos'
 import BitacoraInsumosQuimicosModule from './components/modules/BitacoraInsumosQuimicos';
 import BitacoraInventariosSGCModule from './components/modules/BitacoraInventariosSGC';
 import BitacoraControlUniformesModule from './components/modules/BitacoraControlUniformes';
+import BitacoraControlHorasCargadorModule from './components/modules/BitacoraControlHorasCargador';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
 
@@ -229,6 +230,13 @@ export default function App() {
       case 'control_uniformes':
         return (
           <BitacoraControlUniformesModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'control_horas_cargador':
+        return (
+          <BitacoraControlHorasCargadorModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />
