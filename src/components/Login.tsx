@@ -28,7 +28,7 @@ export default function Login({ onLoginSuccess }: Props) {
     setLoading(true);
 
     try {
-      // Query the database for the active SGC user
+      // Query the database for the active SGI user
       const q = query(collection(db, 'usuarios'), where('email', '==', targetEmail));
       const qSnap = await getDocs(q);
 
@@ -55,7 +55,7 @@ export default function Login({ onLoginSuccess }: Props) {
           onLoginSuccess(loggedUser);
         }, 1000);
       } else {
-        setErrorMsg('Acceso Denegado. Su correo electrónico no se encuentra registrado ni autorizado en el sistema SGC BIOTRASH S.A.');
+        setErrorMsg('Acceso Denegado. Su correo electrónico no se encuentra registrado ni autorizado en el sistema SGI BIOTRASH S.A.');
       }
     } catch (err) {
       console.error('Error logging in:', err);
@@ -70,7 +70,7 @@ export default function Login({ onLoginSuccess }: Props) {
           });
         }, 800);
       } else {
-        setErrorMsg('Error de conexión con el servidor SGC Firebase. Intente nuevamente.');
+        setErrorMsg('Error de conexión con el servidor SGI Firebase. Intente nuevamente.');
       }
     } finally {
       setLoading(false);
@@ -87,7 +87,7 @@ export default function Login({ onLoginSuccess }: Props) {
             <Shield className="w-8 h-8 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight text-slate-800 uppercase">SGC BIOTRASH S.A.</h1>
+            <h1 className="text-base font-bold tracking-tight text-slate-800 uppercase">SGI BIOTRASH S.A.</h1>
             <p className="text-[10px] text-[#3B82F6] font-mono font-bold tracking-widest uppercase">
               Control de Accesos Autorizados
             </p>
@@ -148,7 +148,7 @@ export default function Login({ onLoginSuccess }: Props) {
             ) : (
               <>
                 <LogIn className="w-4 h-4 text-sky-400" />
-                <span>Ingresar al Sistema SGC</span>
+                <span>Ingresar al Sistema SGI</span>
               </>
             )}
           </button>

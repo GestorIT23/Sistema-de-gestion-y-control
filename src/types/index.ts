@@ -173,10 +173,12 @@ export interface BitacoraControlAutoclaves extends BaseBitacora {
   resultadoIndicador: string;
   noLoteFabricante: string;
   tempIncubacion: string;
+  cintaTestigoColor?: 'verde' | 'cafe';
   parametrosOperacion: {
     temperatura: boolean;
     presion: boolean;
     tiempoProceso: boolean;
+    bombaVacio?: boolean;
   };
   firmaSupervisor: string;
   firmaCoordinador: string;
@@ -247,8 +249,8 @@ export interface BitacoraInsumosQuimicos extends BaseBitacora {
   filas: FilaInsumoQuimico[];
 }
 
-// 12. Bitáco Inventarios e Insumos SGC
-export interface FilaInventarioSGC {
+// 12. Bitácora Inventarios e Insumos SGI
+export interface FilaInventarioSGI {
   codigoInsmo: string;
   descripcion: string;
   medida: string;
@@ -257,9 +259,9 @@ export interface FilaInventarioSGC {
   estadoEmpaque: 'Buen estado' | 'Dañado' | 'Por vencer';
 }
 
-export interface BitacoraInventariosSGC extends BaseBitacora {
+export interface BitacoraInventariosSGI extends BaseBitacora {
   areaFisica: string;
-  filas: FilaInventarioSGC[];
+  filas: FilaInventarioSGI[];
 }
 
 // 13. Bitacora Control de Uniformes de Planta
@@ -357,6 +359,6 @@ export type BitacoraEntry =
   | { tipo: 'generacion_almacenamiento'; data: BitacoraGeneracionAlmacenamiento }
   | { tipo: 'lavado_banos'; data: BitacoraLavadoBanos }
   | { tipo: 'insumos_quimicos'; data: BitacoraInsumosQuimicos }
-  | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGC }
+  | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGI }
   | { tipo: 'control_uniformes'; data: BitacoraControlUniformes }
   | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador };

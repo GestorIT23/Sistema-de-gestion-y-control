@@ -137,7 +137,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
     try {
       await addDoc(collection(db, 'bitacora_generacion_almacenamiento'), nuevoRegistro);
       generateAndDownloadPDF('generacion_almacenamiento', nuevoRegistro);
-      setMsg({ text: 'El reporte de recepción y almacenamiento se guardó exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'El reporte de recepción y almacenamiento se guardó exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {

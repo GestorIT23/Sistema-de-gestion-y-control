@@ -28,7 +28,7 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
 
   const [horaInicio, setHoraInicio] = useState('06:00');
   const [horaFin, setHoraFin] = useState('10:30');
-  const [tempCombustion, setTempCombustion] = useState(850); // Grados Celsius (recommended SGC)
+  const [tempCombustion, setTempCombustion] = useState(850); // Grados Celsius (recommended SGI)
   const [tempPostCombustion, setTempPostCombustion] = useState(1100); // Grados Celsius (standard regulation)
   const [cantidadPolvoFin, setCantidadPolvoFin] = useState(15); // Lbs of ash
   const [combustibleUsado, setCombustibleUsado] = useState('Gas Propano / Diesel');
@@ -119,7 +119,7 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
     try {
       await addDoc(collection(db, 'bitacora_control_incineracion'), nuevoRegistro);
       generateAndDownloadPDF('control_incineracion', nuevoRegistro);
-      setMsg({ text: 'La bitácora de incineración se ha guardado exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'La bitácora de incineración se ha guardado exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
       fetchRegistros();
     } catch (err) {
@@ -428,7 +428,7 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
                         onClick={() => generateAndDownloadPDF('control_incineracion', reg)}
                         className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                       >
-                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGC)
+                        <FileText className="w-3 h-3 text-indigo-500" /> Descargar PDF (SGI)
                       </button>
                     </div>
                   </div>

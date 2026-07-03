@@ -212,7 +212,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       code: 'BIOTRASH 4.0. F-OPR-000-8',
       icon: <CheckSquare className="w-5 h-5 text-[#8ec23f]" />,
       color: 'border-lime-200 hover:border-lime-400 focus:ring-lime-500',
-      tag: 'Laboratorio SGC',
+      tag: 'Laboratorio SGI',
       stats: `${counts.control_autoclaves} pruebas`
     },
     {
@@ -247,12 +247,12 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     },
     {
       id: 'inventarios_sgc',
-      title: 'Inventario General SGC',
+      title: 'Inventario General SGI',
       subtitle: 'Auditoría física de equipos y consumibles',
       code: 'BIOTRASH 4.0. F-OPR-000-12',
       icon: <Database className="w-5 h-5 text-amber-600" />,
       color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
-      tag: 'Calidad SGC',
+      tag: 'Calidad SGI',
       stats: `${counts.inventarios_sgc} registros`
     },
     {
@@ -280,12 +280,12 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   if (currentUser.rol === 'Administrador') {
     modulos.push({
       id: 'usuarios',
-      title: 'Gestión de Usuarios SGC',
+      title: 'Gestión de Usuarios SGI',
       subtitle: 'Controle los accesos para Administradores, Supervisores y Operadores',
-      code: 'BIOTRASH 4.2. SGC-USR-MGR',
+      code: 'BIOTRASH 4.2. SGI-USR-MGR',
       icon: <Users className="w-5 h-5 text-indigo-500" />,
       color: 'border-indigo-200 hover:border-indigo-400 focus:ring-indigo-500',
-      tag: 'Seguridad SGC',
+      tag: 'Seguridad SGI',
       stats: 'ADMIN CTR'
     });
   }
@@ -307,7 +307,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#1A1C1E] text-white rounded-lg p-5 shadow-sm border border-[#2D2F31]">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#3B82F6] animate-pulse" /> Panel de Control de Procesos e Ingeniería SGC
+            <Zap className="w-4 h-4 text-[#3B82F6] animate-pulse" /> Panel de Control de Procesos e Ingeniería SGI
           </h2>
           <p className="text-gray-300 text-xs mt-1.5 max-w-4xl leading-relaxed">
             Bienvenido al portal centralizado de aseguramiento de calidad de <strong>BIOTRASH</strong>. Este sistema administra el reporte en tiempo real y la validación de conformidad de los 9 formatos clave de operaciones e higiene ambiental bajo directrices internacionales de las normas <strong>ISO 14001</strong> e <strong>ISO 9001</strong>.
@@ -397,7 +397,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         {/* KPI 4 */}
         <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
           <div>
-            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Informes SGC:</span>
+            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Informes SGI:</span>
             <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
               {Object.values(counts).reduce((a: number, b: number) => a + b, 0)} Archivos
             </span>

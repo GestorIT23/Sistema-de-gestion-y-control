@@ -27,10 +27,10 @@ try {
 const auth = getAuth(app);
 signInAnonymously(auth)
   .then(() => {
-    console.log("BIOTRASH-SGC: Autenticación anónima establecida con éxito.");
+    console.log("BIOTRASH-SGI: Autenticación anónima establecida con éxito.");
   })
   .catch((err) => {
-    console.warn("BIOTRASH-SGC: Error al iniciar sesión anónima:", err);
+    console.warn("BIOTRASH-SGI: Error al iniciar sesión anónima:", err);
   });
 
 export { app, db, auth };

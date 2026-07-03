@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 
 /**
- * Highly polished Excel generation utility for SGC BIOTRASH S.A.
+ * Highly polished Excel generation utility for SGI BIOTRASH S.A.
  * Translates operational data into beautiful spreadsheet grids.
  */
 export function generateAndDownloadExcel(tipo: string, data: any): void {
@@ -21,13 +21,13 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' },
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
-    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGC' },
+    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
-    reporte_general: { code: 'SGC-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGC - ISO 14001 / ISO 9001' }
+    reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
-  const meta = titles[tipo] || { code: 'F-OPR-SGC', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGC' };
+  const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
 
   // --- Header metadata ---
   wsRows.push(['BIOTRASH S.A.', '', '', '', '']);
@@ -42,7 +42,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
       'Fecha Proceso',
       'Tipo de Bitácora',
       'Código Formato',
-      'Responsable SGC',
+      'Responsable SGI',
       'Observaciones Generales',
       'Turno',
       'Área',
@@ -79,7 +79,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
       'Total Peso Boletas Calculado (lbs)',
       'Ubicación Baños',
       'Desinfectante Usado',
-      'Área Física SGC',
+      'Área Física SGI',
       'Inspector Responsable Entrega'
     ]);
     
@@ -136,7 +136,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Fecha Proceso:', data.fecha]);
     wsRows.push(['Área Planta:', data.area]);
     wsRows.push(['Turno Operativo:', data.turno]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
@@ -150,7 +150,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'entrega_contenedores') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total Contenedores:', data.totalContenedores]);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
@@ -172,7 +172,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'disposicion_pirolisis') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total de Pacas:', data.totalPacas]);
     wsRows.push(['Total de Libras:', data.totalLibras + ' lbs']);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
@@ -205,7 +205,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_incineracion') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Incinerador ID:', data.incinerador]);
     wsRows.push(['Duración Proceso:', data.duracionProceso]);
     wsRows.push(['Hora Inicio:', data.horaInicio]);
@@ -232,7 +232,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'cuarto_frio') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Cuarto Frío ID:', data.cuartoFrio]);
     wsRows.push(['Hora Inspección:', data.horaInspeccion]);
     wsRows.push(['Temp. Entrada:', data.tempEntrada + ' °C']);
@@ -247,7 +247,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Limpieza Pisos:', data.inspeccion?.limpiezaPiso ? 'APROBADO' : 'FALLA']);
     wsRows.push(['Funcionamiento Evaporadores:', data.inspeccion?.funcionamientoEvaporadores ? 'APROBADO' : 'FALLA']);
     wsRows.push(['Funcionamiento Condensadores:', data.inspeccion?.funcionamientoCondensadores ? 'APROBADO' : 'FALLA']);
-    wsRows.push(['Luces Interiores SGC:', data.inspeccion?.funcionamientoLucesInteriores ? 'APROBADO' : 'FALLA']);
+    wsRows.push(['Luces Interiores SGI:', data.inspeccion?.funcionamientoLucesInteriores ? 'APROBADO' : 'FALLA']);
     wsRows.push(['Limpieza Techos:', data.inspeccion?.limpiezaTecho ? 'APROBADO' : 'FALLA']);
     wsRows.push(['Limpieza Exterior Techo:', data.inspeccion?.limpiezaExteriorTecho ? 'APROBADO' : 'FALLA']);
     wsRows.push(['Residuo Ordenado:', data.inspeccion?.residuoOrdenado ? 'APROBADO' : 'FALLA']);
@@ -264,7 +264,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'reduccion_volumen') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Código Trituradora:', data.noTrituradora]);
     wsRows.push(['Número de Proceso:', data.noProceso]);
     wsRows.push(['Tiempo Proceso:', data.tiempoProceso]);
@@ -286,7 +286,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_autoclaves') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Identificación Autoclave:', data.noAutoclave]);
     wsRows.push(['Peso del Proceso:', data.pesoProceso + ' Lbs']);
     wsRows.push(['Número de Proceso:', data.noProceso]);
@@ -314,7 +314,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Ente Generador:', data.enteGenerador]);
     wsRows.push(['Fecha Ingreso:', data.fecha]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Ubicación Planta:', data.ubicacion]);
     wsRows.push(['Nro. Ticket Báscula:', data.noTicketBascula]);
     wsRows.push(['Peso Ticket Báscula:', data.pesoTicketBascula + ' lbs']);
@@ -346,7 +346,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Ubicación de Baños:', data.ubicacionBanos]);
     wsRows.push(['Turno Operativo:', data.turno]);
     wsRows.push(['Desinfectante Proceso:', data.desinfectanteUsado]);
-    wsRows.push(['Responsable SGC:', data.responsable]);
+    wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
@@ -381,13 +381,13 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
 
   } else if (tipo === 'inventarios_sgc') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
-    wsRows.push(['Fecha de Auditoría SGC:', data.fecha]);
+    wsRows.push(['Fecha de Auditoría SGI:', data.fecha]);
     wsRows.push(['Área Física Involucrada:', data.areaFisica]);
     wsRows.push(['Auditor de Calidad:', data.responsable]);
     wsRows.push(['Observaciones generales:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
-    wsRows.push(['II. DETALLES DE AUDITORÍA SGC']);
+    wsRows.push(['II. DETALLES DE AUDITORÍA SGI']);
     wsRows.push(['Código Insumo', 'Descripción Completa', 'Unidad Medida', 'Stock Mínimo Requerido', 'Existencia Real Física', 'Estado de Empaque / Conservación']);
     (data.filas || []).forEach((f: any) => {
       wsRows.push([f.codigoInsmo, f.descripcion, f.medida, f.stockMinimo, f.existenciaReal, f.estadoEmpaque]);

@@ -42,7 +42,7 @@ export const AVAILABLE_MODULES = [
   { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento', code: 'F-OPR-9' },
   { id: 'lavado_banos', title: 'Sanitización de Baños/Oficinas', code: 'F-OPR-10' },
   { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', code: 'F-OPR-11' },
-  { id: 'inventarios_sgc', title: 'Inventario General SGC', code: 'F-OPR-12' },
+  { id: 'inventarios_sgc', title: 'Inventario General SGI', code: 'F-OPR-12' },
   { id: 'control_uniformes', title: 'Auditoría de Uniformes y EPP', code: 'F-OPR-13' },
   { id: 'control_horas_cargador', title: 'Control Horas de Trabajo', code: 'F-OPR-14' },
 ];
@@ -123,7 +123,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
       });
       setEditingUserId(null);
       await fetchUsuarios();
-      triggerMsg('Características del usuario SGC actualizadas correctamente.', 'success');
+      triggerMsg('Características del usuario SGI actualizadas correctamente.', 'success');
     } catch (err) {
       console.error("Error updates user characteristics:", err);
       triggerMsg('Error al intentar guardar los cambios del usuario.', 'error');
@@ -291,7 +291,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
         }
       }
       await fetchUsuarios();
-      triggerMsg('Usuarios de prueba SGC agregados correctamente.', 'success');
+      triggerMsg('Usuarios de prueba SGI agregados correctamente.', 'success');
     } catch (err) {
       console.error(err);
       triggerMsg('Error al programar usuarios demo.', 'error');
@@ -322,7 +322,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero
         </button>
         <span className="text-[10px] bg-slate-200 text-slate-800 px-3 py-1 rounded-full font-mono font-bold tracking-widest uppercase">
-          PROCESO: SGC-USR-MGR
+          PROCESO: SGI-USR-MGR
         </span>
       </div>
 
@@ -334,7 +334,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
             <h2 className="text-lg font-bold tracking-tight">Gestión de Usuarios y Permisos Operacionales</h2>
           </div>
           <p className="text-xs text-gray-300 mt-1 max-w-2xl leading-relaxed">
-            Consola centralizada para registrar personal operario, supervisores de rampa y administradores de calidad. Configure niveles de acceso para garantizar la integridad de las bitácoras SGC ISO 9001 e ISO 14001.
+            Consola centralizada para registrar personal operario, supervisores de rampa y administradores de calidad. Configure niveles de acceso para garantizar la integridad de las bitácoras SGI ISO 9001 e ISO 14001.
           </p>
         </div>
         <button
@@ -660,7 +660,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Nombre / Correo / Módulos</th>
-                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Rango / Rol SGC</th>
+                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Rango / Rol SGI</th>
                     <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Rol Rápido</th>
                     <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase text-right">Acciones</th>
                   </tr>
@@ -697,7 +697,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                           
                           {/* Modulos Autorizados Badges */}
                           <div className="mt-2 space-y-1">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Módulos SGC Autorizados:</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Módulos SGI Autorizados:</span>
                             {u.modulosAcceso && u.modulosAcceso.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {u.modulosAcceso.map(mId => {
@@ -760,7 +760,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                               disabled={isImmutablePreset || isSelfAdmin}
                               onClick={() => handleDeleteUsuario(u.id!, u.email)}
                               className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:hover:text-slate-400 transition cursor-pointer"
-                              title={isSelfAdmin ? "No se puede eliminar a usted mismo" : "Eliminar de base de datos SGC"}
+                              title={isSelfAdmin ? "No se puede eliminar a usted mismo" : "Eliminar de base de datos SGI"}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>

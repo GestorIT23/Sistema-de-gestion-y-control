@@ -533,17 +533,34 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawGridInfo([
       { key: 'Control Temperatura Cumplida', value: param.temperatura ? '(ALCANZADO)' : '(FALLO)' },
       { key: 'Control Presión Cumplida', value: param.presion ? '(ALCANZADO)' : '(FALLO)' },
-      { key: 'Tiempo de Esterilización', value: param.tiempoProceso ? '(CONFORME)' : '(REVISIÓN)' }
+      { key: 'Tiempo de Esterilización', value: param.tiempoProceso ? '(CONFORME)' : '(REVISIÓN)' },
+      { key: 'Estado Bomba de Vacío', value: param.bombaVacio === undefined || param.bombaVacio ? '(CORRECTO)' : '(FALLA/ALERTA)' }
     ]);
 
     drawSectionHeader('III. MONITOREO DE INDICADORES BIOLÓGICOS Y QUÍMICOS');
     const ind = data.tipoIndicador || {};
     drawGridInfo([
-      { key: 'Uso de Ampolla Biolágica', value: ind.biologico ? '(SÍ)' : '(NO)' },
+      { key: 'Uso de Ampolla Biológica', value: ind.biologico ? '(SÍ)' : '(NO)' },
       { key: 'Uso de Cinta Química', value: ind.quimico ? '(SÍ)' : '(NO)' },
       { key: 'Marca / Identificación Indicador', value: data.identificacionIndicador },
       { key: 'Resultado Clínico Final', value: data.resultadoIndicador },
-      { key: 'Nro Lote del Fabricante', value: data.noLoteFabricante }
+      { key: 'Nro Lote del Fabricante', value: data.noLoteFabricante },
+      { key: 'Color de Cinta Testigo', value: data.cintaTestigoColor === 'verde' ? 'VERDE (PROCESO FALLIDO)' : 'CAFÉ (VIRADO CORRECTO - PROCESO CORRECTO)' }
+    ]);
+
+    const isAutoCompliant = param.temperatura && param.presion && param.tiempoProceso && (data.resultadoIndicador || '').includes('NEGATIVO') && data.cintaTestigoColor !== 'verde';
+
+    drawSectionHeader('IV. ESTADO DE APROBACIÓN DEL LOTE');
+    drawGridInfo([
+      { key: 'Resultado Final del Lote', value: isAutoCompliant ? 'APROBADO PARA LIBERACIÓN (SGI)' : 'RECHAZADO / RETENIDO' },
+      { key: 'Dictamen de Aseguramiento', value: isAutoCompliant ? 'Apto para egresar de planta' : 'FALLA DE PARÁMETROS / DETENER SALIDA' }
+    ]);
+
+    drawSectionHeader('V. OBSERVACIONES Y FIRMAS DE RESPONSABILIDAD');
+    drawGridInfo([
+      { key: 'Observaciones de Laboratorio', value: data.observaciones || 'Ninguna' },
+      { key: 'Firma Supervisor Técnico', value: data.firmaSupervisor || '' },
+      { key: 'Firma Coordinador Procesos', value: data.firmaCoordinador || '' }
     ]);
 
   } else if (tipo === 'generacion_almacenamiento') {

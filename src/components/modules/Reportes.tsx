@@ -39,7 +39,7 @@ const BITACORAS_INFO = [
   { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento RPBI', col: 'bitacora_generacion_almacenamiento', code: 'F-OPR-000-9' },
   { id: 'lavado_banos', title: 'Sanitización de Baños y Oficinas', col: 'bitacora_lavado_banos', code: 'F-OPR-000-10' },
   { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', col: 'bitacora_insumos_quimicos', code: 'F-OPR-000-11' },
-  { id: 'inventarios_sgc', title: 'Inventario General SGC', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
+  { id: 'inventarios_sgc', title: 'Inventario General SGI', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
   { id: 'control_uniformes', title: 'Control de Uniformes de Planta', col: 'bitacora_control_uniformes', code: 'F-OPR-000-13' },
   { id: 'control_horas_cargador', title: 'Control de Horas de Trabajo', col: 'bitacora_control_horas_cargador', code: 'F-OPR-000-14' },
 ];
@@ -104,7 +104,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
       localStorage.setItem('sgc_logo_base64', base64);
       localStorage.removeItem('sgc_logo_url');
       setLogoPreview(base64);
-      setMsg({ text: 'Se ha guardado el logotipo local del SGC para la exportación de PDFs.', type: 'success' });
+      setMsg({ text: 'Se ha guardado el logotipo local del SGI para la exportación de PDFs.', type: 'success' });
     };
     reader.readAsDataURL(file);
   };
@@ -117,7 +117,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
     localStorage.setItem('sgc_logo_url', logoUrlInput.trim());
     localStorage.removeItem('sgc_logo_base64');
     setLogoPreview(logoUrlInput.trim());
-    setMsg({ text: 'Enlace del logotipo SGC guardado con éxito.', type: 'success' });
+    setMsg({ text: 'Enlace del logotipo SGI guardado con éxito.', type: 'success' });
   };
 
   const handleResetLogo = () => {
@@ -283,7 +283,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
           <div>
             <h1 className="text-xl font-bold tracking-tight text-[#0F172A] flex items-center gap-2">
               <Database className="w-5 h-5 text-[#3B82F6]" />
-              Módulo de Reportes SGC & Demanda ISO 14001
+              Módulo de Reportes SGI & Demanda ISO 14001
             </h1>
             <p className="text-xs text-[#64748B]">
               Filtro y generación consolidada de bitácoras para auditoría interna y fiscalización.
@@ -459,7 +459,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             </button>
           </div>
 
-          {/* Quick info panel about ISO SGC compliance */}
+          {/* Quick info panel about ISO SGI compliance */}
           <div className="bg-[#FAF9F6] border border-[#E2D2B3]/30 rounded-lg p-3 text-[10px] text-[#865E25] space-y-1.5 font-sans">
             <div className="font-bold uppercase tracking-wider flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5 text-[#865E25]" /> Lineamientos ISO 14001:2015
@@ -469,13 +469,13 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             </p>
           </div>
 
-          {/* SGC LOGO CONFIGURATION CENTER */}
+          {/* SGI LOGO CONFIGURATION CENTER */}
           <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-sm p-4 space-y-3.5 text-left">
             <div className="flex items-center gap-1.5 border-b border-[#F1F5F9] pb-2">
               <div className="p-1 bg-[#3B82F6]/10 rounded">
                 <FileText className="w-4 h-4 text-[#3B82F6]" />
               </div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">Logotipo del SGC en PDF</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">Logotipo del SGI en PDF</h2>
             </div>
 
             <p className="text-[10px] text-slate-500 leading-normal">
@@ -486,7 +486,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             <div className="border border-dashed border-[#E2E8F0] rounded p-3 bg-[#F8FAFC] flex flex-col items-center justify-center min-h-[90px] relative">
               <span className="absolute top-1 right-1 text-[8px] font-mono text-gray-400 uppercase font-semibold">Carga actual</span>
               {logoPreview ? (
-                <img src={logoPreview} alt="Logo SGC" className="max-h-[60px] object-contain" referrerPolicy="no-referrer" />
+                <img src={logoPreview} alt="Logo SGI" className="max-h-[60px] object-contain" referrerPolicy="no-referrer" />
               ) : (
                 <div className="flex items-center gap-2">
                   <div className="bg-[#3B82F6] p-1.5 rounded">
@@ -548,7 +548,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                 onClick={handleResetLogo}
                 className="w-full border border-red-100 hover:bg-red-50 text-red-650 font-bold text-[10px] py-1 rounded transition text-center block"
               >
-                Restablecer a Vector SGC
+                Restablecer a Vector SGI
               </button>
             )}
           </div>
@@ -560,7 +560,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             
             <div className="bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#1E293B]">Flujo de Registros Encontrados</h2>
-              <span className="text-[10px] text-gray-500 font-mono">SGC Live Database Integration</span>
+              <span className="text-[10px] text-gray-500 font-mono">SGI Live Database Integration</span>
             </div>
 
             {loading ? (
@@ -621,7 +621,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                         <div className="mt-3 bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded text-xs font-mono text-[#1E293B] space-y-2 animate-fade-in">
                           <div className="grid grid-cols-1 gap-3 text-[10px] border-b border-[#F1F5F9] pb-2">
                             <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">FECHA REGISTRO SGC:</span>
+                              <span className="text-gray-400 block font-bold uppercase text-[8px]">FECHA REGISTRO SGI:</span>
                               <span className="font-bold text-slate-800">{log.fechaRegistro || 'N/A'}</span>
                             </div>
                           </div>

@@ -22,14 +22,16 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   // Form Fields
   const [noAutoclave, setNoAutoclave] = useState('1');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [pesoProceso, setPesoProceso] = useState(650); // Lbs of waste sterilized
+  const [pesoBruto, setPesoBruto] = useState(1730); // Default gross weight to yield 650 lbs net
+  const pesoProceso = Math.max(0, pesoBruto - 1080); // subtracting 1080 lbs tare of metal carts
   const [responsable, setResponsable] = useState(userEmail || 'Líder de Control Biológico');
-  const [noProceso, setNoProceso] = useState('NPA-9920');
+  const [noProceso, setNoProceso] = useState('');
   const [lineaUtilizada, setLineaUtilizada] = useState('Línea 01');
 
   // Indicators Checkboxes
   const [biologico, setBiologico] = useState(false);
   const [quimico, setQuimico] = useState(true);
+  const [cintaTestigoColor, setCintaTestigoColor] = useState<'verde' | 'cafe'>('cafe');
   
   const [identificacionIndicador, setIdentificacionIndicador] = useState('Cinta Testigo Químico Virado');
   const [resultadoIndicador, setResultadoIndicador] = useState('NEGATIVO (SIN CRECIMIENTO - APTO)');
@@ -40,6 +42,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [temperatura, setTemperatura] = useState(true);
   const [presion, setPresion] = useState(true);
   const [tiempoProceso, setTiempoProceso] = useState(true);
+  const [bombaVacio, setBombaVacio] = useState(true);
 
   const [observacionesParameters, setObservacionesParameters] = useState('Presión estable a 75 Psi. Proceso cumplulado en 21 min estándar.');
   const [observaciones, setObservaciones] = useState('');
@@ -47,11 +50,15 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [firmaSupervisor, setFirmaSupervisor] = useState('Ing. Daniel Marroquín');
   const [firmaCoordinador, setFirmaCoordinador] = useState('Licda. Ana Sofía de León');
 
-  // Verify SGI compliance
-  const isCompliant = (quimico || biologico) && temperatura && presion && tiempoProceso && (!biologico || (biologico && resultadoIndicador.includes('NEGATIVO')));
+  // Verify SGI compliance - lot approved if temp, pressure, time are met, chemical/biological indicator reports negative, and indicator tape is brown
+  const isCompliant = temperatura && presion && tiempoProceso && resultadoIndicador.includes('NEGATIVO') && cintaTestigoColor === 'cafe';
 
   useEffect(() => {
     fetchRegistros();
+    // System auto-assigned process number
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '').slice(2);
+    setNoProceso(`NPA-${datePart}-${randomNum}`);
   }, []);
 
   const fetchRegistros = async () => {
@@ -92,7 +99,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       resultadoIndicador,
       noLoteFabricante,
       tempIncubacion,
-      parametrosOperacion: { temperatura, presion, tiempoProceso },
+      cintaTestigoColor,
+      parametrosOperacion: { temperatura, presion, tiempoProceso, bombaVacio },
       firmaSupervisor,
       firmaCoordinador,
       observacionesGeneralesProceso: observacionesParameters,
@@ -108,8 +116,14 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
     try {
       await addDoc(collection(db, 'bitacora_control_autoclaves'), nuevoRegistro);
       generateAndDownloadPDF('control_autoclaves', nuevoRegistro);
-      setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGC.', type: 'success' });
+      setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
+      
+      // Generate a new process number for the next entry
+      const nextRandomNum = Math.floor(1000 + Math.random() * 9000);
+      const nextDatePart = new Date().toISOString().split('T')[0].replace(/-/g, '').slice(2);
+      setNoProceso(`NPA-${nextDatePart}-${nextRandomNum}`);
+      
       fetchRegistros();
     } catch (err) {
       console.error(err);
@@ -197,23 +211,37 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                   id="no-proceso-val"
                   type="text"
                   value={noProceso}
-                  onChange={(e) => setNoProceso(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none text-center"
+                  readOnly
+                  disabled
+                  title="Asignado automáticamente por el sistema"
+                  className="w-full bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 text-slate-600 font-bold outline-none text-center opacity-80 cursor-not-allowed"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso del Proceso (Lbs):</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso Bruto (Lbs):</label>
+                <input
+                  id="peso-bruto-val"
+                  type="number"
+                  value={pesoBruto}
+                  onChange={(e) => setPesoBruto(parseInt(e.target.value) || 0)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso Neto (-1080 Lbs Tara):</label>
                 <input
                   id="peso-proceso-val"
                   type="number"
                   value={pesoProceso}
-                  onChange={(e) => setPesoProceso(parseInt(e.target.value) || 0)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
+                  readOnly
+                  disabled
+                  className="w-full bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 text-slate-600 font-bold outline-none text-center opacity-80 cursor-not-allowed"
                 />
               </div>
 
-              <div className="space-y-1 md:col-span-3">
+              <div className="space-y-1 md:col-span-2">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Del Responsable de Pruebas:</label>
                 <input
                   id="responsable-val"
@@ -281,6 +309,40 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                         placeholder="Ej. Cinta testigo Lote A-01 o Ampolleta autococida"
                         className="w-full bg-white border border-slate-300 rounded p-1.5"
                       />
+                    </div>
+
+                    {/* Cinta Testigo Apartado */}
+                    <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">
+                      <span className="font-bold text-slate-700 block text-[10px] uppercase tracking-wider text-emerald-850">Apartado de Cinta Testigo (Virado de Calor):</span>
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <label className="flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 p-2 rounded border border-slate-150 transition">
+                          <input
+                            id="cinta-cafe"
+                            type="checkbox"
+                            checked={cintaTestigoColor === 'cafe'}
+                            onChange={() => setCintaTestigoColor('cafe')}
+                            className="h-4.5 w-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-700 block text-[10px]">Color Café:</span>
+                            <span className="text-[9px] text-emerald-600 font-extrabold">Proceso Correcto</span>
+                          </div>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 p-2 rounded border border-slate-150 transition">
+                          <input
+                            id="cinta-verde"
+                            type="checkbox"
+                            checked={cintaTestigoColor === 'verde'}
+                            onChange={() => setCintaTestigoColor('verde')}
+                            className="h-4.5 w-4.5 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-700 block text-[10px]">Color Verde:</span>
+                            <span className="text-[9px] text-rose-600 font-extrabold">Proceso Fallido</span>
+                          </div>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="space-y-1">
@@ -356,6 +418,29 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                       </div>
                     </label>
                   ))}
+
+                  {/* Vacuum pump state */}
+                  <label className="flex items-start gap-2.5 p-2 bg-white rounded border border-slate-150 hover:border-slate-300 transition cursor-pointer text-xs">
+                    <input
+                      id="bomba-vacio-checkbox"
+                      type="checkbox"
+                      checked={bombaVacio}
+                      onChange={(e) => setBombaVacio(e.target.checked)}
+                      className="mt-0.5 h-4.5 w-4.5 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <span className="font-bold text-slate-800 block text-[10px]">Bomba de vacío (Correcto)</span>
+                      <span className="text-[9px] text-slate-400">Estado de funcionamiento de la bomba de vacío (no afecta liberación).</span>
+                    </div>
+                  </label>
+
+                  {/* Warning if vacuum pump fails */}
+                  {!bombaVacio && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-300 text-amber-950 rounded text-[10px] font-bold flex items-start gap-2 animate-pulse leading-tight">
+                      <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
+                      <span>ALERTA DE EQUIPO: La bomba de vacío presenta estado inestable o fallido. Reportar a mantenimiento.</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1 font-mono text-xs">
@@ -378,16 +463,16 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                 <>
                   <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
                   <div className="text-xs">
-                    <h5 className="font-bold uppercase">Lote Aprobado para Liberación (SGC BIOTRASH)</h5>
-                    <p>La lectura biológica de 48 horas no muestra crecimiento. El integrador químico viró correctamente a fase de esterilidad.</p>
+                    <h5 className="font-bold uppercase">Lote Aprobado para Liberación (SGI BIOTRASH)</h5>
+                    <p>La lectura biológica de 48 horas no muestra crecimiento. El integrador químico y cinta testigo viraron correctamente a fase de esterilidad.</p>
                   </div>
                 </>
               ) : (
                 <>
                   <AlertCircle className="w-6 h-6 text-red-600 shrink-0" />
                   <div className="text-xs">
-                    <h5 className="font-bold uppercase text-red-700">Lote RECHAZADO / PROTOCOLO BIOLÓGICO NO CUMPLIDO</h5>
-                    <p>Uno o más parámetros operacionales fallaron o el vial muestra turbidez positiva. DETENGA LA SALIDA DE RESIDUOS!</p>
+                    <h5 className="font-bold uppercase text-red-700">Lote RECHAZADO / PROTOCOLO QUÍMICO-BIOLÓGICO NO CUMPLIDO</h5>
+                    <p>Uno o más parámetros operacionales fallaron, la cinta testigo reporta color incorrecto, o el vial muestra turbidez/virado positivo. DETENGA LA SALIDA DE RESIDUOS!</p>
                   </div>
                 </>
               )}
@@ -425,7 +510,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                 rows={3}
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
-                placeholder="Introduzca anomalías sobre las tiras indicadoras de calor o cualquier comportamiento secundario observativo..."
+                placeholder="Introduzca anomalías sobre las tiras indicadoras de calor o cualquier comportamiento secundario observado..."
                 className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs md:text-sm outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500 transition"
               />
             </div>
@@ -456,10 +541,10 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
-              <Info className="w-4 h-4 text-emerald-450" /> Laboratorio BIOTRASH SGC
+              <Info className="w-4 h-4 text-emerald-450" /> Laboratorio BIOTRASH SGI
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
-              La comprobación científica de la efectividad del proceso de esterilización asegura el aseguramiento total de la eliminación de la carga patógena clínica de los RPBI.
+              La comprobación científica de la efectividad del proceso de esterilización demuestra el aseguramiento total de la eliminación de la carga patógena clínica de los RPBI.
             </p>
           </div>
 
@@ -499,7 +584,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                            onClick={() => generateAndDownloadPDF('control_autoclaves', reg)}
                            className="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                          >
-                           <FileText className="w-2.5 h-2.5 text-rose-500" /> PDF SGC
+                           <FileText className="w-2.5 h-2.5 text-rose-500" /> PDF SGI
                          </button>
                        </div>
                      </div>

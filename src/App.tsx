@@ -15,7 +15,7 @@ import BitacoraControlAutoclavesModule from './components/modules/BitacoraContro
 import BitacoraGeneracionAlmacenamientoModule from './components/modules/BitacoraGeneracionAlmacenamiento';
 import BitacoraLavadoBanosModule from './components/modules/BitacoraLavadoBanos';
 import BitacoraInsumosQuimicosModule from './components/modules/BitacoraInsumosQuimicos';
-import BitacoraInventariosSGCModule from './components/modules/BitacoraInventariosSGC';
+import BitacoraInventariosSGIModule from './components/modules/BitacoraInventariosSGI';
 import BitacoraControlUniformesModule from './components/modules/BitacoraControlUniformes';
 import BitacoraControlHorasCargadorModule from './components/modules/BitacoraControlHorasCargador';
 import ReportesModule from './components/modules/Reportes';
@@ -129,7 +129,7 @@ export default function App() {
   };
 
   const handleSelectUserEmail = (email: string) => {
-    // Switcher is only accessible for SGC Admins. Restricts regular workflows
+    // Switcher is only accessible for SGI Admins. Restricts regular workflows
     if (currentUser.rol !== 'Administrador') return;
 
     const selected = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -229,7 +229,7 @@ export default function App() {
         );
       case 'inventarios_sgc':
         return (
-          <BitacoraInventariosSGCModule
+          <BitacoraInventariosSGIModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />
@@ -274,7 +274,7 @@ export default function App() {
 
   return (
     <div id="ai-studio-app-viewport" className="min-h-screen bg-[#F1F3F5] flex flex-col text-[#1A1C1E] font-sans">
-      {/* SGC Header Navbar */}
+      {/* SGI Header Navbar */}
       <Header 
         currentUser={currentUser} 
         allUsers={allUsers}

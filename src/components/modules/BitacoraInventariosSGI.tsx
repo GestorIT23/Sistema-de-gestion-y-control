@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { BitacoraInventariosSGC, FilaInventarioSGC } from '../../types';
+import { BitacoraInventariosSGI, FilaInventarioSGI } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Plus, Trash2, Database, ShieldCheck, Info, AlertCircle, FileSpreadsheet, FileText, CheckCircle, Flame } from 'lucide-react';
@@ -13,8 +13,8 @@ interface Props {
   userEmail: string;
 }
 
-export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Props) {
-  const [registros, setRegistros] = useState<BitacoraInventariosSGC[]>([]);
+export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Props) {
+  const [registros, setRegistros] = useState<BitacoraInventariosSGI[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
@@ -26,10 +26,10 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
   const [observaciones, setObservaciones] = useState('');
 
   // Table rows
-  const [filas, setFilas] = useState<FilaInventarioSGC[]>([]);
+  const [filas, setFilas] = useState<FilaInventarioSGI[]>([]);
 
   // Row creation inputs
-  const [codigoInsumo, setCodigoInsumo] = useState('INS-SGC-01');
+  const [codigoInsumo, setCodigoInsumo] = useState('INS-SGI-01');
   const [descripcion, setDescripcion] = useState('Indicadores Biológicos de Vapor (Autoclave)');
   const [medida, setMedida] = useState('Cada Caja/100u');
   const [stockMinimo, setStockMinimo] = useState(10);
@@ -45,9 +45,9 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
       setLoading(true);
       const q = query(collection(db, 'bitacora_inventarios_sgc'), orderBy('fechaRegistro', 'desc'), limit(15));
       const querySnapshot = await getDocs(q);
-      const docs: BitacoraInventariosSGC[] = [];
+      const docs: BitacoraInventariosSGI[] = [];
       querySnapshot.forEach((doc) => {
-        docs.push({ id: doc.id, ...doc.data() } as BitacoraInventariosSGC);
+        docs.push({ id: doc.id, ...doc.data() } as BitacoraInventariosSGI);
       });
       setRegistros(docs);
     } catch (e) {
@@ -78,7 +78,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
       }
     ]);
     // Reset additions inputs
-    setCodigoInsumo('INS-SGC-' + Math.floor(Math.random() * 90 + 10));
+    setCodigoInsumo('INS-SGI-' + Math.floor(Math.random() * 90 + 10));
     setDescripcion('');
     setStockMinimo(5);
     setExistenciaReal(10);
@@ -100,7 +100,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
     setSaving(true);
     setMsg({ text: 'Almacenando en Firebase...', type: 'info' });
 
-    const nuevoRegistro: BitacoraInventariosSGC = {
+    const nuevoRegistro: BitacoraInventariosSGI = {
       fechaRegistro: new Date().toISOString(),
       fecha,
       areaFisica,
@@ -123,7 +123,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
 
     try {
       await addDoc(collection(db, 'bitacora_inventarios_sgc'), nuevoRegistro);
-      setMsg({ text: '¡Bitácora SGC guardada exitosamente!', type: 'success' });
+      setMsg({ text: '¡Bitácora SGI guardada exitosamente!', type: 'success' });
       setFilas([]);
       setObservaciones('');
       fetchRegistros();
@@ -138,7 +138,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
     }
   };
 
-  const handleExportExcel = (reg: BitacoraInventariosSGC) => {
+  const handleExportExcel = (reg: BitacoraInventariosSGI) => {
     generateAndDownloadExcel('inventarios_sgc', reg);
   };
 
@@ -160,7 +160,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
       </div>
 
       <FormHeader 
-        titulo="BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGC"
+        titulo="BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGI"
         codigo="BIOTRASH 4.0. F-OPR-000-12"
       />
 
@@ -169,7 +169,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
         {/* Left Input Form */}
         <form onSubmit={handleGuardar} className="lg:col-span-8 bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-6">
           <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-1.5 font-sans">
-            <Database className="w-4 h-4 text-blue-600" /> Auditoría de Existencias SGC
+            <Database className="w-4 h-4 text-blue-600" /> Auditoría de Existencias SGI
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -195,7 +195,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
                 className="w-full text-xs bg-slate-50 border border-slate-200 rounded py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Bodega General de Operaciones">Bodega General de Operaciones</option>
-                <option value="Laboratorio Químico-Biológico">Laboratorio Químico-Biológico SGC</option>
+                <option value="Laboratorio Químico-Biológico">Laboratorio Químico-Biológico SGI</option>
                 <option value="Rampa de Carga y Pesaje">Andén / Rampa de Carga</option>
                 <option value="Oficina de Seguridad Industrial">Oficinas y Seguridad Industrial (EPP)</option>
               </select>
@@ -384,7 +384,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
               disabled={saving}
               className="bg-[#1A1C1E] hover:bg-[#2D2F31] disabled:opacity-50 text-white text-xs font-bold px-6 py-2 rounded transition cursor-pointer"
             >
-              {saving ? 'Guardando...' : 'Guardar Formulario SGC-12'}
+              {saving ? 'Guardando...' : 'Guardar Formulario SGI-12'}
             </button>
           </div>
         </form>
@@ -393,7 +393,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
         <div className="lg:col-span-4 bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-200 pb-2">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 col-span-3">
-              <Calendar className="w-4 h-4 text-[#8ec23f]" /> Registro Auditoría SGC
+              <Calendar className="w-4 h-4 text-[#8ec23f]" /> Registro Auditoría SGI
             </h3>
             <span className="bg-[#8ec23f]/15 text-[#6c9c22] font-mono text-[9px] px-2 py-0.5 rounded font-bold">LIVE</span>
           </div>
@@ -405,7 +405,7 @@ export default function BitacoraInventariosSGCModule({ onBack, userEmail }: Prop
           ) : registros.length === 0 ? (
             <div className="text-center py-10 bg-white rounded border border-dashed border-slate-200 text-slate-400">
               <Info className="w-8 h-8 mx-auto text-slate-300" />
-              <p className="text-xs mt-2">No se han guardado auditorías SGC hoy.</p>
+              <p className="text-xs mt-2">No se han guardado auditorías SGI hoy.</p>
             </div>
           ) : (
             <div className="space-y-4 max-h-[580px] overflow-y-auto pr-1">
