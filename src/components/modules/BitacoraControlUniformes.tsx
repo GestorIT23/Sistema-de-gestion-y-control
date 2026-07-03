@@ -39,6 +39,13 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
   const [motivoDotacion, setMotivoDotacion] = useState('Reemplazo por desgaste de planta');
   const [firmaRecibido, setFirmaRecibido] = useState('');
 
+  // Auditoria de EPP y Uniformes fields
+  const [usaUniformeCompleto, setUsaUniformeCompleto] = useState(true);
+  const [usaBotasSeguridad, setUsaBotasSeguridad] = useState(true);
+  const [cumpleLimpieza, setCumpleLimpieza] = useState(true);
+  const [observacionAuditoria, setObservacionAuditoria] = useState('Uso correcto del equipo completo.');
+  const [estadoGeneralConforme, setEstadoGeneralConforme] = useState(true);
+
   useEffect(() => {
     fetchRegistros();
   }, []);
@@ -82,11 +89,17 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
         tieneCareta,
         motivoDotacion,
         firmaRecibido,
+        usaUniformeCompleto,
+        usaBotasSeguridad,
+        cumpleLimpieza,
+        observacionAuditoria,
+        estadoGeneralConforme,
       }
     ]);
     // Reset selections
     setColaborador('');
     setFirmaRecibido('');
+    setObservacionAuditoria('Uso correcto del equipo completo.');
     setMsg({ text: '', type: '' });
   };
 
@@ -286,29 +299,64 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
                 />
               </div>
 
-              {/* Checkboxes for EPP delivered */}
-              <div className="sm:col-span-12 grid grid-cols-3 gap-2 py-2">
-                <label className="flex items-center gap-2 bg-white p-2 rounded border border-slate-200 shadow-xs cursor-pointer">
+              {/* Checkboxes for EPP and Uniform Auditing Check */}
+              <div className="sm:col-span-12 grid grid-cols-2 md:grid-cols-3 gap-2 py-2">
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
+                  <input type="checkbox" checked={usaUniformeCompleto} onChange={() => setUsaUniformeCompleto(!usaUniformeCompleto)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
+                  <span className="text-[10px] font-bold text-slate-700">Uniforme Completo</span>
+                </label>
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
+                  <input type="checkbox" checked={usaBotasSeguridad} onChange={() => setUsaBotasSeguridad(!usaBotasSeguridad)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
+                  <span className="text-[10px] font-bold text-slate-700">Botas con Casquillo</span>
+                </label>
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
                   <input type="checkbox" checked={tieneMandil} onChange={() => setTieneMandil(!tieneMandil)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
                   <span className="text-[10px] font-bold text-slate-700">Peto / Mandil Plástico</span>
                 </label>
-                <label className="flex items-center gap-2 bg-white p-2 rounded border border-slate-200 shadow-xs cursor-pointer">
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
                   <input type="checkbox" checked={tieneGuantes} onChange={() => setTieneGuantes(!tieneGuantes)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
                   <span className="text-[10px] font-bold text-slate-700">Guantes de Protección</span>
                 </label>
-                <label className="flex items-center gap-2 bg-white p-2 rounded border border-slate-200 shadow-xs cursor-pointer">
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
                   <input type="checkbox" checked={tieneCareta} onChange={() => setTieneCareta(!tieneCareta)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
-                  <span className="text-[10px] font-bold text-slate-700">Careta de Protección SGI</span>
+                  <span className="text-[10px] font-bold text-slate-700">Careta de Protección</span>
+                </label>
+                <label className="flex items-center gap-2 bg-white p-2.5 rounded border border-slate-200 shadow-sm cursor-pointer">
+                  <input type="checkbox" checked={cumpleLimpieza} onChange={() => setCumpleLimpieza(!cumpleLimpieza)} className="w-4 h-4 text-emerald-600 cursor-pointer" />
+                  <span className="text-[10px] font-bold text-slate-700">Cumple Limpieza e Higiene</span>
                 </label>
               </div>
 
+              <div className="sm:col-span-4">
+                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Estado de Auditoría</label>
+                <select 
+                  value={estadoGeneralConforme ? 'CONFORME' : 'NO_CONFORME'} 
+                  onChange={(e) => setEstadoGeneralConforme(e.target.value === 'CONFORME')}
+                  className="w-full text-xs bg-white border border-slate-200 rounded py-1.5 px-2"
+                >
+                  <option value="CONFORME">CONFORME (Uso Correcto)</option>
+                  <option value="NO_CONFORME">NO CONFORME (Infracción de Seguridad)</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-8">
+                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Observación / Hallazgos de Auditoría</label>
+                <input
+                  type="text"
+                  value={observacionAuditoria}
+                  onChange={(e) => setObservacionAuditoria(e.target.value)}
+                  placeholder="Ej. Todo el EPP virado y limpio. Casco con barboquejo correcto."
+                  className="w-full text-xs bg-white border border-slate-200 rounded py-1.5 px-3 font-sans"
+                />
+              </div>
+
               <div className="sm:col-span-9">
-                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Firma / Inicial Conformidad</label>
+                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Firma del Auditor / Supervisor SGI</label>
                 <input
                   type="text"
                   value={firmaRecibido}
                   onChange={(e) => setFirmaRecibido(e.target.value)}
-                  placeholder="Ej. Pedro Pérez L. - Firma Digital"
+                  placeholder="Ej. Ing. Daniel Marroquín - Auditor SGI"
                   className="w-full text-xs bg-white border border-slate-200 rounded py-1.5 px-3 font-mono"
                 />
               </div>
@@ -319,7 +367,7 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
                   onClick={handleAddFila}
                   className="bg-[#8ec23f] hover:bg-[#7ba834] text-white text-[11px] font-bold py-2 px-3 rounded flex items-center gap-1.5 hover:shadow transition cursor-pointer w-full justify-center"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Agregar Colaborante
+                  <Plus className="w-3.5 h-3.5" /> Agregar Fila Auditoría
                 </button>
               </div>
             </div>
@@ -330,13 +378,13 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#1A1C1E] text-white text-[9px] uppercase font-bold tracking-wider">
                   <tr>
-                    <th className="py-2.5 px-3">Colaborante</th>
-                    <th className="py-2.5 px-2">Puesto</th>
-                    <th className="py-2.5 px-2 text-center">Talla Filip.</th>
-                    <th className="py-2.5 px-2 text-center">Talla Pantл.</th>
-                    <th className="py-2.5 px-2 text-center">Botas No.</th>
-                    <th className="py-2.5 px-2 text-center">EPP OK</th>
-                    <th className="py-2.5 px-3 font-mono">Firma</th>
+                    <th className="py-2.5 px-3">Colaborante y Puesto</th>
+                    <th className="py-2.5 px-2 text-center">Uniforme</th>
+                    <th className="py-2.5 px-2 text-center">Botas</th>
+                    <th className="py-2.5 px-2 text-center">EPP (Mnd/Gnt/Crt)</th>
+                    <th className="py-2.5 px-2 text-center">Limpieza</th>
+                    <th className="py-2.5 px-2 text-center">Estado SGI</th>
+                    <th className="py-2.5 px-3">Observación</th>
                     <th className="py-2.5 px-2 text-center">Rem</th>
                   </tr>
                 </thead>
@@ -344,18 +392,40 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
                   {filas.map((f, i) => {
                     const eppCount = [f.tieneMandil, f.tieneGuantes, f.tieneCareta].filter(Boolean).length;
                     return (
-                      <tr key={i} className="hover:bg-slate-50 transition">
-                        <td className="py-2 px-3 font-medium text-slate-900">{f.colaborador}</td>
-                        <td className="py-2 px-2 text-slate-500 font-sans text-[11px]">{f.puesto.split(' ')[0]}...</td>
-                        <td className="py-2 px-2 text-center font-mono font-bold text-blue-600">{f.tallaCamisa}</td>
-                        <td className="py-2 px-2 text-center font-mono text-indigo-600">{f.tallaPantalon}</td>
-                        <td className="py-2 px-2 text-center font-mono text-emerald-700 font-bold">{f.tallaBotas}</td>
+                      <tr key={i} className="hover:bg-slate-50 transition text-[11px]">
+                        <td className="py-2 px-3 font-medium text-slate-900">
+                          <div className="font-bold">{f.colaborador}</div>
+                          <div className="text-[10px] text-slate-500">{f.puesto}</div>
+                        </td>
                         <td className="py-2 px-2 text-center">
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${eppCount === 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                          <span className={`px-1.5 py-0.5 rounded font-extrabold ${f.usaUniformeCompleto !== false ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                            {f.usaUniformeCompleto !== false ? 'SÍ' : 'NO'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <span className={`px-1.5 py-0.5 rounded font-extrabold ${f.usaBotasSeguridad !== false ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                            {f.usaBotasSeguridad !== false ? 'SÍ' : 'NO'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-black ${eppCount === 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                             {eppCount}/3 EPP
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-slate-500 font-mono text-[10px] truncate max-w-[100px]">{f.firmaRecibido}</td>
+                        <td className="py-2 px-2 text-center">
+                          <span className={`px-1.5 py-0.5 rounded font-extrabold ${f.cumpleLimpieza !== false ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                            {f.cumpleLimpieza !== false ? 'CUMPLE' : 'NO CUMPLE'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-center font-bold">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${f.estadoGeneralConforme !== false ? 'bg-emerald-150 text-emerald-800 border border-emerald-300' : 'bg-rose-150 text-rose-800 border border-rose-300'}`}>
+                            {f.estadoGeneralConforme !== false ? 'CONFORME' : 'NO CONFORME'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-slate-600 max-w-[150px] truncate">
+                          <div className="font-semibold">{f.observacionAuditoria || 'Sin observaciones.'}</div>
+                          <div className="text-[9px] text-slate-400 font-mono">Auditor: {f.firmaRecibido}</div>
+                        </td>
                         <td className="py-2 px-2 text-center">
                           <button
                             type="button"

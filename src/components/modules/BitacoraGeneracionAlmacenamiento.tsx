@@ -440,15 +440,15 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-200 rounded-xl p-4 bg-slate-50 font-mono text-xs mt-3">
                 <div>
                   <span className="block text-[9px] font-bold text-slate-500 uppercase">Total Peso Combinado (Tickets):</span>
-                  <span className="text-base font-extrabold text-cyan-800">{totalPesoTickets.toFixed(1)} LBS / KGS</span>
+                  <span className="text-base font-extrabold text-cyan-800">{totalPesoTickets.toFixed(1)} Lbs</span>
                 </div>
                 <div>
                   <span className="block text-[9px] font-bold text-slate-500 uppercase">Peso Oficial Báscula:</span>
-                  <span className="text-base font-extrabold text-slate-700">{pesoTicketBascula.toFixed(1)} LBS / KGS</span>
+                  <span className="text-base font-extrabold text-slate-700">{pesoTicketBascula.toFixed(1)} Lbs</span>
                 </div>
                 <div className={`p-1.5 rounded-lg border flex flex-col justify-center ${scaleDeviationPct > 3 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
                   <span className="block text-[9px] font-bold uppercase">Desviación de Báscula:</span>
-                  <span className="text-sm font-extrabold">{scaleDeviationPct.toFixed(2)} % ({scaleDeviation.toFixed(1)})</span>
+                  <span className="text-sm font-extrabold">{scaleDeviationPct.toFixed(2)} % ({scaleDeviation.toFixed(1)} Lbs)</span>
                 </div>
               </div>
             </div>

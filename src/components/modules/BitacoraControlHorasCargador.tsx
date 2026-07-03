@@ -63,6 +63,24 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
   // Calculated: Total operado (hrs)
   const totalOperadoHoras = Math.max(0, Number((lecturaFinalHorometro - lecturaInicialHorometro).toFixed(2)));
 
+  // Calculated: Horas Efectivas de Trabajo del Operador (Reloj)
+  const getHorasEfectivas = () => {
+    if (!horaInicio || !horaTermino) return 0;
+    try {
+      const [hIni, mIni] = horaInicio.split(':').map(Number);
+      const [hFin, mFin] = horaTermino.split(':').map(Number);
+      let diffMs = (hFin * 60 + mFin) - (hIni * 60 + mIni);
+      if (diffMs < 0) {
+        diffMs += 24 * 60; // overnight
+      }
+      const diffHours = diffMs / 60;
+      return Math.max(0, Number((diffHours - (Number(horasPausaInactividad) || 0)).toFixed(2)));
+    } catch (e) {
+      return 0;
+    }
+  };
+  const horasEfectivasTrabajo = getHorasEfectivas();
+
   // 5. Actividades Realizadas
   const [tipoActividadPrincipal, setTipoActividadPrincipal] = useState('Alimentación de Tolva de Trituradora');
   const [tipoMaterialTrabajado, setTipoMaterialTrabajado] = useState('Residuos Clínicos y Hospitalarios Sólidos (RPBI)');
@@ -156,6 +174,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
       horaInicio,
       horaTermino,
       horasPausaInactividad: Number(horasPausaInactividad) || 0,
+      horasTrabajoCalculadas: horasEfectivasTrabajo,
 
       // Actividades
       tipoActividadPrincipal,
@@ -435,7 +454,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 pt-1">
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hora de Inicio *</label>
                 <input
@@ -467,6 +486,13 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
                 />
                 <span className="text-[8px] text-slate-450 block mt-1 leading-none">Incluye traslados, esperas y paros</span>
+              </div>
+              <div className="bg-emerald-50 border border-emerald-200 rounded p-2 text-center flex flex-col justify-center">
+                <span className="block text-[9px] font-bold text-emerald-700 uppercase tracking-wider">Horas Trabajo (Reloj)</span>
+                <span className="text-base font-black text-emerald-900 font-mono mt-0.5">
+                  {horasEfectivasTrabajo} hrs
+                </span>
+                <span className="text-[8px] text-emerald-650 block leading-none">Neto (Inicio a Término - Pausa)</span>
               </div>
             </div>
           </div>
@@ -773,7 +799,10 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                   {/* Operational metrics pills */}
                   <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
                     <span className="bg-amber-50 text-amber-700 text-[9px] px-2 py-0.5 rounded-full font-bold">
-                      {reg.totalOperadoHoras} Hrs Operadas
+                      {reg.totalOperadoHoras} Hrs Horómetro
+                    </span>
+                    <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 rounded-full font-bold">
+                      {reg.horasTrabajoCalculadas ?? reg.totalOperadoHoras} Hrs Trabajo (Reloj)
                     </span>
                     <span className="bg-slate-100 text-slate-700 text-[9px] px-2 py-0.5 rounded-full font-medium">
                       Actividad: {reg.tipoActividadPrincipal.slice(0, 22)}...

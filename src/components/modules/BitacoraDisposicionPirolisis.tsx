@@ -27,7 +27,14 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
   const [observaciones, setObservaciones] = useState('');
 
   // 11 Processes pre-populated as seen in PDF
-  const [filas, setFilas] = useState<FilaDisposicionPirolisis[]>([]);
+  const [filas, setFilas] = useState<FilaDisposicionPirolisis[]>(() => {
+    return Array.from({ length: 11 }, (_, i) => ({
+      proceso: `Proceso ${String(i + 1).padStart(2, '0')}`,
+      pacas: 0,
+      noPaseTraslado: '',
+      firmaRecibe: ''
+    }));
+  });
 
   useEffect(() => {
     fetchRegistros();
@@ -93,6 +100,12 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
       generateAndDownloadPDF('disposicion_pirolisis', nuevoRegistro);
       setMsg({ text: 'Los datos de disposición final a pirólisis se han guardado exitosamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
+      setFilas(Array.from({ length: 11 }, (_, i) => ({
+        proceso: `Proceso ${String(i + 1).padStart(2, '0')}`,
+        pacas: 0,
+        noPaseTraslado: '',
+        firmaRecibe: ''
+      })));
       fetchRegistros();
     } catch (err) {
       console.error(err);

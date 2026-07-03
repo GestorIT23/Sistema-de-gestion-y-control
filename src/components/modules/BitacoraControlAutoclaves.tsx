@@ -25,6 +25,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [pesoProceso, setPesoProceso] = useState(650); // Lbs of waste sterilized
   const [responsable, setResponsable] = useState(userEmail || 'Líder de Control Biológico');
   const [noProceso, setNoProceso] = useState('NPA-9920');
+  const [lineaUtilizada, setLineaUtilizada] = useState('Línea 01');
 
   // Indicators Checkboxes
   const [biologico, setBiologico] = useState(false);
@@ -33,7 +34,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [identificacionIndicador, setIdentificacionIndicador] = useState('Cinta Testigo Químico Virado');
   const [resultadoIndicador, setResultadoIndicador] = useState('NEGATIVO (SIN CRECIMIENTO - APTO)');
   const [noLoteFabricante, setNoLoteFabricante] = useState('LOTE-2025-X12');
-  const [tempIncubacion, setTempIncubacion] = useState('56.5 °C (48 horas)');
+  const [tempIncubacion, setTempIncubacion] = useState('120 grados y 21 minutos');
 
   // Autoclave parameters checks
   const [temperatura, setTemperatura] = useState(true);
@@ -85,6 +86,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       noAutoclave,
       pesoProceso,
       noProceso,
+      lineaUtilizada,
       tipoIndicador: { biologico, quimico },
       identificacionIndicador,
       resultadoIndicador,
@@ -150,7 +152,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
             <FormHeader titulo="Bitácora de Control Químico / Biológico de Auto Claves" />
 
             {/* Sub-header parameters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
               <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">N° Autoclave:</label>
                 <select
@@ -178,25 +180,14 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso del Proceso (Lbs):</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Línea Utilizada:</label>
                 <input
-                  id="peso-proceso-val"
-                  type="number"
-                  value={pesoProceso}
-                  onChange={(e) => setPesoProceso(parseInt(e.target.value) || 0)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
-                />
-              </div>
-
-              <div className="space-y-1 md:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Del Responsable de Pruebas:</label>
-                <input
-                  id="responsable-val"
+                  id="linea-utilizada-val"
                   type="text"
-                  value={responsable}
-                  onChange={(e) => setResponsable(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
-                  required
+                  value={lineaUtilizada}
+                  onChange={(e) => setLineaUtilizada(e.target.value)}
+                  placeholder="Línea 01"
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none"
                 />
               </div>
 
@@ -208,6 +199,29 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                   value={noProceso}
                   onChange={(e) => setNoProceso(e.target.value)}
                   className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none text-center"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso del Proceso (Lbs):</label>
+                <input
+                  id="peso-proceso-val"
+                  type="number"
+                  value={pesoProceso}
+                  onChange={(e) => setPesoProceso(parseInt(e.target.value) || 0)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
+                />
+              </div>
+
+              <div className="space-y-1 md:col-span-3">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Del Responsable de Pruebas:</label>
+                <input
+                  id="responsable-val"
+                  type="text"
+                  value={responsable}
+                  onChange={(e) => setResponsable(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                  required
                 />
               </div>
             </div>

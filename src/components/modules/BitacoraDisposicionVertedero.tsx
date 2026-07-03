@@ -37,7 +37,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         placa: '',
         noPaseSalida: '',
         cantidadPacas: 0,
-        pesaje: 0
+        pesaje: 0,
+        horaSalida: '',
+        nombrePiloto: ''
       }));
       setFilas(initial);
     }
@@ -87,7 +89,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         placa: '',
         noPaseSalida: '',
         cantidadPacas: 0,
-        pesaje: 0
+        pesaje: 0,
+        horaSalida: '',
+        nombrePiloto: ''
       }
     ]);
   };
@@ -137,7 +141,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         placa: '',
         noPaseSalida: '',
         cantidadPacas: 0,
-        pesaje: 0
+        pesaje: 0,
+        horaSalida: '',
+        nombrePiloto: ''
       }));
       setFilas(resetFilas);
       fetchRegistros();
@@ -241,58 +247,80 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                 <table id="vertedero-form-table" className="w-full text-xs text-left text-slate-600">
                   <thead className="bg-[#fef3c7] text-amber-800 uppercase p-2 font-semibold text-[10px] border-b border-amber-200">
                     <tr>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-1/4">CAMIÓN / TRANSPORTE</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-28 text-center">PLACA</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-28 text-center">N° PASE SALIDA</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-24 text-center">CANTIDAD PACAS</th>
-                      <th className="px-4 py-2.5 border-r border-slate-300 w-24 text-center">PESAJE (LBS)</th>
-                      <th className="px-4 py-2.5 text-center w-12">ACCION</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-1/5">CAMIÓN / TRANSPORTE</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">PLACA</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">N° PASE SALIDA</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">HORA SALIDA</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-1/5 text-center">PILOTO</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">CANTIDAD PACAS</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">PESAJE (LBS)</th>
+                      <th className="px-2 py-2.5 text-center w-10">ACCION</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white font-mono text-center">
                     {filas.map((f, index) => (
                       <tr key={index} className="hover:bg-amber-50/10">
-                        <td className="px-2 py-1 border-r border-slate-200">
+                        <td className="px-1 py-1 border-r border-slate-200">
                           <input
                             id={`camion-input-${index}`}
                             type="text"
                             value={f.camion}
                             onChange={(e) => handleRowChange(index, 'camion', e.target.value)}
                             placeholder="Camión XX"
-                            className="bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800 w-full px-2 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800 w-full px-1 py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-2 py-1 border-r border-slate-200">
+                        <td className="px-1 py-1 border-r border-slate-200">
                           <input
                             id={`placa-input-${index}`}
                             type="text"
                             value={f.placa}
                             onChange={(e) => handleRowChange(index, 'placa', e.target.value.toUpperCase())}
                             placeholder="C-XXXX"
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-24 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-2 py-1 border-r border-slate-200">
+                        <td className="px-1 py-1 border-r border-slate-200">
                           <input
                             id={`salida-input-${index}`}
                             type="text"
                             value={f.noPaseSalida}
                             onChange={(e) => handleRowChange(index, 'noPaseSalida', e.target.value)}
                             placeholder="PS-XXX"
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-24 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-2 py-1 border-r border-slate-200 text-center">
+                        <td className="px-1 py-1 border-r border-slate-200">
+                          <input
+                            id={`hora-salida-input-${index}`}
+                            type="text"
+                            value={f.horaSalida || ''}
+                            onChange={(e) => handleRowChange(index, 'horaSalida', e.target.value)}
+                            placeholder="HH:MM"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-1 py-1 border-r border-slate-200">
+                          <input
+                            id={`piloto-input-${index}`}
+                            type="text"
+                            value={f.nombrePiloto || ''}
+                            onChange={(e) => handleRowChange(index, 'nombrePiloto', e.target.value)}
+                            placeholder="Nombre del Piloto"
+                            className="bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800 w-full px-1 py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-1 py-1 border-r border-slate-200 text-center">
                           <input
                             id={`pacas-vert-input-${index}`}
                             type="number"
                             value={f.cantidadPacas}
                             min={0}
                             onChange={(e) => handleRowChange(index, 'cantidadPacas', parseInt(e.target.value) || 0)}
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-16 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-full py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-2 py-1 border-r border-slate-200 text-center">
+                        <td className="px-1 py-1 border-r border-slate-200 text-center">
                           <input
                             id={`pesaje-vert-input-${index}`}
                             type="number"
@@ -300,10 +328,10 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             min={0}
                             onChange={(e) => handleRowChange(index, 'pesaje', parseInt(e.target.value) || 0)}
                             placeholder="0 LBS"
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-20 py-1 focus:bg-white outline-none"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-extrabold text-slate-800 w-full py-1 focus:bg-white outline-none"
                           />
                         </td>
-                        <td className="px-2 py-1 text-center">
+                        <td className="px-1 py-1 text-center">
                           <button
                             id={`btn-remove-row-${index}`}
                             type="button"

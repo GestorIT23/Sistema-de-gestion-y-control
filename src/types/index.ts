@@ -79,6 +79,8 @@ export interface FilaDisposicionVertedero {
   noPaseSalida: string;
   cantidadPacas: number;
   pesaje?: number;
+  horaSalida?: string;
+  nombrePiloto?: string;
 }
 
 export interface BitacoraDisposicionVertedero extends BaseBitacora {
@@ -148,9 +150,12 @@ export interface BitacoraReduccionVolumen extends BaseBitacora {
   estadoCajasReductoras: boolean;
   estadoFajas: boolean;
   estadoElevadorCarros: boolean;
-  estadoBandaTransportadora: boolean;
+  estadoBandaTransportadora?: boolean;
   estadoCompactadora: boolean;
   anotacionesEspeciales: string;
+  horaInicio?: string;
+  horaFin?: string;
+  lineaUtilizada?: string;
 }
 
 // 8. Bitacora Control Químico / Biológico de Autoclaves
@@ -158,6 +163,7 @@ export interface BitacoraControlAutoclaves extends BaseBitacora {
   noAutoclave: string;
   pesoProceso: number;
   noProceso: string;
+  lineaUtilizada?: string;
   tipoIndicador: {
     biologico: boolean;
     quimico: boolean;
@@ -267,6 +273,11 @@ export interface FilaControlUniforme {
   tieneCareta: boolean;
   motivoDotacion: string;
   firmaRecibido: string;
+  usaUniformeCompleto?: boolean;
+  usaBotasSeguridad?: boolean;
+  cumpleLimpieza?: boolean;
+  observacionAuditoria?: string;
+  estadoGeneralConforme?: boolean;
 }
 
 export interface BitacoraControlUniformes extends BaseBitacora {
@@ -297,6 +308,7 @@ export interface BitacoraControlHorasCargador extends BaseBitacora {
   horaInicio: string;
   horaTermino: string;
   horasPausaInactividad: number;
+  horasTrabajoCalculadas?: number;
 
   // Actividades
   tipoActividadPrincipal: string;

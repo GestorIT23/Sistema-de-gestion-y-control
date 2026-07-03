@@ -28,6 +28,19 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
   // Table rows
   const [filas, setFilas] = useState<FilaInsumoQuimico[]>([]);
 
+  // Available Products options
+  const [productOptions, setProductOptions] = useState([
+    'Bolsas Rojas Plásticas (Calibre 200)',
+    'Bolsas Amarillas Patológico (Calibre 200)',
+    'Bolsas Negras Desechos Comunes',
+    'Cloro Industrial Líquido al 5%',
+    'Amonio Cuaternario Concentrado',
+    'Alcohol Isopropílico Desinfectante',
+    'Contenedores Plásticos Rojos 15L',
+    'Film Stretch Transparente de Embalar'
+  ]);
+  const [newProductName, setNewProductName] = useState('');
+
   // Add row fields
   const [nuevoProducto, setNuevoProducto] = useState('Bolsas Rojas Plásticas (Calibre 200)');
   const [medida, setMedida] = useState('Unidades');
@@ -59,6 +72,16 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddNewProductOption = () => {
+    if (!newProductName.trim()) return;
+    const trimmed = newProductName.trim();
+    if (!productOptions.includes(trimmed)) {
+      setProductOptions([...productOptions, trimmed]);
+    }
+    setNuevoProducto(trimmed);
+    setNewProductName('');
   };
 
   const handleAddFila = () => {
@@ -224,20 +247,33 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
                 <label className="block text-[10px] font-bold text-slate-600 uppercase mb-0.5">Producto Consumible / Químico</label>
-                <select
-                  value={nuevoProducto}
-                  onChange={(e) => setNuevoProducto(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-200 rounded py-1.5 px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="Bolsas Rojas Plásticas (Calibre 200)">Bolsas Rojas Plásticas (Calibre 200)</option>
-                  <option value="Bolsas Amarillas Patológico (Calibre 200)">Bolsas Amarillas Patológico (Calibre 200)</option>
-                  <option value="Bolsas Negras Desechos Comunes">Bolsas Negras Desechos Comunes</option>
-                  <option value="Cloro Industrial Líquido al 5%">Cloro Industrial Líquido al 5%</option>
-                  <option value="Amonio Cuaternario Concentrado">Amonio Cuaternario Concentrado</option>
-                  <option value="Alcohol Isopropílico Desinfectante">Alcohol Isopropílico Desinfectante</option>
-                  <option value="Contenedores Plásticos Rojos 15L">Contenedores Plásticos Rojos 15L</option>
-                  <option value="Film Stretch Transparente de Embalar">Film Stretch Transparente de Embalar</option>
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={nuevoProducto}
+                    onChange={(e) => setNuevoProducto(e.target.value)}
+                    className="w-full text-xs bg-white border border-slate-200 rounded py-1.5 px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    {productOptions.map((p, idx) => (
+                      <option key={idx} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mt-2 flex gap-1.5 items-center bg-white p-2 border border-slate-200 rounded shadow-sm">
+                  <input
+                    type="text"
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                    placeholder="Escriba un nuevo producto para agregar a la lista..."
+                    className="flex-1 text-xs border border-slate-300 rounded px-2.5 py-1.5 outline-none focus:border-cyan-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddNewProductOption}
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white text-[10px] font-bold py-1.5 px-3 rounded cursor-pointer transition whitespace-nowrap"
+                  >
+                    + Registrar Producto
+                  </button>
+                </div>
               </div>
 
               <div>

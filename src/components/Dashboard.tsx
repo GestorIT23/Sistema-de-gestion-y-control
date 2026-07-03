@@ -257,8 +257,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     },
     {
       id: 'control_uniformes',
-      title: 'Control de Uniformes de Planta',
-      subtitle: 'Dotación de uniformes y EPP',
+      title: 'Auditoría de Uniformes y EPP',
+      subtitle: 'Auditoría del uso de EPP y uso de uniforme',
       code: 'BIOTRASH 4.0. F-OPR-000-13',
       icon: <Pocket className="w-5 h-5 text-cyan-600" />,
       color: 'border-cyan-200 hover:border-cyan-400 focus:ring-cyan-500',

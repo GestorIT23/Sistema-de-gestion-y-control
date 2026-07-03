@@ -165,6 +165,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
 
     const colWidth = (pageWidth - (marginX * 2) - 2) / 2;
+    const maxKeyWidth = colWidth - 25; // guaranteed 25mm of space for the value text
     let localY = y;
 
     for (let i = 0; i < items.length; i += 2) {
@@ -174,28 +175,51 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         doc.rect(marginX + 1, localY, colWidth * 2, 7, 'F');
       }
 
-      // Left column
+      // Left column key
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text(items[i].key + ':', marginX + 4, localY + 4.8);
       
+      const keyStrLeft = items[i].key + ':';
+      let displayKeyLeft = keyStrLeft;
+      if (doc.getTextWidth(keyStrLeft) > maxKeyWidth) {
+        let tempKey = items[i].key;
+        while (tempKey.length > 5 && doc.getTextWidth(tempKey + '...:') > maxKeyWidth) {
+          tempKey = tempKey.slice(0, -1);
+        }
+        displayKeyLeft = tempKey + '...:';
+      }
+      doc.text(displayKeyLeft, marginX + 4, localY + 4.8);
+      
+      // Left column value
       doc.setFont('Helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text(truncateText(items[i].value, 46), marginX + 28, localY + 4.8);
+      doc.text(truncateText(items[i].value, 46), marginX + colWidth - 4, localY + 4.8, { align: 'right' });
 
       // Right column (if exists)
       if (items[i + 1]) {
+        // Right column key
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(7.5);
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.text(items[i + 1].key + ':', marginX + colWidth + 4, localY + 4.8);
         
+        const keyStrRight = items[i + 1].key + ':';
+        let displayKeyRight = keyStrRight;
+        if (doc.getTextWidth(keyStrRight) > maxKeyWidth) {
+          let tempKey = items[i + 1].key;
+          while (tempKey.length > 5 && doc.getTextWidth(tempKey + '...:') > maxKeyWidth) {
+            tempKey = tempKey.slice(0, -1);
+          }
+          displayKeyRight = tempKey + '...:';
+        }
+        doc.text(displayKeyRight, marginX + colWidth + 4, localY + 4.8);
+        
+        // Right column value
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(7.5);
         doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-        doc.text(truncateText(items[i + 1].value, 46), marginX + colWidth + 28, localY + 4.8);
+        doc.text(truncateText(items[i + 1].value, 46), marginX + colWidth * 2 - 4, localY + 4.8, { align: 'right' });
       }
 
       // Draw horizontal dividing line
@@ -315,10 +339,10 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('II. CONTROL DE ESTADO GENERAL DE CONTENEDORES');
     const estado = data.estadoGeneral || {};
     drawGridInfo([
-      { key: 'Tapadera Buen Estado', value: estado.tapaderaBuenEstado ? 'SÍ (✓)' : 'NO (✗)' },
-      { key: 'Cuerpo de Plástico', value: estado.cuerpoBuenEstado ? 'SÍ (✓)' : 'NO (✗)' },
-      { key: 'Llantas / Ruedas', value: estado.llantasBuenEstado ? 'SÍ (✓)' : 'NO (✗)' },
-      { key: 'Halador / Manijas', value: estado.haladorBuenEstado ? 'SÍ (✓)' : 'NO (✗)' }
+      { key: 'Tapadera Buen Estado', value: estado.tapaderaBuenEstado ? '(SÍ)' : '(NO)' },
+      { key: 'Cuerpo de Plástico', value: estado.cuerpoBuenEstado ? '(SÍ)' : '(NO)' },
+      { key: 'Llantas / Ruedas', value: estado.llantasBuenEstado ? '(SÍ)' : '(NO)' },
+      { key: 'Halador / Manijas', value: estado.haladorBuenEstado ? '(SÍ)' : '(NO)' }
     ]);
 
     if (data.observaciones) {
@@ -379,13 +403,15 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     }
 
     drawSectionHeader('III. DESGLOSE DE CAMIONES Y VIAJES');
-    const tableHeaders = ['CÓDIGO CAMIÓN', 'PLACA REGISTRADA', 'NO. PASE SALIDA', 'CANTIDAD PACAS', 'PESAJE (LBS)'];
-    const tableWidths = [36, 36, 36, 36, 36];
+    const tableHeaders = ['CÓDIGO', 'PLACA', 'NO. PASE', 'H. SALIDA', 'PILOTO / CHOFER', 'PACAS', 'PESO (LBS)'];
+    const tableWidths = [24, 24, 24, 24, 40, 24, 30];
     const tableRows = (data.filas || []).map((f: any) => [
-      f.camion,
-      f.placa,
-      f.noPaseSalida,
-      f.cantidadPacas,
+      f.camion || '',
+      f.placa || '',
+      f.noPaseSalida || '',
+      f.horaSalida || 'N/R',
+      f.nombrePiloto || 'N/R',
+      String(f.cantidadPacas || 0),
       f.pesaje !== undefined ? `${f.pesaje} lbs` : '0 lbs'
     ]);
     drawDataTable(tableHeaders, tableWidths, tableRows);
@@ -409,7 +435,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Temp. Cámara Combustión', value: String(data.tempCombustion || 0) + ' °C' },
       { key: 'Temp. Cámara Post-Combustión', value: String(data.tempPostCombustion || 0) + ' °C' },
       { key: 'Polvo de Cenizas Final (kg)', value: String(data.cantidadPolvoFin || 0) + ' kg' },
-      { key: 'Eficiencia de Combustión', value: '99.8% Conforme (✓)' }
+      { key: 'Eficiencia de Combustión', value: '(99.8% CONFORME)' }
     ]);
 
     if (data.observaciones) {
@@ -442,14 +468,14 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('II. REGISTRO DE INSPECCIÓN SANITARIA Y COMPONENTES');
     const insp = data.inspeccion || {};
     drawGridInfo([
-      { key: 'Limpieza Paredes Ext.', value: insp.limpiezaParedesExteriores ? 'CONFORME (✓)' : 'MAL ESTADO (✗)' },
-      { key: 'Limpieza Paredes Int.', value: insp.limpiezaParedesInteriores ? 'CONFORME (✓)' : 'MAL ESTADO (✗)' },
-      { key: 'Limpieza de Pisos', value: insp.limpiezaPiso ? 'CONFORME (✓)' : 'MAL ESTADO (✗)' },
-      { key: 'Funcionamiento Evaporador', value: insp.funcionamientoEvaporadores ? 'CONFORME (✓)' : 'FALLA (✗)' },
-      { key: 'Funcionamiento Condensador', value: insp.funcionamientoCondensadores ? 'CONFORME (✓)' : 'FALLA (✗)' },
-      { key: 'Luces Interiores SGI', value: insp.funcionamientoLucesInteriores ? 'CONFORME (✓)' : 'REEMPLAZAR (✗)' },
-      { key: 'Residuos Ordenados', value: insp.residuoOrdenado ? 'CONFORME (✓)' : 'DESORDEN (✗)' },
-      { key: 'Limpieza de Techos', value: insp.limpiezaTecho ? 'CONFORME (✓)' : 'SUCIO (✗)' }
+      { key: 'Limpieza Paredes Ext.', value: insp.limpiezaParedesExteriores ? '(CONFORME)' : '(MAL ESTADO)' },
+      { key: 'Limpieza Paredes Int.', value: insp.limpiezaParedesInteriores ? '(CONFORME)' : '(MAL ESTADO)' },
+      { key: 'Limpieza de Pisos', value: insp.limpiezaPiso ? '(CONFORME)' : '(MAL ESTADO)' },
+      { key: 'Funcionamiento Evaporador', value: insp.funcionamientoEvaporadores ? '(CONFORME)' : '(FALLA)' },
+      { key: 'Funcionamiento Condensador', value: insp.funcionamientoCondensadores ? '(CONFORME)' : '(FALLA)' },
+      { key: 'Luces Interiores SGI', value: insp.funcionamientoLucesInteriores ? '(CONFORME)' : '(REEMPLAZAR)' },
+      { key: 'Residuos Ordenados', value: insp.residuoOrdenado ? '(CONFORME)' : '(DESORDEN)' },
+      { key: 'Limpieza de Techos', value: insp.limpiezaTecho ? '(CONFORME)' : '(SUCIO)' }
     ]);
 
     const temps = data.tempCongeladores || {};
@@ -471,6 +497,9 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Responsable', value: data.responsable },
       { key: 'Código Trituradora', value: data.noTrituradora },
       { key: 'Número de Proceso', value: data.noProceso },
+      { key: 'Línea Utilizada', value: data.lineaUtilizada || '' },
+      { key: 'Hora de Inicio', value: data.horaInicio || '' },
+      { key: 'Hora de Finalización', value: data.horaFin || '' },
       { key: 'Tiempo de Duración', value: data.tiempoProceso },
       { key: 'Cantidad Pacas Producidas', value: String(data.cantidadPacas || 0) },
       { key: 'Peso Entrada (lbs)', value: String(data.pesoEntrada || 0) + ' lbs' },
@@ -479,12 +508,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
     drawSectionHeader('II. DIAGNÓSTICO DEL SISTEMA MECÁNICO DE TRITURACIÓN');
     drawGridInfo([
-      { key: 'Estado Mecánico Trituradora', value: data.estadoTrituradora ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' },
-      { key: 'Estado Cajas Reductoras', value: data.estadoCajasReductoras ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' },
-      { key: 'Estado Fajas de Transmisión', value: data.estadoFajas ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' },
-      { key: 'Estado Elevador Carros', value: data.estadoElevadorCarros ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' },
-      { key: 'Estado Banda Transportadora', value: data.estadoBandaTransportadora ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' },
-      { key: 'Estado Mecánico Compactadora', value: data.estadoCompactadora ? 'CONFORME (✓)' : 'REPORTAR FALLA (✗)' }
+      { key: 'Estado Mecánico Trituradora', value: data.estadoTrituradora ? '(CONFORME)' : '(REPORTAR FALLA)' },
+      { key: 'Estado Cajas Reductoras', value: data.estadoCajasReductoras ? '(CONFORME)' : '(REPORTAR FALLA)' },
+      { key: 'Estado general de la faja o tornillo', value: data.estadoFajas ? '(CONFORME)' : '(REPORTAR FALLA)' },
+      { key: 'Estado Elevador Carros', value: data.estadoElevadorCarros ? '(CONFORME)' : '(REPORTAR FALLA)' },
+      { key: 'Estado Mecánico Compactadora', value: data.estadoCompactadora ? '(CONFORME)' : '(REPORTAR FALLA)' }
     ]);
 
   } else if (tipo === 'control_autoclaves') {
@@ -495,6 +523,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Responsable SGI', value: data.responsable },
       { key: 'Identificación Autoclave', value: data.noAutoclave },
       { key: 'Número Proceso', value: data.noProceso },
+      { key: 'Línea Utilizada', value: data.lineaUtilizada || '' },
       { key: 'Peso del Proceso', value: String(data.pesoProceso || 0) + ' lbs' },
       { key: 'Temperatura Incubación', value: data.tempIncubacion }
     ]);
@@ -502,16 +531,16 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('II. PARÁMETROS OPERATIVOS DE ESTERILIZACIÓN');
     const param = data.parametrosOperacion || {};
     drawGridInfo([
-      { key: 'Control Temperatura Cumplida', value: param.temperatura ? 'ALCANZADO (✓)' : 'FALLO (✗)' },
-      { key: 'Control Presión Cumplida', value: param.presion ? 'ALCANZADO (✓)' : 'FALLO (✗)' },
-      { key: 'Tiempo de Esterilización', value: param.tiempoProceso ? 'CONFORME (✓)' : 'REVISIÓN (✗)' }
+      { key: 'Control Temperatura Cumplida', value: param.temperatura ? '(ALCANZADO)' : '(FALLO)' },
+      { key: 'Control Presión Cumplida', value: param.presion ? '(ALCANZADO)' : '(FALLO)' },
+      { key: 'Tiempo de Esterilización', value: param.tiempoProceso ? '(CONFORME)' : '(REVISIÓN)' }
     ]);
 
     drawSectionHeader('III. MONITOREO DE INDICADORES BIOLÓGICOS Y QUÍMICOS');
     const ind = data.tipoIndicador || {};
     drawGridInfo([
-      { key: 'Uso de Ampolla Biolágica', value: ind.biologico ? 'SÍ (✓)' : 'NO' },
-      { key: 'Uso de Cinta Química', value: ind.quimico ? 'SÍ (✓)' : 'NO' },
+      { key: 'Uso de Ampolla Biolágica', value: ind.biologico ? '(SÍ)' : '(NO)' },
+      { key: 'Uso de Cinta Química', value: ind.quimico ? '(SÍ)' : '(NO)' },
       { key: 'Marca / Identificación Indicador', value: data.identificacionIndicador },
       { key: 'Resultado Clínico Final', value: data.resultadoIndicador },
       { key: 'Nro Lote del Fabricante', value: data.noLoteFabricante }
@@ -533,12 +562,12 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     const res = data.tipoResiduo || {};
     const emb = data.tipoEmbalaje || {};
     drawGridInfo([
-      { key: 'Clase Inorgánico', value: res.inorganico ? 'SÍ (✓)' : 'NO' },
-      { key: 'Clase Punzocortantes', value: res.punzoCortante ? 'SÍ (✓)' : 'NO' },
-      { key: 'Clase Patológicos', value: res.patologico ? 'SÍ (✓)' : 'NO' },
-      { key: 'Embalaje Contenedor', value: emb.contenedor ? 'SÍ (✓)' : 'NO' },
-      { key: 'Embalaje Tonel Metálico', value: emb.tonelMetalico ? 'SÍ (✓)' : 'NO' },
-      { key: 'Embalaje Congelador', value: emb.congelador ? 'SÍ (✓)' : 'NO' }
+      { key: 'Clase Inorgánico', value: res.inorganico ? '(SÍ)' : '(NO)' },
+      { key: 'Clase Punzocortantes', value: res.punzoCortante ? '(SÍ)' : '(NO)' },
+      { key: 'Clase Patológicos', value: res.patologico ? '(SÍ)' : '(NO)' },
+      { key: 'Embalaje Contenedor', value: emb.contenedor ? '(SÍ)' : '(NO)' },
+      { key: 'Embalaje Tonel Metálico', value: emb.tonelMetalico ? '(SÍ)' : '(NO)' },
+      { key: 'Embalaje Congelador', value: emb.congelador ? '(SÍ)' : '(NO)' }
     ]);
 
     drawSectionHeader('III. DETALLES DETALLADOS DE TICKETS INTERNOS');
@@ -582,16 +611,16 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     const chk = data.checklistBanos || {};
     const ab = data.abastecimientoBanos || {};
     drawGridInfo([
-      { key: 'Lavado de Sanitarios', value: chk.lavadoSanitarios ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Lavado de Lavamanos', value: chk.lavadoLavamanos ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Barrido y Trapeado', value: chk.barridoTrapeado ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Limpieza de Espejos', value: chk.limpiezaEspejos ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Limpieza de Vidrios', value: chk.limpiezaVidrios ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Desinfección Superficies', value: chk.desinfeccionSuperficies ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Vaciado Papeleras', value: chk.vaciadoPapeleras ? 'CUMPLIDO (✓)' : 'PENDIENTE' },
-      { key: 'Papel Higiénico Surtido', value: ab.papelHigienico ? 'CON STOCK (✓)' : 'SIN STOCK' },
-      { key: 'Jabón Surtido', value: ab.jabonManos ? 'CON STOCK (✓)' : 'SIN STOCK' },
-      { key: 'Toallas de Papel', value: ab.toallasPapel ? 'CON STOCK (✓)' : 'SIN STOCK' }
+      { key: 'Lavado de Sanitarios', value: chk.lavadoSanitarios ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Lavado de Lavamanos', value: chk.lavadoLavamanos ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Barrido y Trapeado', value: chk.barridoTrapeado ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Limpieza de Espejos', value: chk.limpiezaEspejos ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Limpieza de Vidrios', value: chk.limpiezaVidrios ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Desinfección Superficies', value: chk.desinfeccionSuperficies ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Vaciado Papeleras', value: chk.vaciadoPapeleras ? '(CUMPLIDO)' : '(PENDIENTE)' },
+      { key: 'Papel Higiénico Surtido', value: ab.papelHigienico ? '(CON STOCK)' : '(SIN STOCK)' },
+      { key: 'Jabón Surtido', value: ab.jabonManos ? '(CON STOCK)' : '(SIN STOCK)' },
+      { key: 'Toallas de Papel', value: ab.toallasPapel ? '(CON STOCK)' : '(SIN STOCK)' }
     ]);
 
   } else if (tipo === 'insumos_quimicos') {
@@ -663,12 +692,17 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       y += 8;
     }
 
-    drawSectionHeader('III. CONTROL DE DOTACIONES DE EPP');
-    const tableHeaders = ['COLABORADOR', 'PUESTO OPERACIONAL', 'FILIP', 'PANT', 'BOTAS', 'EPP OK?', 'FIRMA RECIBIDO'];
-    const tableWidths = [45, 45, 12, 12, 12, 18, 36];
+    drawSectionHeader('III. AUDITORÍA DE UNIFORMES Y EPP');
+    const tableHeaders = ['COLABORADOR', 'PUESTO', 'UNIFORME OK', 'BOTAS OK', 'LIMPIO', 'ESTADO GRAL', 'OBSERVACIONES / FIRMA'];
+    const tableWidths = [45, 30, 20, 18, 15, 20, 32];
     const tableRows = (data.filas || []).map((f: any) => [
-      f.colaborador, f.puesto.split(' ')[0], f.tallaCamisa, f.tallaPantalon, f.tallaBotas,
-      [f.tieneMandil, f.tieneGuantes, f.tieneCareta].filter(Boolean).length + '/3', f.firmaRecibido
+      f.colaborador,
+      f.puesto || 'N/A',
+      f.usaUniformeCompleto ? '(SÍ)' : '(NO)',
+      f.usaBotasSeguridad ? '(SÍ)' : '(NO)',
+      f.cumpleLimpieza ? '(SÍ)' : '(NO)',
+      `(${f.estadoGeneralConforme || 'CONFORME'})`,
+      f.observacionAuditoria || 'Sin observaciones'
     ]);
     drawDataTable(tableHeaders, tableWidths, tableRows);
   } else if (tipo === 'control_horas_cargador') {
@@ -720,11 +754,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     const tableHeaders = ['COMPONENTE INSPECCIONADO', 'ESTADO (CONFORME?)', 'COMPONENTE INSPECCIONADO', 'ESTADO (CONFORME?)'];
     const tableWidths = [60, 30, 60, 30];
     const tableRows = [
-      ['Nivel de aceite motor', chk.nivelAceiteMotor ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Frenos de servicio y de mano', chk.frenos ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
-      ['Nivel de refrigerante', chk.nivelRefrigerante ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Cinturón de seguridad', chk.cinturonSeguridad ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
-      ['Presión de llantas', chk.presionLlantas ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Bocina y alarma de reversa', chk.bocinaAlarmaReversa ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
-      ['Estado de la cuchara/balde', chk.estadoCucharaBalde ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Extintor a bordo (vigencia)', chk.extintorAbordo ? 'OK / CONFORME' : 'REQUIERE REVISIÓN'],
-      ['Luces y señales direccionales', chk.lucesSenales ? 'OK / CONFORME' : 'REQUIERE REVISIÓN', 'Documentos y tarjeta de equipo', chk.documentosEquipo ? 'OK / CONFORME' : 'REQUIERE REVISIÓN']
+      ['Nivel de aceite motor', chk.nivelAceiteMotor ? '(CONFORME)' : '(REQUIERE REVISIÓN)', 'Frenos de servicio y de mano', chk.frenos ? '(CONFORME)' : '(REQUIERE REVISIÓN)'],
+      ['Nivel de refrigerante', chk.nivelRefrigerante ? '(CONFORME)' : '(REQUIERE REVISIÓN)', 'Cinturón de seguridad', chk.cinturonSeguridad ? '(CONFORME)' : '(REQUIERE REVISIÓN)'],
+      ['Presión de llantas', chk.presionLlantas ? '(CONFORME)' : '(REQUIERE REVISIÓN)', 'Bocina y alarma de reversa', chk.bocinaAlarmaReversa ? '(CONFORME)' : '(REQUIERE REVISIÓN)'],
+      ['Estado de la cuchara/balde', chk.estadoCucharaBalde ? '(CONFORME)' : '(REQUIERE REVISIÓN)', 'Extintor a bordo (vigencia)', chk.extintorAbordo ? '(CONFORME)' : '(REQUIERE REVISIÓN)'],
+      ['Luces y señales direccionales', chk.lucesSenales ? '(CONFORME)' : '(REQUIERE REVISIÓN)', 'Documentos y tarjeta de equipo', chk.documentosEquipo ? '(CONFORME)' : '(REQUIERE REVISIÓN)']
     ];
     drawDataTable(tableHeaders, tableWidths, tableRows);
 

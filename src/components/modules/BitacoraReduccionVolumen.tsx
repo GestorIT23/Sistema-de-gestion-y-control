@@ -25,6 +25,9 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
   const [tiempoProceso, setTiempoProceso] = useState('2.5 Horas');
   const [responsable, setResponsable] = useState(userEmail || 'Operador de Planta');
   const [noProceso, setNoProceso] = useState('NP-88390');
+  const [lineaUtilizada, setLineaUtilizada] = useState('Línea 01');
+  const [horaInicio, setHoraInicio] = useState('08:00');
+  const [horaFin, setHoraFin] = useState('10:30');
 
   const [pesoEntrada, setPesoEntrada] = useState(1200); // Lbs
   const [pesoSalida, setPesoSalida] = useState(1185);  // Lbs
@@ -35,7 +38,6 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
   const [estadoCajasReductoras, setEstadoCajasReductoras] = useState(true);
   const [estadoFajas, setEstadoFajas] = useState(true);
   const [estadoElevadorCarros, setEstadoElevadorCarros] = useState(true);
-  const [estadoBandaTransportadora, setEstadoBandaTransportadora] = useState(true);
   const [estadoCompactadora, setEstadoCompactadora] = useState(true);
 
   const [observaciones, setObservaciones] = useState('');
@@ -92,10 +94,12 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
       estadoCajasReductoras,
       estadoFajas,
       estadoElevadorCarros,
-      estadoBandaTransportadora,
       estadoCompactadora,
       anotacionesEspeciales,
       observaciones,
+      horaInicio,
+      horaFin,
+      lineaUtilizada,
       elaboro: 'Gerente Comercial Industrial',
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
@@ -152,7 +156,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
             <FormHeader titulo="Bitácora de Proceso de Reducción de Volúmen y Control de Pacas" />
 
             {/* Sub-header parameters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
               <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">N° Trituradora:</label>
                 <input
@@ -177,25 +181,14 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Tiempo del Proceso:</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Línea Utilizada:</label>
                 <input
-                  id="tiempo-proceso-val"
+                  id="linea-utilizada-val"
                   type="text"
-                  value={tiempoProceso}
-                  onChange={(e) => setTiempoProceso(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
-                />
-              </div>
-
-              <div className="space-y-1 md:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Del Responsable de Operación:</label>
-                <input
-                  id="responsable-val"
-                  type="text"
-                  value={responsable}
-                  onChange={(e) => setResponsable(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
-                  required
+                  value={lineaUtilizada}
+                  onChange={(e) => setLineaUtilizada(e.target.value)}
+                  placeholder="Línea 01"
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none"
                 />
               </div>
 
@@ -207,6 +200,53 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   value={noProceso}
                   onChange={(e) => setNoProceso(e.target.value)}
                   className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Hora de Inicio:</label>
+                <input
+                  id="hora-inicio-val"
+                  type="text"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  placeholder="HH:MM"
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Hora de Finalización:</label>
+                <input
+                  id="hora-fin-val"
+                  type="text"
+                  value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  placeholder="HH:MM"
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Tiempo del Proceso:</label>
+                <input
+                  id="tiempo-proceso-val"
+                  type="text"
+                  value={tiempoProceso}
+                  onChange={(e) => setTiempoProceso(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Responsable:</label>
+                <input
+                  id="responsable-val"
+                  type="text"
+                  value={responsable}
+                  onChange={(e) => setResponsable(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                  required
                 />
               </div>
             </div>
@@ -280,9 +320,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   {[
                     { label: 'Estado general de la trituradora', state: estadoTrituradora, set: setEstadoTrituradora },
                     { label: 'Estado de las cajas reductoras', state: estadoCajasReductoras, set: setEstadoCajasReductoras },
-                    { label: 'Estado general de las fajas', state: estadoFajas, set: setEstadoFajas },
+                    { label: 'Estado general de la faja o tornillo', state: estadoFajas, set: setEstadoFajas },
                     { label: 'Estado general del elevador de carros', state: estadoElevadorCarros, set: setEstadoElevadorCarros },
-                    { label: 'Estado general de la banda transportadora', state: estadoBandaTransportadora, set: setEstadoBandaTransportadora },
                     { label: 'Estado general de la compactadora', state: estadoCompactadora, set: setEstadoCompactadora },
                   ].map((eq, i) => (
                     <label key={i} className="flex items-center justify-between p-2.5 bg-white rounded border border-slate-150 hover:border-slate-350 transition cursor-pointer text-xs">
@@ -344,10 +383,10 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                 id="btn-save-compactor"
                 type="submit"
                 disabled={saving}
-                className="bg-emerald-650 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm px-6 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2"
+                className="bg-emerald-650 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition flex items-center gap-2"
               >
                 <Database className="w-4 h-4" />
-                {saving ? 'Guardando...' : 'Sincronizar Compactadora'}
+                {saving ? 'Guardando...' : 'Guardar y Sincronizar Registro de Trituración'}
               </button>
             </div>
 
