@@ -152,7 +152,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
           <form id="bitacora-inventario-form" onSubmit={handleGuardar} className="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-6">
             
             {/* Paper Header Clone */}
-            <FormHeader titulo="Bitácora de Inventarios e Insumos" />
+            <FormHeader titulo="Bitácora de Ingreso de Desechos a Planta" />
 
             {/* Sub-Header Metadata Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
@@ -210,7 +210,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
             {/* Grid Form Row Creator */}
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b pb-2 border-slate-100">
-                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">Registro de Movimientos de Insumos</h3>
+                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">Registro de Ingreso de Desechos</h3>
                 <span className="text-[10px] text-slate-400">Inserte filas para alimentar el formato</span>
               </div>
 
@@ -402,11 +402,11 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
               <CheckCircle className="w-4 h-4 text-emerald-400" /> Control del Proceso
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              De acuerdo con las regulaciones de la norma <strong>BIOTRASH ISO 14001</strong> de gestión de residuos peligrosos biológico-infecciosos (RPBI), este formato monitorea la correcta disponibilidad de bolsas y envases herméticos en las áreas designadas.
+              De acuerdo con las regulaciones de la norma <strong>BIOTRASH ISO 14001</strong> de gestión de residuos peligrosos biológico-infecciosos (RPBI), este formato monitorea el ingreso de desechos clínicos e industriales a la planta de tratamiento.
             </p>
             <div className="border-t border-slate-800 pt-4 space-y-3 font-mono text-[11px] text-slate-300">
               <div className="flex justify-between">
-                <span>Total de insumos hoy:</span>
+                <span>Total de desechos hoy:</span>
                 <span className="font-bold text-emerald-400">
                   {filas.reduce((total, f) => total + f.cantidad, 0)} pzas
                 </span>

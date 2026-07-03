@@ -48,7 +48,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
   // Document Title mapping
   const titles: Record<string, { code: string; name: string }> = {
-    inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS' },
+    inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
     entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
     disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
     disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
@@ -278,7 +278,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
   // Render content according to the bitacora form category/type
   if (tipo === 'inventarios') {
-    // 1. Inventarios e Insumos
+    // 1. Ingreso de Desechos a Planta
     drawSectionHeader('I. INFORMACIÓN DE LA BITÁCORA');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
@@ -296,8 +296,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       y += 8;
     }
 
-    drawSectionHeader('III. REGISTRO DE PRODUCTOS E INSUMOS');
-    const tableHeaders = ['HORA', 'PRODUCTO / INSUMO', 'CANTIDAD', 'FIRMA REGISTRO'];
+    drawSectionHeader('III. REGISTRO DE DESECHOS INGRESADOS');
+    const tableHeaders = ['HORA', 'TIPO DE DESECHO', 'CANTIDAD', 'FIRMA REGISTRO'];
     const tableWidths = [30, 80, 30, 40];
     const tableRows = (data.filas || []).map((f: any) => [f.hora, f.producto, f.cantidad, f.firma]);
     drawDataTable(tableHeaders, tableWidths, tableRows);

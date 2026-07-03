@@ -137,12 +137,12 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   const modulos = [
     {
       id: 'inventarios',
-      title: 'Inventarios e Insumos',
-      subtitle: 'Bolsas, envases y consumibles SGC',
+      title: 'Ingreso de Desechos a Planta',
+      subtitle: 'Registro de ingreso de desechos clínicos e industriales',
       code: 'BIOTRASH 4.0. F-OPR-000-1',
       icon: <ClipboardList className="w-5 h-5 text-emerald-500" />,
       color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
-      tag: 'Insumos',
+      tag: 'Ingreso',
       stats: `${counts.inventarios} registros`
     },
     {

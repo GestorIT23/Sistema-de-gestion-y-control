@@ -28,7 +28,7 @@ interface Props {
 
 const BITACORAS_INFO = [
   { id: 'all', title: 'Todas las Bitácoras', col: 'all', code: 'BIOTRASH-ALL' },
-  { id: 'inventarios', title: 'Inventarios e Insumos', col: 'bitacora_inventarios', code: 'F-OPR-000-1' },
+  { id: 'inventarios', title: 'Bitácora de Ingreso de Desechos a Planta', col: 'bitacora_inventarios', code: 'F-OPR-000-1' },
   { id: 'entrega_contenedores', title: 'Entrega Contenedores Rojos', col: 'bitacora_entrega_contenedores', code: 'F-OPR-000-2' },
   { id: 'disposicion_pirolisis', title: 'Disposición Final a Pirólisis', col: 'bitacora_disposicion_pirolisis', code: 'F-OPR-000-3' },
   { id: 'disposicion_vertedero', title: 'Disposición Final a Vertedero', col: 'bitacora_disposicion_vertedero', code: 'F-OPR-000-4' },

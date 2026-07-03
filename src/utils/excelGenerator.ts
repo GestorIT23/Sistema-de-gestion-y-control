@@ -10,7 +10,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
 
   // Define metadata title mapping
   const titles: Record<string, { code: string; name: string }> = {
-    inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS' },
+    inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
     entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
     disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
     disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
@@ -140,8 +140,8 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
-    wsRows.push(['II. REGISTRO DE PRODUCTOS E INSUMOS']);
-    wsRows.push(['Hora', 'Producto / Insumo', 'Cantidad', 'Firma Registro']);
+    wsRows.push(['II. REGISTRO DE DESECHOS INGRESADOS']);
+    wsRows.push(['Hora', 'Tipo de Desecho', 'Cantidad', 'Firma Registro']);
     
     (data.filas || []).forEach((f: any) => {
       wsRows.push([f.hora, f.producto, f.cantidad, f.firma]);
