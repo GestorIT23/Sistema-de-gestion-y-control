@@ -330,16 +330,27 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Embalaje Congelador:', data.tipoEmbalaje?.congelador ? 'SÍ' : 'NO']);
     wsRows.push([]); // separator
 
-    wsRows.push(['III. DETALLES DE BOLETAS TICKETS INTERNOS']);
-    wsRows.push(['Ticket Izquierdo', 'Peso L (lbs)', 'Ticket Derecho', 'Peso R (lbs)']);
+    wsRows.push(['III. DETALLES DE RECEPCIÓN Y PESAJES']);
+    wsRows.push(['No. Ticket', 'Tipo de Residuo', 'Embalaje', 'Cantidad (Unidades)', 'Peso (lbs)']);
     
-    const rowsLen = Math.max((data.filasLeft || []).length, (data.filasRight || []).length);
-    for (let i = 0; i < rowsLen; i++) {
-      const left = data.filasLeft[i] || { noTicketInterno: '', peso: '' };
-      const right = data.filasRight[i] || { noTicketInterno: '', peso: '' };
-      wsRows.push([left.noTicketInterno, left.peso, right.noTicketInterno, right.peso]);
-    }
-    wsRows.push(['Suma Total Tickets Calculada:', data.totalPesoTickets]);
+    (data.filasLeft || []).forEach((f: any) => {
+      wsRows.push([
+        f.noTicketInterno || 'N/A',
+        f.tipoResiduo || 'Inorgánico común',
+        f.tipoEmbalaje || 'Bolsa / Ninguno',
+        f.cantidad || 1,
+        f.peso || 0
+      ]);
+    });
+    wsRows.push([]);
+    wsRows.push(['Total Peso Combinado (Tickets):', data.totalPesoTickets]);
+    wsRows.push(['Peso Oficial Báscula:', data.pesoTicketBascula]);
+    
+    const deviation = Math.abs((data.totalPesoTickets || 0) - (data.pesoTicketBascula || 0));
+    const devPct = (data.pesoTicketBascula || 0) > 0 ? (deviation / (data.pesoTicketBascula || 0)) * 100 : 0;
+    wsRows.push(['Desviación de Báscula (%):', devPct.toFixed(2) + ' %']);
+    wsRows.push(['Desviación de Báscula (lbs):', deviation.toFixed(1) + ' lbs']);
+    wsRows.push(['Estado de Tolerancia:', devPct > 3 ? 'FUERA DE TOLERANCIA (>3%)' : 'DENTRO DE TOLERANCIA (≤3%)']);
   } else if (tipo === 'lavado_banos') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);

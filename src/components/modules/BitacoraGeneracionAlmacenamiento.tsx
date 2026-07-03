@@ -38,22 +38,44 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
 
   // Left & Right double tables as physically designed in PDF
   const [filasLeft, setFilasLeft] = useState<FilaGeneracionTicket[]>([]);
-
-  const [filasRight, setFilasRight] = useState<FilaGeneracionTicket[]>([]);
+  const [filasRight, setFilasRight] = useState<FilaGeneracionTicket[]>([]); // will remain empty []
 
   // Form temporary row fields
   const [newTicketId, setNewTicketId] = useState('');
-  const [newWeight, setNewWeight] = useState(0);
-  const [tableSide, setTableSide] = useState<'left' | 'right'>('left');
+  const [newTipoResiduo, setNewTipoResiduo] = useState('Inorgánico común clínico');
+  const [newTipoEmbalaje, setNewTipoEmbalaje] = useState('Bolsa / Ninguno');
+  const [newCantidad, setNewCantidad] = useState(1);
+  const [newPesoUnitario, setNewPesoUnitario] = useState(0);
 
   const [observaciones, setObservaciones] = useState('');
 
   // Auto Calculations
-  const sumLeft = filasLeft.reduce((a, b) => a + (Number(b.peso) || 0), 0);
-  const sumRight = filasRight.reduce((a, b) => a + (Number(b.peso) || 0), 0);
-  const totalPesoTickets = sumLeft + sumRight;
+  const totalPesoTickets = filasLeft.reduce((a, b) => a + (Number(b.peso) || 0), 0);
   const scaleDeviation = Math.abs(totalPesoTickets - pesoTicketBascula);
   const scaleDeviationPct = pesoTicketBascula > 0 ? (scaleDeviation / pesoTicketBascula) * 100 : 0;
+
+  // Auto-generate ticket IDs and keep checkboxes in sync
+  useEffect(() => {
+    setNewTicketId('TI-' + Math.floor(1000 + Math.random() * 9000));
+  }, [filasLeft]);
+
+  useEffect(() => {
+    const hasInorganico = filasLeft.some(f => f.tipoResiduo === 'Inorgánico común clínico');
+    const hasPunzo = filasLeft.some(f => f.tipoResiduo === 'Punzo Cortante (Guardianes)');
+    const hasPatologico = filasLeft.some(f => f.tipoResiduo === 'Patológico orgánico infeccioso');
+    
+    const hasContenedor = filasLeft.some(f => f.tipoEmbalaje === 'Contenedor Rojo Logística');
+    const hasTonel = filasLeft.some(f => f.tipoEmbalaje === 'Tonel Metálico');
+    const hasCongelador = filasLeft.some(f => f.tipoEmbalaje === 'Congelador Móvil Frío');
+    
+    setInorganico(hasInorganico);
+    setPunzoCortante(hasPunzo);
+    setPatologico(hasPatologico);
+    
+    setContenedor(hasContenedor);
+    setTonelMetalico(hasTonel);
+    setCongelador(hasCongelador);
+  }, [filasLeft]);
 
   useEffect(() => {
     fetchRegistros();
@@ -79,27 +101,27 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
   };
 
   const handleAddTicket = () => {
-    if (!newTicketId || newWeight <= 0) {
-      setMsg({ text: 'Rellene código de ticket y un peso mayor a cero.', type: 'error' });
+    if (!newTicketId || newPesoUnitario <= 0 || newCantidad <= 0) {
+      setMsg({ text: 'Rellene código de ticket, cantidad y un peso mayor a cero.', type: 'error' });
       return;
     }
-    const newRow = { noTicketInterno: newTicketId, peso: newWeight };
-    if (tableSide === 'left') {
-      setFilasLeft([...filasLeft, newRow]);
-    } else {
-      setFilasRight([...filasRight, newRow]);
-    }
-    setNewTicketId('');
-    setNewWeight(0);
+    const totalPeso = newCantidad * newPesoUnitario;
+    const newRow: FilaGeneracionTicket = { 
+      noTicketInterno: newTicketId,
+      tipoResiduo: newTipoResiduo,
+      tipoEmbalaje: newTipoEmbalaje,
+      cantidad: newCantidad,
+      peso: totalPeso
+    };
+    setFilasLeft([...filasLeft, newRow]);
+    
+    setNewPesoUnitario(0);
+    setNewCantidad(1);
     setMsg({ text: '', type: '' });
   };
 
   const handleRemoveLeft = (idx: number) => {
     setFilasLeft(filasLeft.filter((_, i) => i !== idx));
-  };
-
-  const handleRemoveRight = (idx: number) => {
-    setFilasRight(filasRight.filter((_, i) => i !== idx));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -195,7 +217,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Fecha Recolección:</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Fecha Recepción:</label>
                 <input
                   id="fecha-recoleccion"
                   type="date"
@@ -303,137 +325,158 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
 
             </div>
 
-            {/* Grid Double Columns of Tickets */}
+            {/* Grid Single Column of Tickets */}
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-2 border-slate-150 gap-2">
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide flex items-center gap-1.5 text-cyan-700">
                   <LayoutList className="w-4 h-4" /> Relación de Tickets Internos de Pesaje
                 </h3>
-                
-                {/* Embedded row addition bar */}
-                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs shrink-0 self-end">
-                  <input
-                    id="add-ticket-id"
-                    type="text"
-                    value={newTicketId}
-                    onChange={(e) => setNewTicketId(e.target.value)}
-                    placeholder="TI-XXXX"
-                    className="bg-white border rounded px-2 py-1 w-24 outline-none font-mono"
-                  />
-                  <input
-                    id="add-ticket-weight"
-                    type="number"
-                    step="0.01"
-                    value={newWeight || ''}
-                    onChange={(e) => setNewWeight(parseFloat(e.target.value) || 0)}
-                    placeholder="Peso"
-                    className="bg-white border rounded px-1.5 py-1 w-16 text-center font-bold"
-                  />
-                  <select
-                    id="add-ticket-side"
-                    value={tableSide}
-                    onChange={(e) => setTableSide(e.target.value as any)}
-                    className="bg-white border rounded px-1 py-1 text-[11px]"
-                  >
-                    <option value="left">Tabla Izq</option>
-                    <option value="right">Tabla Der</option>
-                  </select>
-                  <button
-                    id="btn-add-ticket"
-                    type="button"
-                    onClick={handleAddTicket}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white rounded p-1 flex items-center justify-center transition shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+              </div>
+
+              {/* Advanced entry form */}
+              <div className="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <span className="font-bold text-slate-700 block text-xs uppercase tracking-wider text-cyan-800">
+                  Ingresar Registro de Pesaje (por Residuo o Unidad)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase">No. Ticket Interno:</label>
+                    <input
+                      id="add-ticket-id"
+                      type="text"
+                      value={newTicketId}
+                      onChange={(e) => setNewTicketId(e.target.value)}
+                      placeholder="TI-XXXX"
+                      className="w-full bg-white border border-slate-300 rounded p-2 outline-none font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase">Tipo de Residuo:</label>
+                    <select
+                      id="add-residuo"
+                      value={newTipoResiduo}
+                      onChange={(e) => setNewTipoResiduo(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded p-2 outline-none text-xs font-semibold"
+                    >
+                      <option value="Inorgánico común clínico">Inorgánico común clínico</option>
+                      <option value="Punzo Cortante (Guardianes)">Punzo Cortante (Guardianes)</option>
+                      <option value="Patológico orgánico infeccioso">Patológico orgánico infeccioso</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase">Tipo de Embalaje:</label>
+                    <select
+                      id="add-embalaje"
+                      value={newTipoEmbalaje}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewTipoEmbalaje(val);
+                        if (val === 'Bolsa / Ninguno') {
+                          setNewCantidad(1);
+                        }
+                      }}
+                      className="w-full bg-white border border-slate-300 rounded p-2 outline-none text-xs font-semibold"
+                    >
+                      <option value="Bolsa / Ninguno">Bolsa / Ninguno</option>
+                      <option value="Contenedor Rojo Logística">Contenedor Rojo Logística</option>
+                      <option value="Tonel Metálico">Tonel Metálico</option>
+                      <option value="Congelador Móvil Frío">Congelador Móvil Frío</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase">Cantidad (Unidades):</label>
+                    <input
+                      id="add-cantidad"
+                      type="number"
+                      min="1"
+                      disabled={newTipoEmbalaje === 'Bolsa / Ninguno'}
+                      value={newCantidad}
+                      onChange={(e) => setNewCantidad(parseInt(e.target.value) || 1)}
+                      className="w-full bg-white disabled:bg-slate-150 disabled:text-slate-400 border border-slate-300 rounded p-2 text-center font-bold text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase">
+                      {newTipoEmbalaje === 'Bolsa / Ninguno' ? 'Peso Total (lbs):' : 'Peso Unitario (lbs):'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="add-peso-unitario"
+                        type="number"
+                        step="0.1"
+                        value={newPesoUnitario || ''}
+                        onChange={(e) => setNewPesoUnitario(parseFloat(e.target.value) || 0)}
+                        placeholder="0.0"
+                        className="w-full bg-white border border-slate-300 rounded p-2 text-center font-bold text-xs text-slate-850"
+                      />
+                      <button
+                        id="btn-add-ticket"
+                        type="button"
+                        onClick={handleAddTicket}
+                        className="bg-cyan-600 hover:bg-cyan-700 text-white rounded px-4 py-2 flex items-center justify-center transition shrink-0 cursor-pointer font-bold text-xs"
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Agregar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Split responsive grid mimicking physical Double Table columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Left Side Table */}
-                <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white">
-                  <table id="tickets-left-table" className="w-full text-xs text-left text-slate-600">
-                    <thead className="bg-[#ecfeff] text-cyan-800 uppercase p-2 font-bold text-[9px] border-b">
-                      <tr>
-                        <th className="px-3 py-1.5 border-r border-slate-350">No. DE TICKET´S INTERNOS</th>
-                        <th className="px-3 py-1.5 text-center w-24 border-r">PESO</th>
-                        <th className="px-1 py-1 w-8"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 font-mono">
-                      {filasLeft.map((f, i) => (
+              {/* Single Wide Table */}
+              <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white">
+                <table id="tickets-single-table" className="w-full text-xs text-left text-slate-600">
+                  <thead className="bg-[#ecfeff] text-cyan-800 uppercase p-2 font-bold text-[9px] border-b">
+                    <tr>
+                      <th className="px-3 py-2 border-r border-slate-200">NO. TICKET</th>
+                      <th className="px-3 py-2 border-r border-slate-200">TIPO DE RESIDUO</th>
+                      <th className="px-3 py-2 border-r border-slate-200">TIPO DE EMBALAJE</th>
+                      <th className="px-3 py-2 text-center w-28 border-r border-slate-200">CANTIDAD (UNIDADES)</th>
+                      <th className="px-3 py-2 text-center w-28 border-r border-slate-200">PESO UNITARIO (LBS)</th>
+                      <th className="px-3 py-2 text-center w-28 border-r border-slate-200">PESO TOTAL (LBS)</th>
+                      <th className="px-2 py-2 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-mono">
+                    {filasLeft.map((f, i) => {
+                      const qty = f.cantidad || 1;
+                      const uWeight = qty > 0 ? (f.peso / qty) : 0;
+                      return (
                         <tr key={i} className="hover:bg-slate-50/50">
-                          <td className="px-3 py-1.5 border-r font-bold text-slate-700">{f.noTicketInterno}</td>
-                          <td className="px-3 py-1.5 text-center border-r font-semibold">{f.peso.toFixed(1)}</td>
-                          <td className="px-1 py-1 text-center">
+                          <td className="px-3 py-2 border-r font-bold text-slate-700">{f.noTicketInterno}</td>
+                          <td className="px-3 py-2 border-r text-slate-700">{f.tipoResiduo || 'Inorgánico común clínico'}</td>
+                          <td className="px-3 py-2 border-r text-slate-700">{f.tipoEmbalaje || 'Bolsa / Ninguno'}</td>
+                          <td className="px-3 py-2 text-center border-r font-semibold text-slate-700">{qty}</td>
+                          <td className="px-3 py-2 text-center border-r font-semibold text-slate-700">{uWeight.toFixed(1)}</td>
+                          <td className="px-3 py-2 text-center border-r font-extrabold text-cyan-800">{f.peso.toFixed(1)}</td>
+                          <td className="px-2 py-2 text-center">
                             <button
                               id={`del-left-${i}`}
                               type="button"
                               onClick={() => handleRemoveLeft(i)}
-                              className="text-red-500 hover:text-red-700 focus:outline-none"
+                              className="text-red-500 hover:text-red-700 focus:outline-none cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </td>
                         </tr>
-                      ))}
-                      {filasLeft.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="text-center py-6 text-slate-400 italic text-[11px]">En espera de registros izquierdo...</td>
-                        </tr>
-                      )}
-                      <tr className="bg-slate-50 font-bold border-t border-slate-300">
-                        <td className="px-3 py-1.5 border-r uppercase text-[9px]">Sumatoria Columna Izq:</td>
-                        <td className="px-3 py-1.5 text-center text-cyan-800">{sumLeft.toFixed(1)}</td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Right Side Table */}
-                <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white">
-                  <table id="tickets-right-table" className="w-full text-xs text-left text-slate-600">
-                    <thead className="bg-[#ecfeff] text-cyan-800 uppercase p-2 font-bold text-[9px] border-b">
+                      );
+                    })}
+                    {filasLeft.length === 0 && (
                       <tr>
-                        <th className="px-3 py-1.5 border-r border-slate-350">No. DE TICKET´S INTERNOS</th>
-                        <th className="px-3 py-1.5 text-center w-24 border-r">PESO</th>
-                        <th className="px-1 py-1 w-8"></th>
+                        <td colSpan={7} className="text-center py-8 text-slate-400 italic text-[11px]">No hay tickets de pesajes agregados. Ingrese un registro arriba.</td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 font-mono">
-                      {filasRight.map((f, i) => (
-                        <tr key={i} className="hover:bg-slate-50/50">
-                          <td className="px-3 py-1.5 border-r font-bold text-slate-700">{f.noTicketInterno}</td>
-                          <td className="px-3 py-1.5 text-center border-r font-semibold">{f.peso.toFixed(1)}</td>
-                          <td className="px-1 py-1 text-center">
-                            <button
-                              id={`del-right-${i}`}
-                              type="button"
-                              onClick={() => handleRemoveRight(i)}
-                              className="text-red-500 hover:text-red-700 focus:outline-none"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {filasRight.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="text-center py-6 text-slate-400 italic text-[11px]">En espera de registros derecho...</td>
-                        </tr>
-                      )}
-                      <tr className="bg-slate-50 font-bold border-t border-slate-300">
-                        <td className="px-3 py-1.5 border-r uppercase text-[9px]">Sumatoria Columna Der:</td>
-                        <td className="px-3 py-1.5 text-center text-cyan-800">{sumRight.toFixed(1)}</td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
+                    )}
+                    <tr className="bg-slate-50 font-bold border-t border-slate-300">
+                      <td colSpan={3} className="px-3 py-2 border-r uppercase text-[9px] text-slate-500 text-right">Sumatoria Total de Recepción:</td>
+                      <td className="px-3 py-2 text-center border-r text-slate-700">
+                        {filasLeft.reduce((sum, f) => sum + (f.cantidad || 1), 0)} Unidades
+                      </td>
+                      <td className="px-3 py-2 border-r"></td>
+                      <td className="px-3 py-2 text-center text-cyan-800 border-r">{totalPesoTickets.toFixed(1)} Lbs</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
               {/* Total combined and reconciliation matching original template totals flow */}

@@ -188,6 +188,9 @@ export interface BitacoraControlAutoclaves extends BaseBitacora {
 // 9. Bitacora Generación y Almacenamiento Temporal de RPBI
 export interface FilaGeneracionTicket {
   noTicketInterno: string;
+  tipoResiduo?: string;
+  tipoEmbalaje?: string;
+  cantidad?: number;
   peso: number;
 }
 

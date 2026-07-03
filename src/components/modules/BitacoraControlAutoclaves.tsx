@@ -44,7 +44,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [tiempoProceso, setTiempoProceso] = useState(true);
   const [bombaVacio, setBombaVacio] = useState(true);
 
-  const [observacionesParameters, setObservacionesParameters] = useState('Presión estable a 75 Psi. Proceso cumplulado en 21 min estándar.');
+  const [observacionesParameters, setObservacionesParameters] = useState('Presión estable a 75 Psi. Proceso acumulado en 21 min estándar.');
   const [observaciones, setObservaciones] = useState('');
   
   const [firmaSupervisor, setFirmaSupervisor] = useState('Ing. Daniel Marroquín');

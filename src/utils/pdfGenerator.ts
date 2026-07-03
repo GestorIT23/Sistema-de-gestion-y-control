@@ -587,22 +587,40 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Embalaje Congelador', value: emb.congelador ? '(SÍ)' : '(NO)' }
     ]);
 
-    drawSectionHeader('III. DETALLES DETALLADOS DE TICKETS INTERNOS');
-    const tableHeadersCombined = ['TICKET L', 'PESO L', 'TICKET R', 'PESO R'];
-    const tableWidthsCombined = [45, 45, 45, 45];
-    const rowsLen = Math.max((data.filasLeft || []).length, (data.filasRight || []).length);
-    const tableRowsCombined: any[][] = [];
-    for (let i = 0; i < rowsLen; i++) {
-      const left = data.filasLeft[i] || { noTicketInterno: '', peso: '' };
-      const right = data.filasRight[i] || { noTicketInterno: '', peso: '' };
-      tableRowsCombined.push([left.noTicketInterno, left.peso ? left.peso + ' lbs' : '', right.noTicketInterno, right.peso ? right.peso + ' lbs' : '']);
-    }
-    drawDataTable(tableHeadersCombined, tableWidthsCombined, tableRowsCombined);
+    drawSectionHeader('III. DETALLES DE RECEPCIÓN Y PESAJES');
+    const tableHeaders = ['NO. TICKET', 'TIPO RESIDUO', 'EMBALAJE/RECIPIENTE', 'CANT.', 'PESO TOTAL'];
+    const tableWidths = [35, 55, 45, 20, 25];
+    const tableRows = (data.filasLeft || []).map((f: any) => [
+      f.noTicketInterno || 'N/A',
+      f.tipoResiduo || 'Inorgánico común',
+      f.tipoEmbalaje || 'Bolsa / Ninguno',
+      String(f.cantidad || 1),
+      String(f.peso || 0) + ' lbs'
+    ]);
+    drawDataTable(tableHeaders, tableWidths, tableRows);
     
-    // Total indicator
+    // Total indicator and deviation in PDF
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(`Suma total calculada de tickets: ${data.totalPesoTickets || 0} lbs`, marginX + 4, y);
+    doc.setFontSize(8.5);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text(`TOTAL COMBINADO (TICKETS): ${data.totalPesoTickets || 0} lbs`, marginX + 4, y);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+    doc.text(`PESO OFICIAL BÁSCULA: ${data.pesoTicketBascula || 0} lbs`, marginX + 110, y);
+    y += 5;
+
+    const deviation = Math.abs((data.totalPesoTickets || 0) - (data.pesoTicketBascula || 0));
+    const devPct = (data.pesoTicketBascula || 0) > 0 ? (deviation / (data.pesoTicketBascula || 0)) * 100 : 0;
+    
+    doc.setFont('Helvetica', 'bold');
+    if (devPct > 3) {
+      doc.setTextColor(185, 28, 28); // red color for high deviation
+      doc.text(`DESVIACIÓN DE BÁSCULA: ${devPct.toFixed(2)}% (${deviation.toFixed(1)} lbs) - FUERA DE TOLERANCIA (>3%)`, marginX + 4, y);
+    } else {
+      doc.setTextColor(4, 120, 87); // emerald color for compliant deviation
+      doc.text(`DESVIACIÓN DE BÁSCULA: ${devPct.toFixed(2)}% (${deviation.toFixed(1)} lbs) - DENTRO DE TOLERANCIA (≤3%)`, marginX + 4, y);
+    }
     y += 8;
   } else if (tipo === 'lavado_banos') {
     // 10. Lavado de Baños
