@@ -6,6 +6,7 @@ export interface Usuario {
   nombre: string;
   rol: UserRole;
   fechaCreacion?: string;
+  modulosAcceso?: string[];
 }
 
 export interface BaseBitacora {

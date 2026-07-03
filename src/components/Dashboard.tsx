@@ -290,6 +290,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     });
   }
 
+  const filteredModulos = modulos.filter(mod => {
+    if (currentUser.rol === 'Administrador' || mod.id === 'usuarios') {
+      return true;
+    }
+    if (currentUser.modulosAcceso) {
+      return currentUser.modulosAcceso.includes(mod.id);
+    }
+    return true;
+  });
+
   return (
     <div id="system-dashboard-root" className="max-w-7xl mx-auto px-6 py-6 space-y-6 animate-fade-in text-[#1A1C1E]">
       
@@ -414,7 +424,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
 
         {/* 3x3 Grid cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {modulos.map((mod) => (
+          {filteredModulos.map((mod) => (
             <button
               key={mod.id}
               id={`modulo-card-${mod.id}`}

@@ -30,6 +30,23 @@ import {
 } from 'firebase/firestore';
 import { Usuario, UserRole } from '../../types';
 
+export const AVAILABLE_MODULES = [
+  { id: 'inventarios', title: 'Ingreso de Desechos a Planta', code: 'F-OPR-1' },
+  { id: 'entrega_contenedores', title: 'Entrega Contenedores Rojos', code: 'F-OPR-2' },
+  { id: 'disposicion_pirolisis', title: 'Disposición Final a Pirólisis', code: 'F-OPR-3' },
+  { id: 'disposicion_vertedero', title: 'Disposición Final (Vertedero)', code: 'F-OPR-4' },
+  { id: 'control_incineracion', title: 'Control de Incineración RPBI', code: 'F-OPR-5' },
+  { id: 'cuarto_frio', title: 'Control de Cuarto Frío', code: 'F-OPR-6' },
+  { id: 'reduccion_volumen', title: 'Reducción de Volumen Shredder', code: 'F-OPR-7' },
+  { id: 'control_autoclaves', title: 'Control Químico / Biológico', code: 'F-OPR-8' },
+  { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento', code: 'F-OPR-9' },
+  { id: 'lavado_banos', title: 'Sanitización de Baños/Oficinas', code: 'F-OPR-10' },
+  { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', code: 'F-OPR-11' },
+  { id: 'inventarios_sgc', title: 'Inventario General SGC', code: 'F-OPR-12' },
+  { id: 'control_uniformes', title: 'Auditoría de Uniformes y EPP', code: 'F-OPR-13' },
+  { id: 'control_horas_cargador', title: 'Control Horas de Trabajo', code: 'F-OPR-14' },
+];
+
 interface Props {
   onBack: () => void;
   currentUserEmail: string;
@@ -45,6 +62,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
   const [newEmail, setNewEmail] = useState('');
   const [newNombre, setNewNombre] = useState('');
   const [newRol, setNewRol] = useState<UserRole>('Operador/Llenador');
+  const [newModulosAcceso, setNewModulosAcceso] = useState<string[]>(AVAILABLE_MODULES.map(m => m.id));
 
   // Search Filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,12 +72,14 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
   const [editNombre, setEditNombre] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRol, setEditRol] = useState<UserRole>('Operador/Llenador');
+  const [editModulosAcceso, setEditModulosAcceso] = useState<string[]>([]);
 
   const startEdit = (u: Usuario) => {
     setEditingUserId(u.id || null);
     setEditNombre(u.nombre);
     setEditEmail(u.email);
     setEditRol(u.rol);
+    setEditModulosAcceso(u.modulosAcceso || AVAILABLE_MODULES.map(m => m.id));
   };
 
   const cancelEdit = () => {
@@ -98,7 +118,8 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
       await updateDoc(docRef, {
         nombre: editNombre.trim(),
         email: emailClean,
-        rol: editRol
+        rol: editRol,
+        modulosAcceso: editModulosAcceso
       });
       setEditingUserId(null);
       await fetchUsuarios();
@@ -126,7 +147,8 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
           email: 'gestor.it@biotrash.net',
           nombre: 'Soporte y Sistemas BIOTRASH (Default Admin)',
           rol: 'Administrador',
-          fechaCreacion: new Date().toISOString()
+          fechaCreacion: new Date().toISOString(),
+          modulosAcceso: AVAILABLE_MODULES.map(m => m.id)
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
         list.push({ id: docRef.id, ...defaultAdmin });
@@ -175,7 +197,8 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
         email: emailClean,
         nombre: newNombre.trim(),
         rol: newRol,
-        fechaCreacion: new Date().toISOString()
+        fechaCreacion: new Date().toISOString(),
+        modulosAcceso: newModulosAcceso
       };
 
       await addDoc(collection(db, 'usuarios'), newUser);
@@ -184,6 +207,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
       setNewEmail('');
       setNewNombre('');
       setNewRol('Operador/Llenador');
+      setNewModulosAcceso(AVAILABLE_MODULES.map(m => m.id));
       triggerMsg('Usuario agregado correctamente.', 'success');
     } catch (err) {
       console.error("Error adding user:", err);
@@ -244,8 +268,18 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
     setSaving(true);
     try {
       const presets = [
-        { email: 'supervisor@biotrash.net', nombre: 'Ing. Daniel Marroquín (Supervisor)', rol: 'Supervisor' as UserRole },
-        { email: 'operador@biotrash.net', nombre: 'Tco. Manuel Flores (Operador)', rol: 'Operador/Llenador' as UserRole }
+        { 
+          email: 'supervisor@biotrash.net', 
+          nombre: 'Ing. Daniel Marroquín (Supervisor)', 
+          rol: 'Supervisor' as UserRole,
+          modulosAcceso: AVAILABLE_MODULES.map(m => m.id)
+        },
+        { 
+          email: 'operador@biotrash.net', 
+          nombre: 'Tco. Manuel Flores (Operador)', 
+          rol: 'Operador/Llenador' as UserRole,
+          modulosAcceso: AVAILABLE_MODULES.map(m => m.id)
+        }
       ];
 
       for (const preset of presets) {
@@ -326,62 +360,243 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Column 1: Add New User Form */}
-        <div className="lg:col-span-4 bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm space-y-4">
-          <div className="border-b pb-2 flex items-center gap-2">
-            <Plus className="w-4 h-4 text-slate-500" />
-            <h3 className="text-xs font-bold uppercase text-slate-800 tracking-wider">Registrar Nuevo Colaborador</h3>
-          </div>
+        {/* Column 1: Add New or Edit User Form */}
+        <div className="lg:col-span-4 bg-white border border-[#E2E8F0] rounded-lg p-5 shadow-sm space-y-4 h-fit sticky top-6">
+          {editingUserId ? (
+            // EDIT FORM
+            <>
+              <div className="border-b pb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Edit2 className="w-4 h-4 text-amber-500" />
+                  <h3 className="text-xs font-bold uppercase text-slate-800 tracking-wider">Editar Colaborador</h3>
+                </div>
+                <button
+                  onClick={cancelEdit}
+                  className="text-[10px] font-bold text-rose-500 hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <X className="w-3 h-3" /> Cancelar
+                </button>
+              </div>
 
-          <form onSubmit={handleAddUsuario} className="space-y-3">
-            <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Completo</label>
-              <input
-                type="text"
-                value={newNombre}
-                onChange={(e) => setNewNombre(e.target.value)}
-                placeholder="Ej. Ing. Daniel Marroquín"
-                className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500"
-                required
-              />
-            </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveEdit(editingUserId, editEmail);
+              }} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={editNombre}
+                    onChange={(e) => setEditNombre(e.target.value)}
+                    placeholder="Ej. Ing. Daniel Marroquín"
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500"
+                    required
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase">Correo Electrónico (BIOTRASH o Aliado)</label>
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="Ej. dmarroquin@biotrash.net"
-                className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500"
-                required
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Correo Electrónico</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="Ej. dmarroquin@biotrash.net"
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500 disabled:opacity-60 disabled:bg-slate-50"
+                    required
+                    disabled={editEmail.toLowerCase() === 'gestor.it@biotrash.net'}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase">Rol / Nivel de Acceso</label>
-              <select
-                value={newRol}
-                onChange={(e) => setNewRol(e.target.value as UserRole)}
-                className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-bold text-slate-800 focus:border-blue-500"
-              >
-                <option value="Operador/Llenador">Operador/Llenador (Captura simple)</option>
-                <option value="Supervisor">Supervisor (Captura + Reportes)</option>
-                <option value="Administrador">Administrador (Acceso Completo)</option>
-              </select>
-            </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Rol / Nivel de Acceso</label>
+                  <select
+                    value={editRol}
+                    onChange={(e) => setEditRol(e.target.value as UserRole)}
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-bold text-slate-800 focus:border-blue-500 disabled:opacity-60 disabled:bg-slate-50"
+                    disabled={editEmail.toLowerCase() === 'gestor.it@biotrash.net' || editEmail.toLowerCase() === currentUserEmail.toLowerCase()}
+                  >
+                    <option value="Operador/Llenador">Operador/Llenador (Captura simple)</option>
+                    <option value="Supervisor">Supervisor (Captura + Reportes)</option>
+                    <option value="Administrador">Administrador (Acceso Completo)</option>
+                  </select>
+                </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full bg-[#1A1C1E] hover:bg-neutral-800 text-white font-bold text-xs py-2 rounded transition cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
-              >
-                <Plus className="w-4 h-4 text-sky-400" />
-                {saving ? 'Registrando...' : 'Registrar Colaborador'}
-              </button>
-            </div>
-          </form>
+                {/* Edit Modules Authorized */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Módulos Autorizados</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditModulosAcceso(AVAILABLE_MODULES.map(m => m.id))}
+                        className="text-[9px] font-bold text-blue-600 hover:underline cursor-pointer"
+                      >
+                        Todos
+                      </button>
+                      <span className="text-[9px] text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setEditModulosAcceso([])}
+                        className="text-[9px] font-bold text-slate-500 hover:underline cursor-pointer"
+                      >
+                        Ninguno
+                      </button>
+                    </div>
+                  </div>
+                  <div className="border border-slate-300 rounded bg-slate-50 p-2 max-h-48 overflow-y-auto space-y-1">
+                    {AVAILABLE_MODULES.map((modulo) => {
+                      const isChecked = editModulosAcceso.includes(modulo.id);
+                      return (
+                        <label key={modulo.id} className="flex items-start gap-2 cursor-pointer hover:bg-slate-100 p-1 rounded text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setEditModulosAcceso(editModulosAcceso.filter(id => id !== modulo.id));
+                              } else {
+                                setEditModulosAcceso([...editModulosAcceso, modulo.id]);
+                              }
+                            }}
+                            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
+                          />
+                          <div className="text-[11px] leading-tight font-medium">
+                            <span className="font-bold text-slate-800 mr-1">{modulo.code}</span>
+                            {modulo.title}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 rounded transition cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
+                  >
+                    <Save className="w-4 h-4 text-white" />
+                    {saving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-3 py-2 rounded transition cursor-pointer text-center"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </>
+          ) : (
+            // CREATE FORM
+            <>
+              <div className="border-b pb-2 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-slate-500" />
+                <h3 className="text-xs font-bold uppercase text-slate-800 tracking-wider">Registrar Nuevo Colaborador</h3>
+              </div>
+
+              <form onSubmit={handleAddUsuario} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={newNombre}
+                    onChange={(e) => setNewNombre(e.target.value)}
+                    placeholder="Ej. Ing. Daniel Marroquín"
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Correo Electrónico (BIOTRASH o Aliado)</label>
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="Ej. dmarroquin@biotrash.net"
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-medium text-slate-800 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Rol / Nivel de Acceso</label>
+                  <select
+                    value={newRol}
+                    onChange={(e) => setNewRol(e.target.value as UserRole)}
+                    className="w-full bg-white border border-slate-300 rounded text-xs px-2.5 py-1.5 outline-none font-bold text-slate-800 focus:border-blue-500"
+                  >
+                    <option value="Operador/Llenador">Operador/Llenador (Captura simple)</option>
+                    <option value="Supervisor">Supervisor (Captura + Reportes)</option>
+                    <option value="Administrador">Administrador (Acceso Completo)</option>
+                  </select>
+                </div>
+
+                {/* Create Modules Authorized */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Módulos Autorizados</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewModulosAcceso(AVAILABLE_MODULES.map(m => m.id))}
+                        className="text-[9px] font-bold text-blue-600 hover:underline cursor-pointer"
+                      >
+                        Todos
+                      </button>
+                      <span className="text-[9px] text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewModulosAcceso([])}
+                        className="text-[9px] font-bold text-slate-500 hover:underline cursor-pointer"
+                      >
+                        Ninguno
+                      </button>
+                    </div>
+                  </div>
+                  <div className="border border-slate-300 rounded bg-slate-50 p-2 max-h-48 overflow-y-auto space-y-1">
+                    {AVAILABLE_MODULES.map((modulo) => {
+                      const isChecked = newModulosAcceso.includes(modulo.id);
+                      return (
+                        <label key={modulo.id} className="flex items-start gap-2 cursor-pointer hover:bg-slate-100 p-1 rounded text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setNewModulosAcceso(newModulosAcceso.filter(id => id !== modulo.id));
+                              } else {
+                                setNewModulosAcceso([...newModulosAcceso, modulo.id]);
+                              }
+                            }}
+                            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
+                          />
+                          <div className="text-[11px] leading-tight font-medium">
+                            <span className="font-bold text-slate-800 mr-1">{modulo.code}</span>
+                            {modulo.title}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full bg-[#1A1C1E] hover:bg-neutral-800 text-white font-bold text-xs py-2 rounded transition cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4 text-sky-400" />
+                    {saving ? 'Registrando...' : 'Registrar Colaborador'}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
 
           {/* Quick Informational Tip Card */}
           <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 mt-4 text-[11px] leading-relaxed text-slate-600">
@@ -391,7 +606,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
             <ul className="list-disc pl-4 space-y-1">
               <li><strong>Administrador:</strong> Acceso completo incluyendo reportes y el gestor de usuarios.</li>
               <li><strong>Supervisor:</strong> Puede llenar cualquier bitácora y consultar reporte mensual de trazabilidad.</li>
-              <li><strong>Operador/Llenador:</strong> Acceso exclusivo a ingreso de registros en las 9 bitácoras operacionales.</li>
+              <li><strong>Operador/Llenador:</strong> Acceso exclusivo a ingreso de registros en las bitácoras operacionales autorizadas.</li>
             </ul>
           </div>
         </div>
@@ -419,7 +634,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
               </div>
               <button
                 onClick={fetchUsuarios}
-                className="p-1 px-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 transition whitespace-nowrap"
+                className="p-1 px-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 transition whitespace-nowrap cursor-pointer"
                 title="Sincronizar"
               >
                 <RefreshCcw className="w-3.5 h-3.5" />
@@ -444,9 +659,9 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
               <table className="w-full border-collapse text-left text-xs text-slate-700">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Nombre / Correo</th>
+                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Nombre / Correo / Módulos</th>
                     <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Rango / Rol SGC</th>
-                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Cambiar Autorización</th>
+                    <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase">Rol Rápido</th>
                     <th className="px-4 py-2.5 font-bold text-slate-600 text-[10px] uppercase text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -456,95 +671,48 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                     const isImmutablePreset = u.email.toLowerCase() === 'gestor.it@biotrash.net';
                     const isEditing = editingUserId === u.id;
 
-                    if (isEditing) {
-                      return (
-                        <tr key={u.id} className="bg-amber-50/20">
-                          {/* Editing Name & Email */}
-                          <td className="px-4 py-3 space-y-1.5">
-                            <div>
-                              <label className="block text-[8px] font-bold text-[#3B82F6] uppercase">Nombre Completo</label>
-                              <input
-                                type="text"
-                                value={editNombre}
-                                onChange={(e) => setEditNombre(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded text-xs px-2 py-1 font-bold text-slate-800 focus:border-blue-500 outline-none"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[8px] font-bold text-[#3B82F6] uppercase">Correo Electrónico</label>
-                              <input
-                                type="email"
-                                value={editEmail}
-                                onChange={(e) => setEditEmail(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded text-xs px-2 py-1 font-mono text-slate-700 focus:border-blue-500 outline-none"
-                                required
-                                disabled={isImmutablePreset}
-                              />
-                            </div>
-                          </td>
-
-                          {/* Editing Role */}
-                          <td className="px-4 py-3">
-                            <label className="block text-[8px] font-bold text-[#3B82F6] uppercase mb-1">Rol SGC</label>
-                            <select
-                              value={editRol}
-                              onChange={(e) => setEditRol(e.target.value as UserRole)}
-                              disabled={isImmutablePreset || isSelfAdmin}
-                              className="bg-white border select-xs border-slate-300 rounded text-xs px-2 py-1 text-slate-800 outline-none font-bold"
-                            >
-                              <option value="Operador/Llenador">Operador/Llenador</option>
-                              <option value="Supervisor">Supervisor</option>
-                              <option value="Administrador">Administrador</option>
-                            </select>
-                          </td>
-
-                          {/* Autorización state */}
-                          <td className="px-4 py-3 text-[10px] text-amber-600 font-extrabold uppercase tracking-wide">
-                            Edición Activa
-                          </td>
-
-                          {/* Actions: Save / Cancel */}
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2.5">
-                              <button
-                                onClick={() => handleSaveEdit(u.id!, u.email)}
-                                className="p-1 px-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-1 cursor-pointer transition shadow-sm"
-                                title="Guardar Cambios"
-                              >
-                                <Save className="w-3.5 h-3.5" /> Guardar
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="p-1 px-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded flex items-center gap-1 cursor-pointer transition"
-                                title="Cancelar Edición"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
-
                     return (
                       <tr 
                         key={u.id} 
                         className={`hover:bg-slate-50 transition ${
-                          isSelfAdmin ? 'bg-blue-50/20' : ''
+                          isEditing ? 'bg-amber-50/40 border-l-2 border-amber-500' : isSelfAdmin ? 'bg-blue-50/20' : ''
                         }`}
                       >
-                        {/* Name Info */}
+                        {/* Name Info & Authorized Modules */}
                         <td className="px-4 py-3">
-                          <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <div className="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
                             {u.nombre}
                             {isSelfAdmin && (
                               <span className="text-[8px] bg-sky-100 text-sky-800 px-1 py-0.2 rounded font-mono font-bold">
                                 Tú
                               </span>
                             )}
+                            {isEditing && (
+                              <span className="text-[8px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono font-bold flex items-center gap-0.5 animate-pulse">
+                                <Edit2 className="w-2.5 h-2.5" /> Editando en panel izquierdo
+                              </span>
+                            )}
                           </div>
                           <div className="text-[11px] text-slate-500 font-mono mt-0.5">{u.email}</div>
+                          
+                          {/* Modulos Autorizados Badges */}
+                          <div className="mt-2 space-y-1">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Módulos SGC Autorizados:</span>
+                            {u.modulosAcceso && u.modulosAcceso.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {u.modulosAcceso.map(mId => {
+                                  const m = AVAILABLE_MODULES.find(mod => mod.id === mId);
+                                  return m ? (
+                                    <span key={mId} className="text-[9px] bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-mono font-semibold" title={m.title}>
+                                      {m.code}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-[9px] text-rose-500 italic font-bold">Sin acceso a ningún módulo</span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Current Role Badger */}
@@ -583,15 +751,15 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => startEdit(u)}
-                              className="p-1 text-slate-400 hover:text-sky-600 transition"
-                              title="Editar Características"
+                              className={`p-1 hover:text-sky-600 transition cursor-pointer ${isEditing ? 'text-sky-600' : 'text-slate-400'}`}
+                              title="Editar Características y Módulos"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               disabled={isImmutablePreset || isSelfAdmin}
                               onClick={() => handleDeleteUsuario(u.id!, u.email)}
-                              className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:hover:text-slate-400 transition"
+                              className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:hover:text-slate-400 transition cursor-pointer"
                               title={isSelfAdmin ? "No se puede eliminar a usted mismo" : "Eliminar de base de datos SGC"}
                             >
                               <Trash2 className="w-3.5 h-3.5" />

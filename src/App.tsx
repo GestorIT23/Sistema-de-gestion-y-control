@@ -76,7 +76,14 @@ export default function App() {
           email: 'gestor.it@biotrash.net',
           nombre: 'Soporte y Sistemas BIOTRASH (Default Admin)',
           rol: 'Administrador',
-          fechaCreacion: new Date().toISOString()
+          fechaCreacion: new Date().toISOString(),
+          modulosAcceso: [
+            'inventarios', 'entrega_contenedores', 'disposicion_pirolisis', 
+            'disposicion_vertedero', 'control_incineracion', 'cuarto_frio', 
+            'reduccion_volumen', 'control_autoclaves', 'generacion_almacenamiento', 
+            'lavado_banos', 'insumos_quimicos', 'inventarios_sgc', 
+            'control_uniformes', 'control_horas_cargador'
+          ]
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
         list.push({ id: docRef.id, ...defaultAdmin });
