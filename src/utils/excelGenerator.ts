@@ -271,6 +271,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Peso Entrada (lbs):', data.pesoEntrada + ' Lbs']);
     wsRows.push(['Peso Salida (lbs):', data.pesoSalida + ' Lbs']);
     wsRows.push(['Cantidad Pacas:', data.cantidadPacas]);
+    wsRows.push(['Peso Promedio por Paca:', (data.cantidadPacas > 0 ? (data.pesoSalida / data.cantidadPacas).toFixed(1) : '0') + ' Lbs/Paca']);
     wsRows.push(['Anotaciones Especiales:', data.anotacionesEspeciales || 'Ninguna']);
     wsRows.push(['Observaciones Generales:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator

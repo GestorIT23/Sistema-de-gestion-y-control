@@ -22,12 +22,25 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
   // Form Fields
   const [noTrituradora, setNoTrituradora] = useState('Trituradora Industrial Shredder-750X');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [tiempoProceso, setTiempoProceso] = useState('2.5 Horas');
   const [responsable, setResponsable] = useState(userEmail || 'Operador de Planta');
-  const [noProceso, setNoProceso] = useState('NP-88390');
+  const [noProceso] = useState(() => 'NP-' + Math.floor(10000 + Math.random() * 90000));
   const [lineaUtilizada, setLineaUtilizada] = useState('Línea 01');
-  const [horaInicio, setHoraInicio] = useState('08:00');
-  const [horaFin, setHoraFin] = useState('10:30');
+
+  const getCurrentTimeStr = () => {
+    const now = new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
+  };
+
+  const [horaInicio] = useState(getCurrentTimeStr());
+  const [horaFin, setHoraFin] = useState(() => {
+    const now = new Date();
+    now.setHours(now.getHours() + 2);
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
+  });
 
   const [pesoEntrada, setPesoEntrada] = useState(1200); // Lbs
   const [pesoSalida, setPesoSalida] = useState(1185);  // Lbs
@@ -43,9 +56,29 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
   const [observaciones, setObservaciones] = useState('');
   const [anotacionesEspeciales, setAnotacionesEspeciales] = useState('');
 
+  const calculateDuration = (start: string, end: string): string => {
+    if (!start || !end) return '0.0 Horas';
+    const [startHrs, startMins] = start.split(':').map(Number);
+    const [endHrs, endMins] = end.split(':').map(Number);
+    if (isNaN(startHrs) || isNaN(startMins) || isNaN(endHrs) || isNaN(endMins)) return '0.0 Horas';
+    
+    let startTotal = startHrs * 60 + startMins;
+    let endTotal = endHrs * 60 + endMins;
+    
+    // Handle overnight processing
+    if (endTotal < startTotal) {
+      endTotal += 24 * 60;
+    }
+    
+    const diffMins = endTotal - startTotal;
+    const hours = diffMins / 60;
+    return `${hours.toFixed(1)} Horas`;
+  };
+
   // Compaction indicator calculations
   const weightLossRatio = pesoEntrada > 0 ? ((pesoEntrada - pesoSalida) / pesoEntrada) * 100 : 0;
   const averageBaleWeight = cantidadPacas > 0 ? (pesoSalida / cantidadPacas) : 0;
+  const tiempoProceso = calculateDuration(horaInicio, horaFin);
 
   useEffect(() => {
     fetchRegistros();
@@ -174,8 +207,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   id="fecha-proceso-val"
                   type="date"
                   value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none"
+                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-semibold outline-none cursor-not-allowed"
+                  disabled
                   required
                 />
               </div>
@@ -198,8 +231,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   id="no-proceso-val"
                   type="text"
                   value={noProceso}
-                  onChange={(e) => setNoProceso(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
+                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-bold outline-none text-center cursor-not-allowed"
+                  disabled
                 />
               </div>
 
@@ -207,11 +240,10 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">Hora de Inicio:</label>
                 <input
                   id="hora-inicio-val"
-                  type="text"
+                  type="time"
                   value={horaInicio}
-                  onChange={(e) => setHoraInicio(e.target.value)}
-                  placeholder="HH:MM"
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-semibold outline-none cursor-not-allowed text-center"
+                  disabled
                 />
               </div>
 
@@ -219,11 +251,10 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">Hora de Finalización:</label>
                 <input
                   id="hora-fin-val"
-                  type="text"
+                  type="time"
                   value={horaFin}
                   onChange={(e) => setHoraFin(e.target.value)}
-                  placeholder="HH:MM"
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none text-center"
                 />
               </div>
 
@@ -233,8 +264,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   id="tiempo-proceso-val"
                   type="text"
                   value={tiempoProceso}
-                  onChange={(e) => setTiempoProceso(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
+                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-bold outline-none text-center cursor-not-allowed"
+                  disabled
                 />
               </div>
 

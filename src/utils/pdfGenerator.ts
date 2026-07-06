@@ -503,7 +503,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Tiempo de Duración', value: data.tiempoProceso },
       { key: 'Cantidad Pacas Producidas', value: String(data.cantidadPacas || 0) },
       { key: 'Peso Entrada (lbs)', value: String(data.pesoEntrada || 0) + ' lbs' },
-      { key: 'Peso Salida Compactada (lbs)', value: String(data.pesoSalida || 0) + ' lbs' }
+      { key: 'Peso Salida Compactada (lbs)', value: String(data.pesoSalida || 0) + ' lbs' },
+      { key: 'Peso Promedio por Paca', value: data.cantidadPacas > 0 ? ((data.pesoSalida || 0) / data.cantidadPacas).toFixed(1) + ' lbs/paca' : '0 lbs/paca' }
     ]);
 
     drawSectionHeader('II. DIAGNÓSTICO DEL SISTEMA MECÁNICO DE TRITURACIÓN');
