@@ -313,7 +313,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'generacion_almacenamiento') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Ente Generador:', data.enteGenerador]);
-    wsRows.push(['Fecha Ingreso:', data.fecha]);
+    wsRows.push(['Fecha Recepción:', data.fecha]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Ubicación Planta:', data.ubicacion]);
     wsRows.push(['Nro. Ticket Báscula:', data.noTicketBascula]);

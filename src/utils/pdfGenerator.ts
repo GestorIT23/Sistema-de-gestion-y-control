@@ -568,7 +568,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN DEL ENTE GENERADOR');
     drawGridInfo([
       { key: 'Ente Generador', value: data.enteGenerador },
-      { key: 'Fecha Ingreso', value: data.fecha },
+      { key: 'Fecha Recepción', value: data.fecha },
       { key: 'Responsable de Recepción', value: data.responsable },
       { key: 'Ubicación Planta', value: data.ubicacion },
       { key: 'No. Ticket Báscula', value: data.noTicketBascula },
