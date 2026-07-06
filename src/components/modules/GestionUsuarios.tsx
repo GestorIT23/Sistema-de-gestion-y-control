@@ -31,20 +31,20 @@ import {
 import { Usuario, UserRole } from '../../types';
 
 export const AVAILABLE_MODULES = [
-  { id: 'inventarios', title: 'Ingreso de Desechos a Planta', code: 'F-OPR-1' },
-  { id: 'entrega_contenedores', title: 'Entrega Contenedores Rojos', code: 'F-OPR-2' },
-  { id: 'disposicion_pirolisis', title: 'Disposición Final a Pirólisis', code: 'F-OPR-3' },
-  { id: 'disposicion_vertedero', title: 'Disposición Final (Vertedero)', code: 'F-OPR-4' },
-  { id: 'control_incineracion', title: 'Control de Incineración RPBI', code: 'F-OPR-5' },
-  { id: 'cuarto_frio', title: 'Control de Cuarto Frío', code: 'F-OPR-6' },
-  { id: 'reduccion_volumen', title: 'Reducción de Volumen Shredder', code: 'F-OPR-7' },
-  { id: 'control_autoclaves', title: 'Control Químico / Biológico', code: 'F-OPR-8' },
-  { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento', code: 'F-OPR-9' },
-  { id: 'lavado_banos', title: 'Sanitización de Baños/Oficinas', code: 'F-OPR-10' },
-  { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', code: 'F-OPR-11' },
-  { id: 'inventarios_sgc', title: 'Inventario General SGI', code: 'F-OPR-12' },
-  { id: 'control_uniformes', title: 'Auditoría de Uniformes y EPP', code: 'F-OPR-13' },
-  { id: 'control_horas_cargador', title: 'Control Horas de Trabajo', code: 'F-OPR-14' },
+  { id: 'inventarios', title: 'Bitácora de Ingreso de Desechos a Planta', code: 'F-OPR-000-1' },
+  { id: 'entrega_contenedores', title: 'Bitácora de Entrega de Contenedores Rojos al Departamento de Logística', code: 'F-OPR-000-2' },
+  { id: 'disposicion_pirolisis', title: 'Bitácora de Disposición Final de RPBI a Pirólisis', code: 'F-OPR-000-3' },
+  { id: 'disposicion_vertedero', title: 'Bitácora de Disposición Final de RPBI (Vertedero Autorizado)', code: 'F-OPR-000-4' },
+  { id: 'control_incineracion', title: 'Bitácora de Control de Incineración de RPBI', code: 'F-OPR-000-5' },
+  { id: 'cuarto_frio', title: 'Bitácora de Control de Cuarto Frío y Congeladores', code: 'F-OPR-000-6' },
+  { id: 'reduccion_volumen', title: 'Bitácora de Proceso de Reducción de Volúmen y Control de Pacas', code: 'F-OPR-000-7' },
+  { id: 'control_autoclaves', title: 'Bitácora de Control Químico / Biológico de Auto Claves', code: 'F-OPR-000-8' },
+  { id: 'generacion_almacenamiento', title: 'Bitácora de Generación y Almacenamiento Temporal de RPBI (Ingreso)', code: 'F-OPR-000-9' },
+  { id: 'lavado_banos', title: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA', code: 'F-OPR-000-10' },
+  { id: 'insumos_quimicos', title: 'BITÁCORA DE CONTROL DE INSUMOS QUÍMICOS Y PLÁSTICOS', code: 'F-OPR-000-11' },
+  { id: 'inventarios_sgc', title: 'BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGI', code: 'F-OPR-000-12' },
+  { id: 'control_uniformes', title: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA Y EPP', code: 'F-OPR-000-13' },
+  { id: 'control_horas_cargador', title: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL', code: 'F-OPR-000-14' },
 ];
 
 interface Props {
