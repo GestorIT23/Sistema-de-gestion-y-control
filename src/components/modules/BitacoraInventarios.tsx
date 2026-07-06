@@ -13,6 +13,13 @@ interface Props {
   userEmail: string;
 }
 
+const getCurrentTimeStr = () => {
+  const now = new Date();
+  const hrs = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  return `${hrs}:${mins}`;
+};
+
 export default function BitacoraInventariosModule({ onBack, userEmail }: Props) {
   const [registros, setRegistros] = useState<BitacoraInventarios[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +36,19 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
   // Table Rows (starts with blank entries)
   const [filas, setFilas] = useState<FilaInventario[]>([]);
 
-  const [nuevaHora, setNuevaHora] = useState('');
+  const [nuevaHora, setNuevaHora] = useState(getCurrentTimeStr());
   const [nuevoProducto, setNuevoProducto] = useState('Bioinfeccioso Inorganico');
   const [useCustomProducto, setUseCustomProducto] = useState(false);
   const [nuevaCantidad, setNuevaCantidad] = useState(0);
   const [nuevaFirma, setNuevaFirma] = useState('');
+
+  useEffect(() => {
+    // Keep automatic time updated
+    const timer = setInterval(() => {
+      setNuevaHora(getCurrentTimeStr());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchRegistros();
@@ -67,7 +82,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
       return;
     }
     setFilas([...filas, { hora: nuevaHora, producto: nuevoProducto, cantidad: nuevaCantidad, firma: nuevaFirma }]);
-    setNuevaHora('');
+    setNuevaHora(getCurrentTimeStr());
     setNuevoProducto('Bioinfeccioso Inorganico');
     setUseCustomProducto(false);
     setNuevaCantidad(0);
@@ -164,8 +179,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                     id="date-input"
                     type="date"
                     value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded text-xs pl-9 pr-2.5 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-slate-100 border border-slate-300 rounded text-xs pl-9 pr-2.5 py-2 outline-none cursor-not-allowed text-slate-500 font-semibold"
+                    disabled
                     required
                   />
                 </div>
@@ -210,7 +225,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
             {/* Grid Form Row Creator */}
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b pb-2 border-slate-100">
-                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">Registro de Ingreso de Desechos</h3>
+                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">Registro de Ingreso de Desecho</h3>
                 <span className="text-[10px] text-slate-400">Inserte filas para alimentar el formato</span>
               </div>
 
@@ -222,8 +237,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                     id="new-hora"
                     type="time"
                     value={nuevaHora}
-                    onChange={(e) => setNuevaHora(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded text-xs px-2 py-1.5 outline-none"
+                    className="w-full bg-slate-100 border border-slate-300 rounded text-xs px-2 py-1.5 outline-none cursor-not-allowed text-slate-500 font-semibold"
+                    disabled
                   />
                 </div>
                 <div className="sm:col-span-5 space-y-1">
