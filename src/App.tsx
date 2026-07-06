@@ -70,7 +70,7 @@ export default function App() {
       });
 
       // Secure default administrator in user list if not created
-      const hasDefaultAdmin = list.some(u => u.email.toLowerCase() === 'gestor.it@biotrash.net');
+      const hasDefaultAdmin = list.some(u => u.email && u.email.toLowerCase() === 'gestor.it@biotrash.net');
       if (!hasDefaultAdmin) {
         const defaultAdmin: Omit<Usuario, 'id'> = {
           email: 'gestor.it@biotrash.net',
@@ -92,8 +92,8 @@ export default function App() {
       setAllUsers(list);
 
       // Match current active user against list to keep roles & names in perfect real-time sync with database edits
-      if (isLoggedIn) {
-        const matched = list.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+      if (isLoggedIn && currentUser && currentUser.email) {
+        const matched = list.find(u => u.email && u.email.toLowerCase() === currentUser.email.toLowerCase());
         if (matched) {
           setCurrentUser(matched);
           localStorage.setItem('biotrash_user_session', JSON.stringify(matched));
@@ -132,7 +132,7 @@ export default function App() {
     // Switcher is only accessible for SGI Admins. Restricts regular workflows
     if (currentUser.rol !== 'Administrador') return;
 
-    const selected = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const selected = allUsers.find(u => u.email && email && u.email.toLowerCase() === email.toLowerCase());
     if (selected) {
       setCurrentUser(selected);
       localStorage.setItem('biotrash_user_session', JSON.stringify(selected));

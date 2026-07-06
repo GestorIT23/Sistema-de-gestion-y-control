@@ -76,10 +76,10 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
 
   const startEdit = (u: Usuario) => {
     setEditingUserId(u.id || null);
-    setEditNombre(u.nombre);
-    setEditEmail(u.email);
-    setEditRol(u.rol);
-    setEditModulosAcceso(u.modulosAcceso || AVAILABLE_MODULES.map(m => m.id));
+    setEditNombre(u.nombre || '');
+    setEditEmail(u.email || '');
+    setEditRol(u.rol || 'Operador/Llenador');
+    setEditModulosAcceso(Array.isArray(u.modulosAcceso) ? u.modulosAcceso : AVAILABLE_MODULES.map(m => m.id));
   };
 
   const cancelEdit = () => {
@@ -95,20 +95,22 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
     const emailClean = editEmail.trim().toLowerCase();
 
     // Check if duplicate
-    const exists = usuarios.some(u => u.id !== userId && u.email.toLowerCase() === emailClean);
+    const exists = usuarios.some(u => u.id !== userId && u.email && u.email.toLowerCase() === emailClean);
     if (exists) {
       triggerMsg('El correo electrónico ya se encuentra registrado por otro colaborador.', 'error');
       return;
     }
 
+    const origEmailClean = (originalEmail || '').toLowerCase();
+
     // Safety checks for changing immutable default admin
-    if (originalEmail.toLowerCase() === 'gestor.it@biotrash.net' && emailClean !== 'gestor.it@biotrash.net') {
+    if (origEmailClean === 'gestor.it@biotrash.net' && emailClean !== 'gestor.it@biotrash.net') {
       triggerMsg('No se permite alterar el correo del administrador maestro "gestor.it@biotrash.net".', 'error');
       return;
     }
 
     // Safety check for self roll lockout
-    if (originalEmail.toLowerCase() === currentUserEmail.toLowerCase() && editRol !== 'Administrador') {
+    if (origEmailClean === (currentUserEmail || '').toLowerCase() && editRol !== 'Administrador') {
       triggerMsg('No puede revocar o cambiar su propio rol administrativo por seguridad.', 'error');
       return;
     }
@@ -141,7 +143,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
       });
 
       // If the default admin gestor.it@biotrash.net is not in the db, we auto-create/seed it
-      const hasDefaultAdmin = list.some(u => u.email.toLowerCase() === 'gestor.it@biotrash.net');
+      const hasDefaultAdmin = list.some(u => u.email && u.email.toLowerCase() === 'gestor.it@biotrash.net');
       if (!hasDefaultAdmin) {
         const defaultAdmin: Omit<Usuario, 'id'> = {
           email: 'gestor.it@biotrash.net',
@@ -186,7 +188,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
     const emailClean = newEmail.trim().toLowerCase();
 
     // Check if duplicate in current list
-    if (usuarios.some(u => u.email.toLowerCase() === emailClean)) {
+    if (usuarios.some(u => u.email && u.email.toLowerCase() === emailClean)) {
       triggerMsg('El correo electrónico ya se encuentra registrado.', 'error');
       return;
     }
@@ -220,7 +222,7 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
   // Update User Role
   const handleUpdateRole = async (userId: string, targetUserEmail: string, newRole: UserRole) => {
     // Safety check: Cannot change own role if itself is the current logged-in user to prevent lockout
-    if (targetUserEmail.toLowerCase() === currentUserEmail.toLowerCase()) {
+    if ((targetUserEmail || '').toLowerCase() === (currentUserEmail || '').toLowerCase()) {
       triggerMsg('No puede degradar o cambiar su propio rol administrativo por seguridad.', 'error');
       return;
     }
@@ -238,13 +240,14 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
 
   // Delete User
   const handleDeleteUsuario = async (userId: string, targetUserEmail: string) => {
+    const emailClean = (targetUserEmail || '').toLowerCase();
     // Safety checks
-    if (targetUserEmail.toLowerCase() === currentUserEmail.toLowerCase()) {
+    if (emailClean === (currentUserEmail || '').toLowerCase()) {
       triggerMsg('No se permite la eliminación de su propia cuenta de usuario en sesión.', 'error');
       return;
     }
 
-    if (targetUserEmail.toLowerCase() === 'gestor.it@biotrash.net') {
+    if (emailClean === 'gestor.it@biotrash.net') {
       triggerMsg('El administrador por defecto gestor.it@biotrash.net no puede ser eliminado.', 'error');
       return;
     }
@@ -303,10 +306,13 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
   // Filter local state list
   const filteredUsuarios = usuarios.filter(u => {
     const text = searchTerm.toLowerCase();
+    const nombre = (u.nombre || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const rol = (u.rol || '').toLowerCase();
     return (
-      u.nombre.toLowerCase().includes(text) || 
-      u.email.toLowerCase().includes(text) || 
-      u.rol.toLowerCase().includes(text)
+      nombre.includes(text) || 
+      email.includes(text) || 
+      rol.includes(text)
     );
   });
 
@@ -667,8 +673,8 @@ export default function GestionUsuarios({ onBack, currentUserEmail }: Props) {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredUsuarios.map((u) => {
-                    const isSelfAdmin = u.email.toLowerCase() === currentUserEmail.toLowerCase();
-                    const isImmutablePreset = u.email.toLowerCase() === 'gestor.it@biotrash.net';
+                    const isSelfAdmin = u.email && currentUserEmail && u.email.toLowerCase() === currentUserEmail.toLowerCase();
+                    const isImmutablePreset = u.email && u.email.toLowerCase() === 'gestor.it@biotrash.net';
                     const isEditing = editingUserId === u.id;
 
                     return (
