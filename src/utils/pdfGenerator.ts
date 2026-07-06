@@ -403,14 +403,15 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     }
 
     drawSectionHeader('III. DESGLOSE DE CAMIONES Y VIAJES');
-    const tableHeaders = ['CÓDIGO', 'PLACA', 'NO. PASE', 'H. SALIDA', 'PILOTO / CHOFER', 'PACAS', 'PESO (LBS)'];
-    const tableWidths = [24, 24, 24, 24, 40, 24, 30];
+    const tableHeaders = ['CÓDIGO', 'PLACA', 'NO. PASE', 'H. SALIDA', 'PILOTO / CHOFER', 'CORRELATIVO PACA', 'PACAS', 'PESO (LBS)'];
+    const tableWidths = [20, 20, 20, 20, 32, 28, 20, 30];
     const tableRows = (data.filas || []).map((f: any) => [
       f.camion || '',
       f.placa || '',
       f.noPaseSalida || '',
       f.horaSalida || 'N/R',
       f.nombrePiloto || 'N/R',
+      f.correlativoPacas || 'N/R',
       String(f.cantidadPacas || 0),
       f.pesaje !== undefined ? `${f.pesaje} lbs` : '0 lbs'
     ]);

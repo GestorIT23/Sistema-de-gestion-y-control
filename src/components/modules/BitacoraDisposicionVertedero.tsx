@@ -19,6 +19,13 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
+  const getCurrentTimeStr = () => {
+    const now = new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
+  };
+
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [responsable, setResponsable] = useState(userEmail || 'Ing. de Planta');
@@ -38,8 +45,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         noPaseSalida: '',
         cantidadPacas: 0,
         pesaje: 0,
-        horaSalida: '',
-        nombrePiloto: ''
+        horaSalida: getCurrentTimeStr(),
+        nombrePiloto: '',
+        correlativoPacas: ''
       }));
       setFilas(initial);
     }
@@ -90,8 +98,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         noPaseSalida: '',
         cantidadPacas: 0,
         pesaje: 0,
-        horaSalida: '',
-        nombrePiloto: ''
+        horaSalida: getCurrentTimeStr(),
+        nombrePiloto: '',
+        correlativoPacas: ''
       }
     ]);
   };
@@ -142,8 +151,9 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         noPaseSalida: '',
         cantidadPacas: 0,
         pesaje: 0,
-        horaSalida: '',
-        nombrePiloto: ''
+        horaSalida: getCurrentTimeStr(),
+        nombrePiloto: '',
+        correlativoPacas: ''
       }));
       setFilas(resetFilas);
       fetchRegistros();
@@ -252,6 +262,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                       <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">N° PASE SALIDA</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">HORA SALIDA</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-1/5 text-center">PILOTO</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-28 text-center">N° CORRELATIVO PACA</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">CANTIDAD PACAS</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">PESAJE (LBS)</th>
                       <th className="px-2 py-2.5 text-center w-10">ACCION</th>
@@ -295,9 +306,8 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             id={`hora-salida-input-${index}`}
                             type="text"
                             value={f.horaSalida || ''}
-                            onChange={(e) => handleRowChange(index, 'horaSalida', e.target.value)}
-                            placeholder="HH:MM"
-                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none"
+                            className="bg-slate-100 border border-slate-200 text-center rounded text-xs font-semibold text-slate-500 w-full py-1 cursor-not-allowed outline-none"
+                            disabled
                           />
                         </td>
                         <td className="px-1 py-1 border-r border-slate-200">
@@ -308,6 +318,16 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             onChange={(e) => handleRowChange(index, 'nombrePiloto', e.target.value)}
                             placeholder="Nombre del Piloto"
                             className="bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800 w-full px-1 py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-1 py-1 border-r border-slate-200">
+                          <input
+                            id={`correlativo-input-${index}`}
+                            type="text"
+                            value={f.correlativoPacas || ''}
+                            onChange={(e) => handleRowChange(index, 'correlativoPacas', e.target.value)}
+                            placeholder="P-XXXX"
+                            className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none font-mono"
                           />
                         </td>
                         <td className="px-1 py-1 border-r border-slate-200 text-center">

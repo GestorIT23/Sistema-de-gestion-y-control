@@ -196,10 +196,19 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push([]); // separator
 
     wsRows.push(['II. DESGLOSE DE CAMIONES Y VIAJES']);
-    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'Cantidad Pacas', 'Pesaje (LBS)']);
+    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'Hora Salida', 'Piloto / Chofer', 'Nro. Correlativo de Paca', 'Cantidad Pacas', 'Pesaje (LBS)']);
     
     (data.filas || []).forEach((f: any) => {
-      wsRows.push([f.camion, f.placa, f.noPaseSalida, f.cantidadPacas, f.pesaje !== undefined ? f.pesaje : 0]);
+      wsRows.push([
+        f.camion,
+        f.placa,
+        f.noPaseSalida,
+        f.horaSalida || 'N/R',
+        f.nombrePiloto || 'N/R',
+        f.correlativoPacas || '',
+        f.cantidadPacas,
+        f.pesaje !== undefined ? f.pesaje : 0
+      ]);
     });
 
   } else if (tipo === 'control_incineracion') {

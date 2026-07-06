@@ -82,6 +82,7 @@ export interface FilaDisposicionVertedero {
   pesaje?: number;
   horaSalida?: string;
   nombrePiloto?: string;
+  correlativoPacas?: string;
 }
 
 export interface BitacoraDisposicionVertedero extends BaseBitacora {
