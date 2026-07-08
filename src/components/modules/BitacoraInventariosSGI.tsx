@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Plus, Trash2, Database, ShieldCheck, Info, AlertCircle, FileSpreadsheet, FileText, CheckCircle, Flame } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 
 interface Props {
   onBack: () => void;
@@ -47,7 +48,8 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
       const querySnapshot = await getDocs(q);
       const docs: BitacoraInventariosSGI[] = [];
       querySnapshot.forEach((doc) => {
-        docs.push({ id: doc.id, ...doc.data() } as BitacoraInventariosSGI);
+        const docData = sanitizeBiotrashObject(doc.data());
+        docs.push({ id: doc.id, ...docData } as BitacoraInventariosSGI);
       });
       setRegistros(docs);
     } catch (e) {
@@ -66,11 +68,12 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
       setMsg({ text: 'Por favor complete todos los campos de insumo.', type: 'error' });
       return;
     }
+    const sanitizedDesc = sanitizeBiotrashText(descripcion);
     setFilas([
       ...filas,
       {
         codigoInsmo: codigoInsumo,
-        descripcion,
+        descripcion: sanitizedDesc,
         medida,
         stockMinimo,
         existenciaReal,
@@ -100,7 +103,7 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
     setSaving(true);
     setMsg({ text: 'Almacenando en Firebase...', type: 'info' });
 
-    const nuevoRegistro: BitacoraInventariosSGI = {
+    const nuevoRegistro: BitacoraInventariosSGI = sanitizeBiotrashObject({
       fechaRegistro: new Date().toISOString(),
       fecha,
       areaFisica,
@@ -119,7 +122,7 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
           solicitante: 'Comité de Calidad'
         }
       ]
-    };
+    });
 
     try {
       await addDoc(collection(db, 'bitacora_inventarios_sgc'), nuevoRegistro);

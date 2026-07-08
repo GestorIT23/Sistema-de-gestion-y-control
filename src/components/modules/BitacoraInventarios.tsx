@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, Clock, Plus, Trash2, ArrowLeft, Download, CheckCircle, Database, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 
 interface Props {
   onBack: () => void;
@@ -61,7 +62,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
       const querySnapshot = await getDocs(q);
       const docs: BitacoraInventarios[] = [];
       querySnapshot.forEach((doc) => {
-        docs.push({ id: doc.id, ...doc.data() } as BitacoraInventarios);
+        const docData = sanitizeBiotrashObject(doc.data());
+        docs.push({ id: doc.id, ...docData } as BitacoraInventarios);
       });
       setRegistros(docs);
     } catch (e) {
@@ -81,7 +83,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
       setMsg({ text: 'Por favor complete todos los campos de la nueva fila.', type: 'error' });
       return;
     }
-    setFilas([...filas, { hora: nuevaHora, producto: nuevoProducto, cantidad: nuevaCantidad, firma: nuevaFirma }]);
+    const sanitizedProduct = sanitizeBiotrashText(nuevoProducto);
+    setFilas([...filas, { hora: nuevaHora, producto: sanitizedProduct, cantidad: nuevaCantidad, firma: nuevaFirma }]);
     setNuevaHora(getCurrentTimeStr());
     setNuevoProducto('Bioinfeccioso Inorganico');
     setUseCustomProducto(false);
@@ -104,7 +107,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
     setSaving(true);
     setMsg({ text: 'Guardando en la base de datos de Firebase...', type: 'info' });
 
-    const nuevoRegistro: BitacoraInventarios = {
+    const nuevoRegistro: BitacoraInventarios = sanitizeBiotrashObject({
       fechaRegistro: new Date().toISOString(),
       fecha,
       turno,
@@ -118,7 +121,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
       cambioControl: [
         { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Creación del formato inicial bajo norma ISO 14001 y 9001', solicitante: 'Comité de Calidad' }
       ]
-    };
+    });
 
     try {
       await addDoc(collection(db, 'bitacora_inventarios'), nuevoRegistro);

@@ -1,10 +1,33 @@
 import { jsPDF } from 'jspdf';
+import { sanitizeBiotrashObject } from './textSanitizer';
+
+function formatHoraRegistro(isoString?: string): string {
+  if (!isoString) return '—';
+  try {
+    const parts = isoString.split('T');
+    if (parts.length > 1) {
+      const timePart = parts[1].split(/[Z\-+.]/)[0];
+      return timePart;
+    }
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '—';
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  } catch (e) {
+    return '—';
+  }
+}
 
 /**
  * Highly polished PDF generation utility for SGI BIOTRASH S.A.
  * Translates SGI operation data into elegant, official corporate documents.
  */
 export async function generateAndDownloadPDF(tipo: string, data: any): Promise<void> {
+  // Sanitize all data to ensure "basura bio" is replaced with BIOTRASH
+  data = sanitizeBiotrashObject(data);
+
   // Load logo from localStorage if available
   const savedBase64 = typeof window !== 'undefined' ? localStorage.getItem('sgi_logo_base64') || localStorage.getItem('sgc_logo_base64') : null;
   const savedUrl = typeof window !== 'undefined' ? localStorage.getItem('sgi_logo_url') || localStorage.getItem('sgc_logo_url') : null;
@@ -169,16 +192,28 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     let localY = y;
 
     for (let i = 0; i < items.length; i += 2) {
+      const isPesoLeft = items[i].key.toUpperCase().includes('PESO') || items[i].key.toUpperCase().includes('LIBRAS') || items[i].key.toUpperCase().includes('PESAJE') || items[i].key.toUpperCase().includes('LBS');
+
       // Background row striping
       if (Math.floor(i / 2) % 2 === 0) {
         doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
         doc.rect(marginX + 1, localY, colWidth * 2, 7, 'F');
       }
 
+      // Highlight left if it's weight
+      if (isPesoLeft) {
+        doc.setFillColor(209, 250, 229); // light green
+        doc.rect(marginX + 1, localY, colWidth, 7, 'F');
+      }
+
       // Left column key
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      if (isPesoLeft) {
+        doc.setTextColor(6, 95, 70); // deep emerald green
+      } else {
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      }
       
       const keyStrLeft = items[i].key + ':';
       let displayKeyLeft = keyStrLeft;
@@ -192,17 +227,33 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       doc.text(displayKeyLeft, marginX + 4, localY + 4.8);
       
       // Left column value
-      doc.setFont('Helvetica', 'normal');
+      if (isPesoLeft) {
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(6, 95, 70);
+      } else {
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+      }
       doc.setFontSize(7.5);
-      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
       doc.text(truncateText(items[i].value, 46), marginX + colWidth - 4, localY + 4.8, { align: 'right' });
 
       // Right column (if exists)
       if (items[i + 1]) {
+        const isPesoRight = items[i + 1].key.toUpperCase().includes('PESO') || items[i + 1].key.toUpperCase().includes('LIBRAS') || items[i + 1].key.toUpperCase().includes('PESAJE') || items[i + 1].key.toUpperCase().includes('LBS');
+
+        if (isPesoRight) {
+          doc.setFillColor(209, 250, 229); // light green
+          doc.rect(marginX + colWidth, localY, colWidth, 7, 'F');
+        }
+
         // Right column key
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(7.5);
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        if (isPesoRight) {
+          doc.setTextColor(6, 95, 70);
+        } else {
+          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        }
         
         const keyStrRight = items[i + 1].key + ':';
         let displayKeyRight = keyStrRight;
@@ -216,13 +267,20 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         doc.text(displayKeyRight, marginX + colWidth + 4, localY + 4.8);
         
         // Right column value
-        doc.setFont('Helvetica', 'normal');
+        if (isPesoRight) {
+          doc.setFont('Helvetica', 'bold');
+          doc.setTextColor(6, 95, 70);
+        } else {
+          doc.setFont('Helvetica', 'normal');
+          doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+        }
         doc.setFontSize(7.5);
-        doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
         doc.text(truncateText(items[i + 1].value, 46), marginX + colWidth * 2 - 4, localY + 4.8, { align: 'right' });
       }
 
       // Draw horizontal dividing line
+      doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+      doc.setLineWidth(0.1);
       doc.line(marginX + 1, localY + 7, pageWidth - marginX - 1, localY + 7);
       localY += 7;
     }
@@ -262,18 +320,26 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     // Table Rows
     doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
     rows.forEach((row, rIdx) => {
-      // Striping
-      if (rIdx % 2 === 1) {
-        doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
-        doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, 6.5, 'F');
-      }
-
-      doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(7);
-
       let rowX = marginX + 3;
       row.forEach((cell, cIdx) => {
+        const hName = String(headers[cIdx] || '').toUpperCase();
+        const isPesoCol = hName.includes('PESO') || hName.includes('LIBRAS') || hName.includes('PESAJE') || hName.includes('CANTIDAD') || hName.includes('PACAS');
+
+        if (isPesoCol) {
+          doc.setFillColor(209, 250, 229); // soft green
+          doc.rect(rowX - 2, y, widths[cIdx], 6.5, 'F');
+          doc.setTextColor(6, 95, 70); // deep emerald
+          doc.setFont('Helvetica', 'bold');
+        } else {
+          if (rIdx % 2 === 1) {
+            doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
+            doc.rect(rowX - 2, y, widths[cIdx], 6.5, 'F');
+          }
+          doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+          doc.setFont('Helvetica', 'normal');
+        }
+
+        doc.setFontSize(7);
         doc.text(String(cell || ''), rowX, y + 4.2);
         rowX += widths[cIdx];
       });
@@ -300,12 +366,15 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   
   y += 7;
 
+  const horaCaptura = formatHoraRegistro(data.fechaRegistro);
+
   // Render content according to the bitacora form category/type
   if (tipo === 'inventarios') {
     // 1. Ingreso de Desechos a Planta
     drawSectionHeader('I. INFORMACIÓN DE LA BITÁCORA');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Área Planta', value: data.area },
       { key: 'Turno Operativo', value: data.turno },
       { key: 'Responsable', value: data.responsable }
@@ -331,6 +400,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN DE LA ENTREGA DE CONTENEDORES ROJOS');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable SGI', value: data.responsable },
       { key: 'Total Contenedores', value: String(data.totalContenedores || 0) },
       { key: 'Clase Registro', value: 'Disposición Oficial' }
@@ -364,6 +434,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. METADATOS DISPOSICIÓN FINAL (PIRÓLISIS)');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
       { key: 'Total de Pacas', value: String(data.totalPacas || 0) },
       { key: 'Total en Libras', value: String(data.totalLibras || 0) + ' lbs' }
@@ -388,6 +459,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN REGISTRO VERTEDERO');
     drawGridInfo([
       { key: 'Fecha', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
       { key: 'Total Viajes', value: String(data.totalViajes || 0) },
       { key: 'Total Pacas', value: String(data.totalPacas || 0) },
@@ -422,6 +494,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. METADATOS DE INCINERACIÓN');
     drawGridInfo([
       { key: 'Fecha de Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
       { key: 'Incinerador Id', value: data.incinerador },
       { key: 'Duración', value: data.duracionProceso },
@@ -458,6 +531,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. PARÁMETROS GENERALES CUARTO FRÍO');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
       { key: 'Cuarto Frío ID', value: data.cuartoFrio },
       { key: 'Hora Inspección', value: data.horaInspeccion },
@@ -495,6 +569,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. PARÁMETROS CONTROL DE TRITURACIÓN Y COMPACTACIÓN');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
       { key: 'Código Trituradora', value: data.noTrituradora },
       { key: 'Número de Proceso', value: data.noProceso },
@@ -522,6 +597,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN TÉCNICA DEL CICLO DE AUTOCLAVE');
     drawGridInfo([
       { key: 'Fecha de Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable SGI', value: data.responsable },
       { key: 'Identificación Autoclave', value: data.noAutoclave },
       { key: 'Número Proceso', value: data.noProceso },
@@ -571,6 +647,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawGridInfo([
       { key: 'Ente Generador', value: data.enteGenerador },
       { key: 'Fecha Recepción', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable de Recepción', value: data.responsable },
       { key: 'Ubicación Planta', value: data.ubicacion },
       { key: 'No. Ticket Báscula', value: data.noTicketBascula },
@@ -629,6 +706,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN GENERAL DE SANITIZACIÓN');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Turno Operativo', value: data.turno },
       { key: 'Ubicación General', value: data.ubicacionBanos },
       { key: 'Responsable', value: data.responsable },
@@ -665,6 +743,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN DEL AUDITOR DE ALMACÉN');
     drawGridInfo([
       { key: 'Fecha Auditoría', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Turno Operativo', value: data.turno },
       { key: 'Auditor SGI', value: data.responsable }
     ]);
@@ -691,6 +770,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN GENERAL DE AUDITORÍA');
     drawGridInfo([
       { key: 'Fecha Auditoría', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Área Auditora', value: data.areaFisica },
       { key: 'Auditor Responsable', value: data.responsable }
     ]);
@@ -717,6 +797,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN DE REGISTRO');
     drawGridInfo([
       { key: 'Fecha Inspección', value: data.fecha },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Inspector EPP / Coordinador', value: data.responsableEntrega }
     ]);
 
@@ -747,6 +828,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawSectionHeader('I. INFORMACIÓN GENERAL Y OPERADOR');
     drawGridInfo([
       { key: 'Fecha de Turno', value: data.fecha || '' },
+      { key: 'Hora Captura', value: horaCaptura },
       { key: 'Turno', value: data.turno || '' },
       { key: 'No. Reporte', value: data.noReporte || '' },
       { key: 'Nombre Operador', value: data.nombreOperador || '' },

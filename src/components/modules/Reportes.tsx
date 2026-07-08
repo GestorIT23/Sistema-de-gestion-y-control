@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import FormHeader from '../FormHeader';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { sanitizeBiotrashObject } from '../../utils/textSanitizer';
 
 interface Props {
   onBack: () => void;
@@ -166,7 +168,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
       for (const info of collectionsToQuery) {
         const querySnapshot = await getDocs(collection(db, info.col));
         querySnapshot.forEach(docSnap => {
-          const data = docSnap.data();
+          const data = sanitizeBiotrashObject(docSnap.data());
           tempResults.push({
             id: docSnap.id,
             tipo: info.id,
@@ -258,7 +260,11 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
       setMsg({ text: 'No hay datos en el reporte para exportar.', type: 'error' });
       return;
     }
-    generateAndDownloadExcel('reporte_general', { results });
+    if (selectedBitacora !== 'all') {
+      generateAndDownloadExcel(selectedBitacora, { results });
+    } else {
+      generateAndDownloadExcel('reporte_general', { results });
+    }
   };
 
   const formatWeekSelectionRange = () => {
@@ -573,170 +579,359 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                 No se encontraron registros activos en Firebase que coincidan con la selección y fechas parametrizadas.
               </div>
             ) : (
-              <div className="divide-y divide-[#F1F5F9]">
-                {results.map((log: any, idx: number) => {
-                  const isExpanded = expandedLog === log.id;
-                  return (
-                    <div key={log.id || idx} className="p-3.5 hover:bg-[#F8FAFC] transition">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        
-                        {/* Summary Block */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[9px] font-bold uppercase tracking-wide text-white bg-[#3B82F6] px-1.5 py-0.5 rounded leading-none">
-                              {log.codigoFormato}
-                            </span>
-                            <span className="text-[10px] font-bold text-[#1E293B]">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-[#F1F5F9] border-b border-[#CBD5E1] text-[#475569] font-bold uppercase text-[9px] tracking-wider">
+                      <th className="px-4 py-3">Fecha</th>
+                      <th className="px-4 py-3">Código</th>
+                      <th className="px-4 py-3">Bitácora / Formato SGI</th>
+                      <th className="px-4 py-3">Responsable</th>
+                      {/* HIGHLIGHT WEIGHT COLUMN IN GREEN - HEADER */}
+                      <th className="px-4 py-3 bg-emerald-100 text-emerald-800 font-extrabold border-x border-emerald-200 text-center">
+                        Peso / Medición (Lbs)
+                      </th>
+                      <th className="px-4 py-3 text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E2E8F0]">
+                    {results.map((log: any, idx: number) => {
+                      const isExpanded = expandedLog === log.id;
+                      
+                      // Helper to extract primary weight info
+                      const getPesoPrincipal = (item: any) => {
+                        if (item.totalLibras !== undefined) {
+                          return { val: item.totalLibras, unit: 'lbs', label: 'Libras' };
+                        }
+                        if (item.totalPesaje !== undefined) {
+                          return { val: item.totalPesaje, unit: 'lbs', label: 'Pesaje' };
+                        }
+                        if (item.pesoProceso !== undefined) {
+                          return { val: item.pesoProceso, unit: 'lbs', label: 'Proceso' };
+                        }
+                        if (item.pesoTicketBascula !== undefined) {
+                          return { val: item.pesoTicketBascula, unit: 'lbs', label: 'Báscula' };
+                        }
+                        if (item.pesoEntrada !== undefined || item.pesoSalida !== undefined) {
+                          const ent = item.pesoEntrada !== undefined ? item.pesoEntrada : 0;
+                          const sal = item.pesoSalida !== undefined ? item.pesoSalida : 0;
+                          return { val: `${ent} / ${sal}`, unit: 'lbs', label: 'In / Out' };
+                        }
+                        if (item.totalPesoTickets !== undefined) {
+                          return { val: item.totalPesoTickets, unit: 'lbs', label: 'Tickets' };
+                        }
+                        if (item.totalPacas !== undefined) {
+                          return { val: item.totalPacas, unit: 'pacas', label: 'Pacas' };
+                        }
+                        if (item.totalContenedores !== undefined) {
+                          return { val: item.totalContenedores, unit: 'cont.', label: 'Cont.' };
+                        }
+                        return { val: '—', unit: '', label: 'N/A' };
+                      };
+
+                      const pesoInfo = getPesoPrincipal(log);
+                      const excludeKeys = [
+                        'id', 'tipo', 'tipoTitulo', 'codigoFormato', 'fechaRegistro', 'fecha',
+                        'filas', 'filasLeft', 'estadoGeneral', 'tempCongeladores', 'inspeccion',
+                        'checklistBanos', 'abastecimientoBanos', 'checklistPrevia', 'tipoIndicador',
+                        'parametrosOperacion', 'tipoResiduo', 'tipoEmbalaje', 'responsable'
+                      ];
+
+                      return (
+                        <React.Fragment key={log.id || idx}>
+                          <tr className={`hover:bg-[#F8FAFC] transition-colors ${isExpanded ? 'bg-blue-50/25' : ''}`}>
+                            <td className="px-4 py-3 font-mono text-slate-600 whitespace-nowrap">
+                              {log.fecha}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="text-[9px] font-bold uppercase tracking-wide text-white bg-[#3B82F6] px-1.5 py-0.5 rounded leading-none">
+                                {log.codigoFormato}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-[#1E293B]">
                               {log.tipoTitulo}
-                            </span>
-                            <span className="font-mono text-[10px] text-[#64748B] flex items-center gap-1 bg-[#F1F5F9] px-1.5 py-0.5 rounded">
-                              <Calendar className="w-3 h-3 text-gray-400" /> {log.fecha}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-4 text-[10px] text-gray-500 font-sans">
-                            <span className="flex items-center gap-1 font-medium text-[#1E293B]">
-                              <User className="w-3.5 h-3.5 text-gray-400" /> {log.responsable || 'Sin asignar'}
-                            </span>
-                            <span className="italic truncate max-w-[250px] sm:max-w-md">
-                              {log.observaciones ? `"${log.observaciones}"` : 'Sin observaciones.'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Quick View Actions */}
-                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                          <button
-                            onClick={() => setExpandedLog(isExpanded ? null : log.id)}
-                            className="text-[11px] font-bold text-[#3B82F6] hover:underline uppercase flex items-center gap-0.5"
-                          >
-                            {isExpanded ? 'Ocultar' : 'Detalles'} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                          </button>
-                        </div>
-
-                      </div>
-
-                      {/* Detailed View Expanded Panel */}
-                      {isExpanded && (
-                        <div className="mt-3 bg-[#F8FAFC] border border-[#E2E8F0] p-3 rounded text-xs font-mono text-[#1E293B] space-y-2 animate-fade-in">
-                          <div className="grid grid-cols-1 gap-3 text-[10px] border-b border-[#F1F5F9] pb-2">
-                            <div>
-                              <span className="text-gray-400 block font-bold uppercase text-[8px]">FECHA REGISTRO SGI:</span>
-                              <span className="font-bold text-slate-800">{log.fechaRegistro || 'N/A'}</span>
-                            </div>
-                          </div>
-
-                          {/* Specific metadata details depending on file structure */}
-                          <div className="space-y-1.5 pt-1">
-                            <span className="text-[10px] text-[#3B82F6] font-bold block uppercase tracking-wide">Métricas & Atributos Registrados:</span>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                              {log.turno && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">TURNO:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.turno}</span>
-                                </div>
+                            </td>
+                            <td className="px-4 py-3 text-[#475569] font-medium font-sans">
+                              {log.responsable || 'Sin asignar'}
+                            </td>
+                            {/* HIGHLIGHT WEIGHT COLUMN IN GREEN - CELL */}
+                            <td className="px-4 py-3 bg-emerald-50 text-emerald-800 font-extrabold border-x border-emerald-100 font-mono text-center">
+                              {pesoInfo.val} {pesoInfo.unit}
+                              {pesoInfo.label !== 'N/A' && (
+                                <span className="block text-[7.5px] uppercase font-bold text-emerald-600 font-sans tracking-wide mt-0.5">
+                                  {pesoInfo.label}
+                                </span>
                               )}
-                              {log.area && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">ÁREA:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.area}</span>
-                                </div>
-                              )}
-                              {log.totalContenedores !== undefined && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">TOTAL CONTENEDORES:</span>
-                                  <span className="font-bold text-[10px] text-green-600">{log.totalContenedores}</span>
-                                </div>
-                              )}
-                              {log.totalLibras && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">TOTAL LIBRAS TRATADAS:</span>
-                                  <span className="font-bold text-[10px] text-red-650">{log.totalLibras} lbs</span>
-                                </div>
-                              )}
-                              {log.totalPacas && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">PACAS DESPACHADAS:</span>
-                                  <span className="font-bold text-[10px] text-indigo-650">{log.totalPacas} pacas</span>
-                                </div>
-                              )}
-                              {log.incinerador && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">EQUIPO INCINERADOR / DURACIÓN:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.incinerador} ({log.duracionProceso})</span>
-                                </div>
-                              )}
-                              {log.tempCombustion && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">TEMPERATURAS COMBUSTIÓN:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.tempCombustion}°C / Post: {log.tempPostCombustion}°C</span>
-                                </div>
-                              )}
-                              {log.cuartoFrio && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">CUARTO FRÍO EVALUADO:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.cuartoFrio} (Temp: {log.tempEntrada}°C / {log.tempSalida}°C)</span>
-                                </div>
-                              )}
-                              {log.noTrituradora && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">SHREDDER Nº:</span>
-                                  <span className="font-bold text-[10px] text-[#1E293B]">{log.noTrituradora} (Peso In: {log.pesoEntrada} lbs / Out: {log.pesoSalida} lbs)</span>
-                                </div>
-                              )}
-                              {log.identificacionIndicador && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">INDICADOR BIOLÓGICO:</span>
-                                  <span className="font-semibold text-[10px] text-green-700">{log.resultadoIndicador} (Lote: {log.noLoteFabricante})</span>
-                                </div>
-                              )}
-                              {log.enteGenerador && (
-                                <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                  <span className="text-gray-400 block text-[8px]">ENTE GENERADOR:</span>
-                                  <span className="font-semibold text-[10px] text-[#1E293B]">{log.enteGenerador} (Peso: {log.totalPesoTickets || log.pesoTicketBascula} lbs)</span>
-                                </div>
-                              )}
-                              {log.codigoUnidad && (
-                                <>
-                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                    <span className="text-gray-400 block text-[8px]">CÓDIGO UNIDAD / HORAS OPERADAS:</span>
-                                    <span className="font-semibold text-[10px] text-blue-600">{log.codigoUnidad} ({log.totalOperadoHoras || 0} hrs)</span>
-                                  </div>
-                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                    <span className="text-gray-400 block text-[8px]">OPERADOR / TRABAJO:</span>
-                                    <span className="font-semibold text-[10px] text-[#1E293B]">{log.nombreOperador} ({log.tipoActividadPrincipal})</span>
-                                  </div>
-                                  <div className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
-                                    <span className="text-gray-400 block text-[8px]">ESTADO EQUIPO / COMBUSTIBLE:</span>
-                                    <span className="font-semibold text-[10px] text-amber-700">{log.estadoEquipo} (Carga: {log.litrosCargados || 0} L)</span>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-
-                            {/* Standard Subrows grid counts visualization */}
-                            {log.filas && log.filas.length > 0 && (
-                              <div className="mt-2 text-[9px] bg-white p-2 rounded border border-[#E2E8F0]">
-                                <span className="font-bold block text-gray-450 uppercase mb-1">Subtabla de Transacciones:</span>
-                                <div className="max-h-24 overflow-y-auto space-y-1">
-                                  {log.filas.map((f: any, i: number) => (
-                                    <div key={i} className="flex justify-between border-b border-[#F1F5F9] pb-0.5">
-                                      <span>{f.producto || f.ruta || f.proceso || f.camion || f.ingreso || `Item ${i+1}`}</span>
-                                      <span className="font-bold text-[#3B82F6]">{f.cantidad || f.cantidadPacas || f.libras || f.ticket || ''}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <button
+                                onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                                className="text-[10px] font-extrabold text-[#3B82F6] hover:text-blue-700 hover:underline uppercase flex items-center justify-end gap-0.5 ml-auto"
+                              >
+                                {isExpanded ? 'Ocultar' : 'Detalles'} 
+                                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                              </button>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={6} className="bg-[#F8FAFC] p-4 border-b border-[#CBD5E1]">
+                                <div className="space-y-4 font-sans">
+                                  
+                                  {/* General Metadata Box */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-250 pb-2.5 gap-2 text-xs">
+                                    <div>
+                                      <span className="text-slate-400 text-[8px] font-bold uppercase tracking-wider block">ID Registro SGI:</span>
+                                      <span className="font-mono font-semibold text-slate-700 select-all">{log.id}</span>
                                     </div>
-                                  ))}
+                                    <div>
+                                      <span className="text-slate-400 text-[8px] font-bold uppercase tracking-wider block sm:text-right">Fecha Registro:</span>
+                                      <span className="font-mono font-semibold text-slate-700">{log.fechaRegistro || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 text-[8px] font-bold uppercase tracking-wider block sm:text-right">Formato SGI:</span>
+                                      <span className="font-semibold text-slate-800">{log.codigoFormato} — {log.tipoTitulo}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Individual Report Action Buttons */}
+                                  <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                    <div className="flex items-center gap-1.5 text-slate-700">
+                                      <Info className="w-4 h-4 text-[#3B82F6]" />
+                                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Reporte Personalizado SGI:</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            await generateAndDownloadPDF(log.tipo, log);
+                                            setMsg({ text: 'Reporte SGI en formato PDF descargado con éxito.', type: 'success' });
+                                          } catch (err: any) {
+                                            setMsg({ text: `No se pudo exportar a PDF: ${err.message || err}`, type: 'error' });
+                                          }
+                                        }}
+                                        className="bg-[#EF4444] hover:bg-[#DC2626] text-white text-[9.5px] font-extrabold px-3 py-1.5 rounded flex items-center gap-1.5 transition uppercase tracking-wide cursor-pointer shadow-xs"
+                                      >
+                                        <FileText className="w-3.5 h-3.5" /> Descargar PDF SGI
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          try {
+                                            generateAndDownloadExcel(log.tipo, log);
+                                            setMsg({ text: 'Reporte SGI en formato Excel descargado con éxito.', type: 'success' });
+                                          } catch (err: any) {
+                                            setMsg({ text: `No se pudo exportar a Excel: ${err.message || err}`, type: 'error' });
+                                          }
+                                        }}
+                                        className="bg-[#10B981] hover:bg-[#059669] text-white text-[9.5px] font-extrabold px-3 py-1.5 rounded flex items-center gap-1.5 transition uppercase tracking-wide cursor-pointer shadow-xs"
+                                      >
+                                        <FileSpreadsheet className="w-3.5 h-3.5" /> Descargar Excel SGI
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Dynamic Key-Value grid for ALL primitive attributes */}
+                                  <div className="space-y-1.5">
+                                    <span className="text-[10px] text-[#3B82F6] font-extrabold block uppercase tracking-wider">Atributos y Parámetros del Formato SGI:</span>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px]">
+                                      {Object.entries(log).map(([key, value]) => {
+                                        if (excludeKeys.includes(key) || typeof value === 'object' || value === null || value === '') return null;
+                                        // Format camelCase keys into Title Case
+                                        const formattedKey = key
+                                          .replace(/([A-Z])/g, ' $1')
+                                          .replace(/^./, str => str.toUpperCase())
+                                          .toUpperCase();
+                                        return (
+                                          <div key={key} className="bg-white p-2.5 rounded border border-slate-200/60 flex flex-col justify-between shadow-xs">
+                                            <span className="text-slate-400 text-[7.5px] font-bold block uppercase tracking-wider">{formattedKey}:</span>
+                                            <span className="font-semibold text-slate-800 mt-0.5">{String(value)}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Nested objects rendering */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                    {log.estadoGeneral && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Estado General Contenedores:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.estadoGeneral).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.inspeccion && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Inspección Sanitaria Cuarto Frío:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.inspeccion).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.checklistBanos && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Chequeo Lavado de Baños:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.checklistBanos).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.abastecimientoBanos && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Abastecimiento Consumibles Baños:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.abastecimientoBanos).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.checklistPrevia && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Chequeo Pre-Operacional Cargador:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.checklistPrevia).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.tempCongeladores && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Temperaturas Congeladores Auxiliares:</span>
+                                        <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
+                                          {Object.entries(log.tempCongeladores).map(([k, v]) => (
+                                            <div key={k} className="bg-[#F8FAFC] px-1.5 py-1 rounded border border-slate-100 text-center">
+                                              <span className="text-[7.5px] text-gray-400 block">{k.toUpperCase()}</span>
+                                              <span className="font-bold text-slate-700">{String(v)}°C</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.tipoIndicador && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Tipo de Indicador Autoclave:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.tipoIndicador).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.parametrosOperacion && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Parámetros Operación Autoclave:</span>
+                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                          {Object.entries(log.parametrosOperacion).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.tipoResiduo && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Clasificación Residuo RPBI:</span>
+                                        <div className="grid grid-cols-3 gap-2 text-[10px]">
+                                          {Object.entries(log.tipoResiduo).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.tipoEmbalaje && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Tipo Embalaje RPBI:</span>
+                                        <div className="grid grid-cols-3 gap-2 text-[10px]">
+                                          {Object.entries(log.tipoEmbalaje).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-1.5">
+                                              <span className={v ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{v ? '✓' : '✗'}</span>
+                                              <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Subtables rendering (filas or filasLeft) */}
+                                  {((log.filas && log.filas.length > 0) || (log.filasLeft && log.filasLeft.length > 0)) && (
+                                    <div className="mt-2 text-[10px] bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                      <span className="font-bold block text-slate-700 uppercase mb-1.5 text-[9px] tracking-wide">Subtabla de Transacciones Operativas:</span>
+                                      <div className="max-h-48 overflow-y-auto rounded border border-slate-200">
+                                        <table className="w-full text-left text-[9px] border-collapse">
+                                          <thead>
+                                            <tr className="bg-[#F8FAFC] text-slate-500 uppercase font-bold border-b border-slate-200 text-[8px]">
+                                              <th className="px-2 py-2">Ítem / Descripción</th>
+                                              <th className="px-2 py-2 text-center">Identificación/Ruta/Atributo</th>
+                                              <th className="px-2 py-2 text-right">Medición / Cantidad</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100">
+                                            {((log.filas || log.filasLeft || [])).map((f: any, i: number) => (
+                                              <tr key={i} className="hover:bg-slate-50/50">
+                                                <td className="px-2 py-1.5 text-slate-700 font-medium font-sans">
+                                                  {f.producto || f.ruta || f.proceso || f.camion || f.ingreso || f.colaborador || f.codigoInsumo || f.codigo || `Fila ${i + 1}`}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center text-slate-500 font-mono">
+                                                  {f.noTicketInterno || f.noPaseTraslado || f.noPaseSalida || f.noLoteProveedor || f.puesto || f.unidadMedida || f.medida || '—'}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-right font-bold text-slate-850">
+                                                  {f.peso !== undefined ? `${f.peso} lbs` : 
+                                                   f.pesaje !== undefined ? `${f.pesaje} lbs` : 
+                                                   f.libras !== undefined ? `${f.libras} lbs` :
+                                                   f.cantidad !== undefined ? f.cantidad : 
+                                                   f.cantidadPacas !== undefined ? f.cantidadPacas : 
+                                                   f.existenciaReal !== undefined ? `${f.existenciaReal} (Física)` : '—'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+
                                 </div>
-                              </div>
-                            )}
-
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  );
-                })}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

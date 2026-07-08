@@ -20,6 +20,7 @@ import BitacoraControlUniformesModule from './components/modules/BitacoraControl
 import BitacoraControlHorasCargadorModule from './components/modules/BitacoraControlHorasCargador';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
+import DashboardAnalytics from './components/DashboardAnalytics';
 
 import { db } from './lib/firebase';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
@@ -260,6 +261,13 @@ export default function App() {
           <GestionUsuarios
             onBack={() => setModuloActivo(null)}
             currentUserEmail={currentUser.email}
+          />
+        );
+      case 'dashboard_analitico':
+        return (
+          <DashboardAnalytics
+            onBack={() => setModuloActivo(null)}
+            currentUser={currentUser}
           />
         );
       default:

@@ -118,6 +118,14 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
     fetchRegistros();
   }, []);
 
+  useEffect(() => {
+    if (!noReporte) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '').slice(2);
+      setNoReporte(`REP-${datePart}-${randomNum}`);
+    }
+  }, [noReporte]);
+
   const fetchRegistros = async () => {
     try {
       setLoading(true);
@@ -321,10 +329,11 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Número de Reporte</label>
                 <input
                   type="text"
-                  placeholder="Autogenerado si está vacío"
+                  placeholder="Autogenerado por SGI"
                   value={noReporte}
-                  onChange={(e) => setNoReporte(e.target.value)}
-                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                  readOnly
+                  disabled
+                  className="w-full text-xs bg-slate-100 border border-slate-200 rounded py-2 px-3 focus:outline-none font-mono font-bold text-slate-500 cursor-not-allowed text-center"
                 />
               </div>
             </div>

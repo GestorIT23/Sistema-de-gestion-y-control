@@ -24,6 +24,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { Usuario } from '../types';
+import DashboardAnalytics from './DashboardAnalytics';
 
 interface Props {
   onSelectModulo: (modulo: string) => void;
@@ -51,6 +52,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
   const [autoclaveReliability, setAutoclaveReliability] = useState(100);
   const [loading, setLoading] = useState(false);
+  const [currentView, setCurrentView] = useState<'launchpad' | 'analytics'>('launchpad');
 
   useEffect(() => {
     fetchStats();
@@ -274,6 +276,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
       tag: 'Maquinaria',
       stats: `${counts.control_horas_cargador} registros`
+    },
+    {
+      id: 'dashboard_analitico',
+      title: 'Dashboard de Indicadores SGI',
+      subtitle: 'Análisis volumétrico de masa, conformidad microbiológica de autoclaves e inocuidad',
+      code: 'BIOTRASH 4.2. SGI-DASH-ANA',
+      icon: <TrendingUp className="w-5 h-5 text-indigo-500 animate-pulse" />,
+      color: 'border-indigo-200 hover:border-indigo-400 focus:ring-indigo-500',
+      tag: 'Indicadores SGI',
+      stats: 'ANALÍTICA'
     }
   ];
 
@@ -291,7 +303,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   }
 
   const filteredModulos = modulos.filter(mod => {
-    if (currentUser.rol === 'Administrador' || mod.id === 'usuarios') {
+    if (currentUser.rol === 'Administrador' || mod.id === 'usuarios' || mod.id === 'dashboard_analitico') {
       return true;
     }
     if (currentUser.modulosAcceso) {
@@ -303,165 +315,197 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   return (
     <div id="system-dashboard-root" className="max-w-7xl mx-auto px-6 py-6 space-y-6 animate-fade-in text-[#1A1C1E]">
       
-      {/* Intro section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#1A1C1E] text-white rounded-lg p-5 shadow-sm border border-[#2D2F31]">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#3B82F6] animate-pulse" /> Panel de Control de Procesos e Ingeniería SGI
-          </h2>
-          <p className="text-gray-300 text-xs mt-1.5 max-w-4xl leading-relaxed">
-            Bienvenido al portal centralizado de aseguramiento de calidad de <strong>BIOTRASH</strong>. Este sistema administra el reporte en tiempo real y la validación de conformidad de los 9 formatos clave de operaciones e higiene ambiental bajo directrices internacionales de las normas <strong>ISO 14001</strong> e <strong>ISO 9001</strong>.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 shrink-0 self-start md:self-center">
-          {(currentUser.rol === 'Administrador' || currentUser.rol === 'Supervisor') && (
-            <button
-              id="btn-go-reports"
-              onClick={() => onSelectModulo('reportes')}
-              className="bg-[#3B82F6] hover:bg-blue-600 font-bold text-xs px-3.5 py-1.5 rounded text-white flex items-center gap-2 transition focus:ring-1 focus:ring-blue-400 cursor-pointer text-center"
-            >
-              <Database className="w-3.5 h-3.5" /> Módulo de Reportes
-            </button>
-          )}
-          {currentUser.rol === 'Administrador' && (
-            <button
-              id="btn-go-users"
-              onClick={() => onSelectModulo('usuarios')}
-              className="bg-indigo-600 hover:bg-indigo-700 font-bold text-xs px-3.5 py-1.5 rounded text-white flex items-center gap-2 transition focus:ring-1 focus:ring-indigo-400 cursor-pointer text-center"
-            >
-              <Users className="w-3.5 h-3.5" /> Control de Usuarios
-            </button>
-          )}
-          <button
-            id="btn-refresh-stats"
-            onClick={fetchStats}
-            disabled={loading}
-            className="bg-[#2D2F31] hover:bg-neutral-800 font-bold text-xs px-3.5 py-1.5 rounded text-white border border-[#2D2F31] flex items-center gap-2 transition focus:ring-1 focus:ring-[#3B82F6] cursor-pointer"
-          >
-            <RefreshCcw className={`w-3.5 h-3.5 text-[#3B82F6] ${loading ? 'animate-spin' : ''}`} /> Sincronizar Datos
-          </button>
-        </div>
+      {/* SGI Navigation Tabs */}
+      <div className="flex border-b border-[#E2E8F0] gap-2">
+        <button
+          id="tab-launchpad-view"
+          onClick={() => setCurrentView('launchpad')}
+          className={`px-5 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition flex items-center gap-2 cursor-pointer ${
+            currentView === 'launchpad'
+              ? 'border-[#3B82F6] text-[#3B82F6]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <LayoutGrid className="w-4 h-4" /> Lanzador de Fórmulas SGI
+        </button>
+        <button
+          id="tab-analytics-view"
+          onClick={() => setCurrentView('analytics')}
+          className={`px-5 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition flex items-center gap-2 cursor-pointer ${
+            currentView === 'analytics'
+              ? 'border-[#3B82F6] text-[#3B82F6]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" /> Módulo de Gráficas y Análisis SGI
+        </button>
       </div>
 
-      {/* KPI stats bar */}
-      <div id="kpi-panel" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* KPI 1 */}
-        <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Carga Procesada:</span>
-            <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
-              {totalTreatedWeight.toLocaleString()} Lbs
-            </span>
-            <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5 mt-1">
-              <TrendingUp className="w-3 h-3" /> +12.4% vs Mes Anterior
-            </span>
+      {currentView === 'analytics' ? (
+        <DashboardAnalytics onBack={() => setCurrentView('launchpad')} currentUser={currentUser} />
+      ) : (
+        <>
+          {/* Intro section */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#1A1C1E] text-white rounded-lg p-5 shadow-sm border border-[#2D2F31]">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#3B82F6] animate-pulse" /> Panel de Control de Procesos e Ingeniería SGI
+              </h2>
+              <p className="text-gray-300 text-xs mt-1.5 max-w-4xl leading-relaxed">
+                Bienvenido al portal centralizado de aseguramiento de calidad de <strong>BIOTRASH</strong>. Este sistema administra el reporte en tiempo real y la validación de conformidad de los 9 formatos clave de operaciones e higiene ambiental bajo directrices internacionales de las normas <strong>ISO 14001</strong> e <strong>ISO 9001</strong>.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 shrink-0 self-start md:self-center">
+              {(currentUser.rol === 'Administrador' || currentUser.rol === 'Supervisor') && (
+                <button
+                  id="btn-go-reports"
+                  onClick={() => onSelectModulo('reportes')}
+                  className="bg-[#3B82F6] hover:bg-blue-600 font-bold text-xs px-3.5 py-1.5 rounded text-white flex items-center gap-2 transition focus:ring-1 focus:ring-blue-400 cursor-pointer text-center"
+                >
+                  <Database className="w-3.5 h-3.5" /> Módulo de Reportes
+                </button>
+              )}
+              {currentUser.rol === 'Administrador' && (
+                <button
+                  id="btn-go-users"
+                  onClick={() => onSelectModulo('usuarios')}
+                  className="bg-indigo-600 hover:bg-indigo-700 font-bold text-xs px-3.5 py-1.5 rounded text-white flex items-center gap-2 transition focus:ring-1 focus:ring-indigo-400 cursor-pointer text-center"
+                >
+                  <Users className="w-3.5 h-3.5" /> Control de Usuarios
+                </button>
+              )}
+              <button
+                id="btn-refresh-stats"
+                onClick={fetchStats}
+                disabled={loading}
+                className="bg-[#2D2F31] hover:bg-neutral-800 font-bold text-xs px-3.5 py-1.5 rounded text-white border border-[#2D2F31] flex items-center gap-2 transition focus:ring-1 focus:ring-[#3B82F6] cursor-pointer"
+              >
+                <RefreshCcw className={`w-3.5 h-3.5 text-[#3B82F6] ${loading ? 'animate-spin' : ''}`} /> Sincronizar Datos
+              </button>
+            </div>
           </div>
-          <div className="bg-blue-50/50 p-2 rounded">
-            <Flame className="w-5 h-5 text-[#3B82F6]" />
-          </div>
-        </div>
 
-        {/* KPI 2 */}
-        <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Cámaras Cuarto Frío:</span>
-            <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
-              {activeSensorsCount} Activos
-            </span>
-            <span className="text-[10px] text-blue-600 font-medium flex items-center gap-0.5 mt-1">
-              Régimen &lt;= 3.0°C estable
-            </span>
-          </div>
-          <div className="bg-blue-50/50 p-2 rounded">
-            <Snowflake className="w-5 h-5 text-[#3B82F6]" />
-          </div>
-        </div>
-
-        {/* KPI 3 */}
-        <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Conformidad Microbio:</span>
-            <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
-              {autoclaveReliability}% Apto
-            </span>
-            <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5 mt-1">
-              Cero crecimientos viales
-            </span>
-          </div>
-          <div className="bg-green-50/50 p-2 rounded">
-            <CheckSquare className="w-5 h-5 text-[#8ec23f]" />
-          </div>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Informes SGI:</span>
-            <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
-              {Object.values(counts).reduce((a: number, b: number) => a + b, 0)} Archivos
-            </span>
-            <span className="text-[10px] text-cyan-600 font-medium flex items-center gap-0.5 mt-1">
-              <Database className="w-3 h-3" /> Sync Firebase Ok
-            </span>
-          </div>
-          <div className="bg-blue-50/50 p-2 rounded">
-            <FileSpreadsheet className="w-5 h-5 text-[#00a2cc]" />
-          </div>
-        </div>
-
-      </div>
-
-      {/* Grid launchpad modules */}
-      <div id="modules-selection-grid" className="space-y-3">
-        <div className="border-b pb-2 flex items-center justify-between border-[#E2E8F0]">
-          <div className="flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4 text-[#64748B]" />
-            <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">Módulos de Formatos Operacionales (F-OPR)</h3>
-          </div>
-          <span className="text-[10px] text-[#64748B] font-mono uppercase">9 Formularios de Captura Activos</span>
-        </div>
-
-        {/* 3x3 Grid cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredModulos.map((mod) => (
-            <button
-              key={mod.id}
-              id={`modulo-card-${mod.id}`}
-              onClick={() => onSelectModulo(mod.id)}
-              className="text-left bg-white border border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-sm rounded-lg p-4 transition duration-150 flex flex-col justify-between h-44 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
-            >
-              
-              {/* Card top */}
-              <div className="w-full space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold uppercase font-mono tracking-wider text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">
-                    {mod.tag}
-                  </span>
-                  <div className="p-1 bg-[#F8FAFC] rounded">
-                    {mod.icon}
-                  </div>
-                </div>
-                <h4 className="font-bold text-[#1E293B] text-sm leading-tight">
-                  {mod.title}
-                </h4>
-                <p className="text-[#64748B] text-xs line-clamp-2">
-                  {mod.subtitle}
-                </p>
-              </div>
-
-              {/* Card Bottom */}
-              <div className="w-full flex items-center justify-between border-t border-[#F1F5F9] pt-2 mt-2 text-[10px] font-mono">
-                <span className="text-slate-400 font-medium text-[9px]">{mod.code}</span>
-                <span className="font-bold text-white bg-[#3B82F6] px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide">
-                  {mod.stats}
+          {/* KPI stats bar */}
+          <div id="kpi-panel" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* KPI 1 */}
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Carga Procesada:</span>
+                <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
+                  {totalTreatedWeight.toLocaleString()} Lbs
+                </span>
+                <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5 mt-1">
+                  <TrendingUp className="w-3 h-3" /> +12.4% vs Mes Anterior
                 </span>
               </div>
+              <div className="bg-blue-50/50 p-2 rounded">
+                <Flame className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+            </div>
 
-            </button>
-          ))}
-        </div>
-      </div>
+            {/* KPI 2 */}
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Cámaras Cuarto Frío:</span>
+                <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
+                  {activeSensorsCount} Activos
+                </span>
+                <span className="text-[10px] text-blue-600 font-medium flex items-center gap-0.5 mt-1">
+                  Régimen &lt;= 3.0°C estable
+                </span>
+              </div>
+              <div className="bg-blue-50/50 p-2 rounded">
+                <Snowflake className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+            </div>
+
+            {/* KPI 3 */}
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Conformidad Microbio:</span>
+                <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
+                  {autoclaveReliability}% Apto
+                </span>
+                <span className="text-[10px] text-green-600 font-medium flex items-center gap-0.5 mt-1">
+                  Cero crecimientos viales
+                </span>
+              </div>
+              <div className="bg-green-50/50 p-2 rounded">
+                <CheckSquare className="w-5 h-5 text-[#8ec23f]" />
+              </div>
+            </div>
+
+            {/* KPI 4 */}
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="block text-[10px] text-[#64748B] uppercase font-bold font-mono tracking-wider">Informes SGI:</span>
+                <span className="font-bold text-xl text-[#1E293B] font-mono block mt-1">
+                  {Object.values(counts).reduce((a: number, b: number) => a + b, 0)} Archivos
+                </span>
+                <span className="text-[10px] text-cyan-600 font-medium flex items-center gap-0.5 mt-1">
+                  <Database className="w-3 h-3" /> Sync Firebase Ok
+                </span>
+              </div>
+              <div className="bg-blue-50/50 p-2 rounded">
+                <FileSpreadsheet className="w-5 h-5 text-[#00a2cc]" />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Grid launchpad modules */}
+          <div id="modules-selection-grid" className="space-y-3">
+            <div className="border-b pb-2 flex items-center justify-between border-[#E2E8F0]">
+              <div className="flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-[#64748B]" />
+                <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">Módulos de Formatos Operacionales (F-OPR)</h3>
+              </div>
+              <span className="text-[10px] text-[#64748B] font-mono uppercase">9 Formularios de Captura Activos</span>
+            </div>
+
+            {/* 3x3 Grid cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredModulos.map((mod) => (
+                <button
+                  key={mod.id}
+                  id={`modulo-card-${mod.id}`}
+                  onClick={() => onSelectModulo(mod.id)}
+                  className="text-left bg-white border border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-sm rounded-lg p-4 transition duration-150 flex flex-col justify-between h-44 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                >
+                  
+                  {/* Card top */}
+                  <div className="w-full space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold uppercase font-mono tracking-wider text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">
+                        {mod.tag}
+                      </span>
+                      <div className="p-1 bg-[#F8FAFC] rounded">
+                        {mod.icon}
+                      </div>
+                    </div>
+                    <h4 className="font-bold text-[#1E293B] text-sm leading-tight">
+                      {mod.title}
+                    </h4>
+                    <p className="text-[#64748B] text-xs line-clamp-2">
+                      {mod.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Card Bottom */}
+                  <div className="w-full flex items-center justify-between border-t border-[#F1F5F9] pt-2 mt-2 text-[10px] font-mono">
+                    <span className="text-slate-400 font-medium text-[9px]">{mod.code}</span>
+                    <span className="font-bold text-white bg-[#3B82F6] px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide">
+                      {mod.stats}
+                    </span>
+                  </div>
+
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   );

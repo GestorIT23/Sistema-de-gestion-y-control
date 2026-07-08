@@ -1,10 +1,39 @@
 import * as XLSX from 'xlsx';
+import { sanitizeBiotrashObject } from './textSanitizer';
+
+function formatHoraRegistro(isoString?: string): string {
+  if (!isoString) return '—';
+  try {
+    const parts = isoString.split('T');
+    if (parts.length > 1) {
+      const timePart = parts[1].split(/[Z\-+.]/)[0];
+      return timePart;
+    }
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '—';
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  } catch (e) {
+    return '—';
+  }
+}
 
 /**
  * Highly polished Excel generation utility for SGI BIOTRASH S.A.
  * Translates operational data into beautiful spreadsheet grids.
  */
 export function generateAndDownloadExcel(tipo: string, data: any): void {
+  // Sanitize data to ensure "basura bio" is replaced with BIOTRASH
+  data = sanitizeBiotrashObject(data);
+
+  // If we receive multiple results for a specific form type, redirect to consolidate generator
+  if (tipo !== 'reporte_general' && data && data.results && Array.isArray(data.results)) {
+    generateConsolidatedFormExcel(tipo, data.results);
+    return;
+  }
+
   // Create Worksheet array
   const wsRows: any[][] = [];
 
@@ -40,6 +69,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['--- DATOS DEL REPORTE INTEGRADO ---']);
     wsRows.push([
       'Fecha Proceso',
+      'Hora Captura',
       'Tipo de Bitácora',
       'Código Formato',
       'Responsable SGI',
@@ -87,6 +117,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     results.forEach((item: any) => {
       wsRows.push([
         item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
         item.tipoTitulo || '',
         item.codigoFormato || '',
         item.responsable || '',
@@ -134,6 +165,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'inventarios') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Área Planta:', data.area]);
     wsRows.push(['Turno Operativo:', data.turno]);
     wsRows.push(['Responsable SGI:', data.responsable]);
@@ -150,6 +182,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'entrega_contenedores') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total Contenedores:', data.totalContenedores]);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
@@ -172,6 +205,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'disposicion_pirolisis') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total de Pacas:', data.totalPacas]);
     wsRows.push(['Total de Libras:', data.totalLibras + ' lbs']);
@@ -188,6 +222,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'disposicion_vertedero') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Total Viajes:', data.totalViajes]);
     wsRows.push(['Total Pacas:', data.totalPacas]);
@@ -214,6 +249,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_incineracion') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Incinerador ID:', data.incinerador]);
     wsRows.push(['Duración Proceso:', data.duracionProceso]);
@@ -241,6 +277,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'cuarto_frio') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Cuarto Frío ID:', data.cuartoFrio]);
     wsRows.push(['Hora Inspección:', data.horaInspeccion]);
@@ -273,6 +310,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'reduccion_volumen') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Código Trituradora:', data.noTrituradora]);
     wsRows.push(['Número de Proceso:', data.noProceso]);
@@ -296,6 +334,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_autoclaves') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Identificación Autoclave:', data.noAutoclave]);
     wsRows.push(['Peso del Proceso:', data.pesoProceso + ' Lbs']);
@@ -324,6 +363,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Ente Generador:', data.enteGenerador]);
     wsRows.push(['Fecha Recepción:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Ubicación Planta:', data.ubicacion]);
     wsRows.push(['Nro. Ticket Báscula:', data.noTicketBascula]);
@@ -364,6 +404,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'lavado_banos') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Ubicación de Baños:', data.ubicacionBanos]);
     wsRows.push(['Turno Operativo:', data.turno]);
     wsRows.push(['Desinfectante Proceso:', data.desinfectanteUsado]);
@@ -389,6 +430,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'insumos_quimicos') {
     wsRows.push(['I. INFORMACIÓN DE AUDITORÍA']);
     wsRows.push(['Fecha de Proceso:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Turno Operativo:', data.turno]);
     wsRows.push(['Responsable Calidad:', data.responsable]);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
@@ -403,6 +445,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'inventarios_sgc') {
     wsRows.push(['I. INFORMACIÓN GENERAL']);
     wsRows.push(['Fecha de Auditoría SGI:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Área Física Involucrada:', data.areaFisica]);
     wsRows.push(['Auditor de Calidad:', data.responsable]);
     wsRows.push(['Observaciones generales:', data.observaciones || 'Ninguna']);
@@ -417,6 +460,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_uniformes') {
     wsRows.push(['I. INFORMACIÓN DE DOTACIONES']);
     wsRows.push(['Fecha Reporte:', data.fecha]);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Coordinador EPP:', data.responsableEntrega]);
     wsRows.push(['Observaciones de Entrega:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
@@ -429,6 +473,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   } else if (tipo === 'control_horas_cargador') {
     wsRows.push(['I. INFORMACIÓN GENERAL Y OPERADOR']);
     wsRows.push(['Fecha de Turno:', data.fecha || '']);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Turno:', data.turno || '']);
     wsRows.push(['Número de Reporte:', data.noReporte || '']);
     wsRows.push(['Nombre Operador:', data.nombreOperador || '']);
@@ -508,5 +553,435 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
 
   // Write and Save
   const outputFileName = `${meta.code}_${tipo}_${(data.fecha || new Date().toISOString().split('T')[0]).replace(/\//g, '-')}.xlsx`;
+  XLSX.writeFile(wb, outputFileName);
+}
+
+/**
+ * Generates a clean, flat, highly customized spreadsheet containing all filtered records
+ * belonging only to a specific bitacora, avoiding irrelevant column clutter.
+ */
+function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
+  // Sanitize all filtered results to ensure "basura bio" is replaced with BIOTRASH
+  results = sanitizeBiotrashObject(results);
+
+  const wsRows: any[][] = [];
+  
+  // Define metadata title mapping
+  const titles: Record<string, { code: string; name: string }> = {
+    inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
+    entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
+    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
+    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
+    control_incineracion: { code: 'F-OPR-05', name: 'BITÁCORA DE CONTROL DE INCINERACIÓN' },
+    cuarto_frio: { code: 'F-OPR-06', name: 'BITÁCORA DE CONTROL DE CUARTO FRÍO Y CONGELADORES' },
+    reduccion_volumen: { code: 'F-OPR-07', name: 'BITÁCORA DE REDUCCIÓN DE VOLUMEN Y CONTROL DE PACAS' },
+    control_autoclaves: { code: 'F-OPR-08', name: 'BITÁCORA DE CONTROL QUÍMICO / BIOLÓGICO DE AUTOCLAVES' },
+    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GESTIÓN DE GENERACIÓN Y ALMACENAMIENTO DE RPBI' },
+    lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
+    insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
+    inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
+    control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
+    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' }
+  };
+
+  const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA SGI' };
+
+  // Headers standard SGI
+  wsRows.push(['BIOTRASH S.A.', '', '', '', '']);
+  wsRows.push(['SISTEMA DE GESTIÓN INTEGRAL (SGI)', '', '', '', '']);
+  wsRows.push([`REPORTE DE CONSOLIDADO DE REGISTROS: ${meta.name}`, '', '', '', '']);
+  wsRows.push([`CÓDIGO FORMATO: ${meta.code}`, '', `VERSIÓN SGI: 4.2`, '', '']);
+  wsRows.push([]); // blank separator
+
+  if (tipo === 'inventarios') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Área Planta', 'Turno Operativo', 'Responsable SGI', 'Observaciones', 'Hora Ingreso', 'Producto/Desecho', 'Cantidad (Unidades)', 'Firma Registro']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.area || '',
+          item.turno || '',
+          item.responsable || '',
+          item.observaciones || '',
+          f.hora || '',
+          f.producto || '',
+          f.cantidad !== undefined ? f.cantidad : '',
+          f.firma || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'entrega_contenedores') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Total Contenedores', 'Tapadera Buen Estado', 'Cuerpo Buen Estado', 'Llantas Buen Estado', 'Halador Buen Estado', 'Ruta/Destino', 'Cantidad Entregada', 'Firma Recibe']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      const est = item.estadoGeneral || {};
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.totalContenedores !== undefined ? item.totalContenedores : '',
+          est.tapaderaBuenEstado ? 'SÍ' : 'NO',
+          est.cuerpoBuenEstado ? 'SÍ' : 'NO',
+          est.llantasBuenEstado ? 'SÍ' : 'NO',
+          est.haladorBuenEstado ? 'SÍ' : 'NO',
+          f.ruta || '',
+          f.cantidad !== undefined ? f.cantidad : '',
+          f.firmaRecibe || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'disposicion_pirolisis') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Total de Pacas', 'Total Libras (Lbs)', 'Identificador Proceso', 'Pacas Asignadas', 'Pase de Traslado', 'Firma Recibe']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.totalPacas !== undefined ? item.totalPacas : '',
+          item.totalLibras !== undefined ? item.totalLibras : '',
+          f.proceso || '',
+          f.pacas !== undefined ? f.pacas : '',
+          f.noPaseTraslado || '',
+          f.firmaRecibe || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'disposicion_vertedero') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Total Viajes', 'Total Pacas', 'Total Pesaje (Lbs)', 'Código Camión', 'Placa Camión', 'Pase Salida', 'Hora Salida', 'Piloto / Chofer', 'Correlativo Paca', 'Cantidad Pacas', 'Pesaje Fila (Lbs)']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.totalViajes !== undefined ? item.totalViajes : '',
+          item.totalPacas !== undefined ? item.totalPacas : '',
+          item.totalPesaje !== undefined ? item.totalPesaje : '',
+          f.camion || '',
+          f.placa || '',
+          f.noPaseSalida || '',
+          f.horaSalida || '',
+          f.nombrePiloto || '',
+          f.correlativoPacas || '',
+          f.cantidadPacas !== undefined ? f.cantidadPacas : '',
+          f.pesaje !== undefined ? f.pesaje : ''
+        ]);
+      });
+    });
+  } else if (tipo === 'control_incineracion') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Incinerador ID', 'Duración Proceso', 'Hora Inicio', 'Hora Fin', 'Total Libras (Lbs)', 'Temp Combustión (°C)', 'Temp Post-Combustión (°C)', 'Polvo Cenizas (kg)', 'Combustible Tipo', 'Combustible Cantidad (Gls)', 'ID Carga / Ingreso', 'Libras Recibidas']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.incinerador || '',
+          item.duracionProceso || '',
+          item.horaInicio || '',
+          item.horaFin || '',
+          item.totalLibras !== undefined ? item.totalLibras : '',
+          item.tempCombustion !== undefined ? item.tempCombustion : '',
+          item.tempPostCombustion !== undefined ? item.tempPostCombustion : '',
+          item.cantidadPolvoFin !== undefined ? item.cantidadPolvoFin : '',
+          item.combustibleUsado || '',
+          item.combustibleCantidad !== undefined ? item.combustibleCantidad : '',
+          f.ingreso || '',
+          f.libras !== undefined ? f.libras : ''
+        ]);
+      });
+    });
+  } else if (tipo === 'cuarto_frio') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Cuarto Frío ID', 'Hora Inspección', 'Temp Entrada (°C)', 'Temp Salida (°C)', 'Congeladores Activos',
+      'Limpieza Paredes Ext', 'Limpieza Paredes Int', 'Limpieza Pisos', 'Evaporadores Ok', 'Condensadores Ok', 'Luces Ok', 'Residuo Ordenado', 'Techo Limpio', 'Ext Techo Limpio',
+      'C1 (°C)', 'C2 (°C)', 'C3 (°C)', 'C4 (°C)', 'C5 (°C)', 'C6 (°C)'
+    ]);
+    results.forEach(item => {
+      const insp = item.inspeccion || {};
+      const temps = item.tempCongeladores || {};
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.responsable || '',
+        item.observaciones || '',
+        item.cuartoFrio || '',
+        item.horaInspeccion || '',
+        item.tempEntrada !== undefined ? item.tempEntrada : '',
+        item.tempSalida !== undefined ? item.tempSalida : '',
+        item.cantidadCongeladoresActivos !== undefined ? item.cantidadCongeladoresActivos : '',
+        insp.limpiezaParedesExteriores ? 'CUMPLE' : 'FALLA',
+        insp.limpiezaParedesInteriores ? 'CUMPLE' : 'FALLA',
+        insp.limpiezaPiso ? 'CUMPLE' : 'FALLA',
+        insp.funcionamientoEvaporadores ? 'CUMPLE' : 'FALLA',
+        insp.funcionamientoCondensadores ? 'CUMPLE' : 'FALLA',
+        insp.funcionamientoLucesInteriores ? 'CUMPLE' : 'FALLA',
+        insp.residuoOrdenado ? 'CUMPLE' : 'FALLA',
+        insp.limpiezaTecho ? 'CUMPLE' : 'FALLA',
+        insp.limpiezaExteriorTecho ? 'CUMPLE' : 'FALLA',
+        temps.congelador01 !== undefined ? temps.congelador01 : '',
+        temps.congelador02 !== undefined ? temps.congelador02 : '',
+        temps.congelador03 !== undefined ? temps.congelador03 : '',
+        temps.congelador04 !== undefined ? temps.congelador04 : '',
+        temps.congelador05 !== undefined ? temps.congelador05 : '',
+        temps.congelador06 !== undefined ? temps.congelador06 : ''
+      ]);
+    });
+  } else if (tipo === 'reduccion_volumen') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Anotaciones Especiales', 'Trituradora ID', 'Nº Proceso', 'Tiempo Proceso', 'Peso Entrada (lbs)', 'Peso Salida (lbs)', 'Cantidad Pacas',
+      'Trituradora Sano', 'Cajas Reductoras Sano', 'Fajas Sano', 'Elevador Carros Sano', 'Banda Transportadora Sano', 'Compactadora Sano'
+    ]);
+    results.forEach(item => {
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.responsable || '',
+        item.observaciones || '',
+        item.anotacionesEspeciales || '',
+        item.noTrituradora || '',
+        item.noProceso || '',
+        item.tiempoProceso || '',
+        item.pesoEntrada !== undefined ? item.pesoEntrada : '',
+        item.pesoSalida !== undefined ? item.pesoSalida : '',
+        item.cantidadPacas !== undefined ? item.cantidadPacas : '',
+        item.estadoTrituradora ? 'SÍ' : 'NO',
+        item.estadoCajasReductoras ? 'SÍ' : 'NO',
+        item.estadoFajas ? 'SÍ' : 'NO',
+        item.estadoElevadorCarros ? 'SÍ' : 'NO',
+        item.estadoBandaTransportadora ? 'SÍ' : 'NO',
+        item.estadoCompactadora ? 'SÍ' : 'NO'
+      ]);
+    });
+  } else if (tipo === 'control_autoclaves') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Autoclave ID', 'Peso Proceso (lbs)', 'Nº Proceso', 'Temp Incubación (°C)', 'Firma Supervisor', 'Firma Coordinador',
+      'Uso Ampolla Biológica', 'Uso Cinta Química', 'Identificación Indicador', 'Resultado Clínico', 'No Lote Fabricante', 'Temp Alcanzado', 'Presión Alcanzado', 'Tiempo Esterilización', 'Observaciones Proceso'
+    ]);
+    results.forEach(item => {
+      const ind = item.tipoIndicador || {};
+      const param = item.parametrosOperacion || {};
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.responsable || '',
+        item.observaciones || '',
+        item.noAutoclave || '',
+        item.pesoProceso !== undefined ? item.pesoProceso : '',
+        item.noProceso || '',
+        item.tempIncubacion !== undefined ? item.tempIncubacion : '',
+        item.firmaSupervisor || '',
+        item.firmaCoordinador || '',
+        ind.biologico ? 'SÍ' : 'NO',
+        ind.quimico ? 'SÍ' : 'NO',
+        item.identificacionIndicador || '',
+        item.resultadoIndicador || '',
+        item.noLoteFabricante || '',
+        param.temperatura ? 'SÍ' : 'NO',
+        param.presion ? 'SÍ' : 'NO',
+        param.tiempoProceso ? 'SÍ' : 'NO',
+        item.observacionesGeneralesProceso || ''
+      ]);
+    });
+  } else if (tipo === 'generacion_almacenamiento') {
+    wsRows.push([
+      'Fecha Recepción', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Ente Generador', 'Ubicación Planta', 'No Ticket Báscula', 'Peso Báscula (lbs)', 'Total Peso Tickets (lbs)',
+      'Inorgánico', 'Punzocortantes', 'Patológico', 'Contenedor', 'Tonel Metálico', 'Congelador', 'No Ticket Interno', 'Tipo Residuo', 'Tipo Embalaje', 'Cantidad', 'Peso (lbs)'
+    ]);
+    results.forEach(item => {
+      const rows = item.filasLeft || [{}];
+      const res = item.tipoResiduo || {};
+      const emb = item.tipoEmbalaje || {};
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.enteGenerador || '',
+          item.ubicacion || '',
+          item.noTicketBascula || '',
+          item.pesoTicketBascula !== undefined ? item.pesoTicketBascula : '',
+          item.totalPesoTickets !== undefined ? item.totalPesoTickets : '',
+          res.inorganico ? 'SÍ' : 'NO',
+          res.punzoCortante ? 'SÍ' : 'NO',
+          res.patologico ? 'SÍ' : 'NO',
+          emb.contenedor ? 'SÍ' : 'NO',
+          emb.tonelMetalico ? 'SÍ' : 'NO',
+          emb.congelador ? 'SÍ' : 'NO',
+          f.noTicketInterno || '',
+          f.tipoResiduo || '',
+          f.tipoEmbalaje || '',
+          f.cantidad !== undefined ? f.cantidad : '',
+          f.peso !== undefined ? f.peso : ''
+        ]);
+      });
+    });
+  } else if (tipo === 'lavado_banos') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Ubicación Baños', 'Turno', 'Desinfectante Usado',
+      'Lavado Sanitarios', 'Lavado Lavamanos', 'Barrido Trapeado', 'Espejos', 'Vidrios', 'Desinfección Superficies', 'Vaciado Papeleras',
+      'Stock Papel Higiénico', 'Stock Jabón Manos', 'Stock Toallas Papel'
+    ]);
+    results.forEach(item => {
+      const chk = item.checklistBanos || {};
+      const abs = item.abastecimientoBanos || {};
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.responsable || '',
+        item.observaciones || '',
+        item.ubicacionBanos || '',
+        item.turno || '',
+        item.desinfectanteUsado || '',
+        chk.lavadoSanitarios ? 'SÍ' : 'NO',
+        chk.lavadoLavamanos ? 'SÍ' : 'NO',
+        chk.barridoTrapeado ? 'SÍ' : 'NO',
+        chk.limpiezaEspejos ? 'SÍ' : 'NO',
+        chk.limpiezaVidrios ? 'SÍ' : 'NO',
+        chk.desinfeccionSuperficies ? 'SÍ' : 'NO',
+        chk.vaciadoPapeleras ? 'SÍ' : 'NO',
+        abs.papelHigienico ? 'CON STOCK' : 'SIN STOCK',
+        abs.jabonManos ? 'CON STOCK' : 'SIN STOCK',
+        abs.toallasPapel ? 'CON STOCK' : 'SIN STOCK'
+      ]);
+    });
+  } else if (tipo === 'insumos_quimicos') {
+    wsRows.push(['Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Turno Operativo', 'Producto', 'Unidad Medida', 'Stock Inicial', 'Unidades Recibidas', 'Unidades Consumidas', 'Stock Final', 'No Lote Proveedor']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.turno || '',
+          f.producto || '',
+          f.unidadMedida || '',
+          f.stockInicial !== undefined ? f.stockInicial : '',
+          f.unidadesRecibidas !== undefined ? f.unidadesRecibidas : '',
+          f.unidadesConsumidas !== undefined ? f.unidadesConsumidas : '',
+          f.stockFinal !== undefined ? f.stockFinal : '',
+          f.noLoteProveedor || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'inventarios_sgc') {
+    wsRows.push(['Fecha Auditoría', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Área Física Involucrada', 'Código Insumo', 'Descripción Completa', 'Unidad Medida', 'Stock Mínimo', 'Existencia Real', 'Estado Empaque']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsable || '',
+          item.observaciones || '',
+          item.areaFisica || '',
+          f.codigoInsumo || f.codigoInsmo || '',
+          f.descripcion || '',
+          f.medida || '',
+          f.stockMinimo !== undefined ? f.stockMinimo : '',
+          f.existenciaReal !== undefined ? f.existenciaReal : '',
+          f.estadoEmpaque || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'control_uniformes') {
+    wsRows.push(['Fecha Reporte', 'Hora Captura', 'Coordinador EPP', 'Observaciones', 'Colaborador', 'Puesto Operativo', 'Talla Filipina', 'Talla Pantalón', 'Talla Botas', 'Mandil', 'Guantes', 'Careta', 'Firma Recibido']);
+    results.forEach(item => {
+      const rows = item.filas || [{}];
+      rows.forEach((f: any) => {
+        wsRows.push([
+          item.fecha || '',
+          formatHoraRegistro(item.fechaRegistro),
+          item.responsableEntrega || '',
+          item.observaciones || '',
+          f.colaborador || '',
+          f.puesto || '',
+          f.tallaCamisa || '',
+          f.tallaPantalon || '',
+          f.tallaBotas || '',
+          f.tieneMandil ? 'SÍ' : 'NO',
+          f.tieneGuantes ? 'SÍ' : 'NO',
+          f.tieneCareta ? 'SÍ' : 'NO',
+          f.firmaRecibido || ''
+        ]);
+      });
+    });
+  } else if (tipo === 'control_horas_cargador') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Turno', 'Nro Reporte', 'Nombre Operador', 'Código Empleado', 'Área Asignada', 'Supervisor Cargo', 'Código Unidad', 'Marca Modelo', 'Año',
+      'Nivel Combustible Inicial', 'Litros Cargados', 'Nivel Combustible Final', 'Horómetro Inicial', 'Horómetro Final', 'Total Operado Horas', 'Hora Inicio', 'Hora Término',
+      'Pausas Inactividad', 'Actividad Principal', 'Material Trabajado', 'Descripción Actividades', 'Estado Equipo', 'Observaciones Fallas', 'Firma Operador', 'Firma Supervisor'
+    ]);
+    results.forEach(item => {
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.turno || '',
+        item.noReporte || '',
+        item.nombreOperador || '',
+        item.codigoEmpleado || '',
+        item.areaAsignada || '',
+        item.supervisorCargo || '',
+        item.codigoUnidad || '',
+        item.marcaModelo || '',
+        item.anio || '',
+        item.nivelCombustibleInicio || '',
+        item.litrosCargados !== undefined ? item.litrosCargados : '',
+        item.nivelCombustibleFinal || '',
+        item.lecturaInicialHorometro !== undefined ? item.lecturaInicialHorometro : '',
+        item.lecturaFinalHorometro !== undefined ? item.lecturaFinalHorometro : '',
+        item.totalOperadoHoras !== undefined ? item.totalOperadoHoras : '',
+        item.horaInicio || '',
+        item.horaTermino || '',
+        item.horasPausaInactividad !== undefined ? item.horasPausaInactividad : '',
+        item.tipoActividadPrincipal || '',
+        item.tipoMaterialTrabajado || '',
+        item.descripcionActividades || '',
+        item.estadoEquipo || '',
+        item.descripcionFallasObservaciones || '',
+        item.firmaOperador || '',
+        item.firmaSupervisor || ''
+      ]);
+    });
+  }
+
+  // Draw Control de Cambios SGI standard at the bottom
+  wsRows.push([]);
+  wsRows.push(['--- SISTEMA SGI CONTROL DE CAMBIOS ---']);
+  wsRows.push(['Versión', 'Fecha Modificación', 'Sección Comprometida', 'Motivo del Cambio', 'Solicitante Comité']);
+  wsRows.push(['1.0', '13/06/2025', 'Todas', 'Creación del formato inicial consolidado bajo norma ISO 14001 y 9001', 'Comité de Calidad']);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsRows);
+
+  // Auto adjust column widths
+  const colWidths = wsRows[0].map(() => ({ wch: 22 }));
+  wsRows.forEach((row) => {
+    row.forEach((cell, cellIdx) => {
+      const val = String(cell || '');
+      if (colWidths[cellIdx] && val.length > colWidths[cellIdx].wch) {
+        colWidths[cellIdx].wch = Math.min(val.length + 2, 60);
+      }
+    });
+  });
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'SGI FORMATO CONSOLIDADO');
+
+  const outputFileName = `${meta.code}_Consolidado_${tipo}_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, outputFileName);
 }

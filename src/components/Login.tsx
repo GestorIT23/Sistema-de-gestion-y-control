@@ -92,7 +92,7 @@ export default function Login({ onLoginSuccess }: Props) {
               Control de Accesos Autorizados
             </p>
           </div>
-          <div className="h-px bg-slate-250 w-24 mx-auto"></div>
+          <div className="h-px bg-slate-200 w-24 mx-auto"></div>
         </div>
 
         {/* Dynamic Status Message Banners */}

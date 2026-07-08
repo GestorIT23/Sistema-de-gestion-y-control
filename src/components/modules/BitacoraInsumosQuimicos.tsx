@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Plus, Trash2, Database, ShieldCheck, Info, AlertCircle, FileSpreadsheet, FileText } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 
 interface Props {
   onBack: () => void;
@@ -60,7 +61,8 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
       const querySnapshot = await getDocs(q);
       const docs: BitacoraInsumosQuimicos[] = [];
       querySnapshot.forEach((doc) => {
-        docs.push({ id: doc.id, ...doc.data() } as BitacoraInsumosQuimicos);
+        const docData = sanitizeBiotrashObject(doc.data());
+        docs.push({ id: doc.id, ...docData } as BitacoraInsumosQuimicos);
       });
       setRegistros(docs);
     } catch (e) {
@@ -76,7 +78,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
 
   const handleAddNewProductOption = () => {
     if (!newProductName.trim()) return;
-    const trimmed = newProductName.trim();
+    const trimmed = sanitizeBiotrashText(newProductName.trim());
     if (!productOptions.includes(trimmed)) {
       setProductOptions([...productOptions, trimmed]);
     }
@@ -124,7 +126,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
     setSaving(true);
     setMsg({ text: 'Guardando datos en Firebase...', type: 'info' });
 
-    const nuevoRegistro: BitacoraInsumosQuimicos = {
+    const nuevoRegistro: BitacoraInsumosQuimicos = sanitizeBiotrashObject({
       fechaRegistro: new Date().toISOString(),
       fecha,
       turno,
@@ -143,7 +145,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
           solicitante: 'Comité de Inventarios'
         }
       ]
-    };
+    });
 
     try {
       await addDoc(collection(db, 'bitacora_insumos_quimicos'), nuevoRegistro);

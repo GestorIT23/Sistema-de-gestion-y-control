@@ -81,6 +81,13 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
     fetchRegistros();
   }, []);
 
+  useEffect(() => {
+    if (!noTicketBascula) {
+      const randomNum = Math.floor(100000 + Math.random() * 900000);
+      setNoTicketBascula(`TCK-${randomNum}`);
+    }
+  }, [noTicketBascula]);
+
   const fetchRegistros = async () => {
     try {
       setLoading(true);
@@ -161,6 +168,10 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
       generateAndDownloadPDF('generacion_almacenamiento', nuevoRegistro);
       setMsg({ text: 'El reporte de recepción y almacenamiento se guardó exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
       setObservaciones('');
+      setEnteGenerador('');
+      setPesoTicketBascula(0);
+      setFilasLeft([]);
+      setNoTicketBascula('');
       fetchRegistros();
     } catch (err) {
       console.error(err);
@@ -263,9 +274,9 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                   id="ticket-bascula"
                   type="text"
                   value={noTicketBascula}
-                  onChange={(e) => setNoTicketBascula(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center"
-                  required
+                  readOnly
+                  disabled
+                  className="w-full bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 text-slate-500 font-bold outline-none text-center cursor-not-allowed"
                 />
               </div>
             </div>
