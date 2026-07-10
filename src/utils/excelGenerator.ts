@@ -337,7 +337,14 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
     wsRows.push(['Identificación Autoclave:', data.noAutoclave]);
-    wsRows.push(['Peso del Proceso:', data.pesoProceso + ' Lbs']);
+    wsRows.push(['Peso Total Bruto:', (data.pesoBrutoTotal !== undefined ? data.pesoBrutoTotal : (data.pesoProceso ? data.pesoProceso + 1080 : 1730)) + ' Lbs']);
+    wsRows.push(['Peso Total Neto (Proceso):', data.pesoProceso + ' Lbs']);
+    wsRows.push(['Peso Carrito 1 (Bruto):', (data.pesoBruto1 !== undefined ? data.pesoBruto1 : 300) + ' Lbs (Neto: ' + (data.pesoNeto1 !== undefined ? data.pesoNeto1 : 120) + ' Lbs)']);
+    wsRows.push(['Peso Carrito 2 (Bruto):', (data.pesoBruto2 !== undefined ? data.pesoBruto2 : 300) + ' Lbs (Neto: ' + (data.pesoNeto2 !== undefined ? data.pesoNeto2 : 120) + ' Lbs)']);
+    wsRows.push(['Peso Carrito 3 (Bruto):', (data.pesoBruto3 !== undefined ? data.pesoBruto3 : 300) + ' Lbs (Neto: ' + (data.pesoNeto3 !== undefined ? data.pesoNeto3 : 120) + ' Lbs)']);
+    wsRows.push(['Peso Carrito 4 (Bruto):', (data.pesoBruto4 !== undefined ? data.pesoBruto4 : 300) + ' Lbs (Neto: ' + (data.pesoNeto4 !== undefined ? data.pesoNeto4 : 120) + ' Lbs)']);
+    wsRows.push(['Peso Carrito 5 (Bruto):', (data.pesoBruto5 !== undefined ? data.pesoBruto5 : 300) + ' Lbs (Neto: ' + (data.pesoNeto5 !== undefined ? data.pesoNeto5 : 120) + ' Lbs)']);
+    wsRows.push(['Peso Carrito 6 (Bruto):', (data.pesoBruto6 !== undefined ? data.pesoBruto6 : 230) + ' Lbs (Neto: ' + (data.pesoNeto6 !== undefined ? data.pesoNeto6 : 50) + ' Lbs)']);
     wsRows.push(['Número de Proceso:', data.noProceso]);
     wsRows.push(['Temperatura Incubación:', data.tempIncubacion]);
     wsRows.push(['Firma Supervisor:', data.firmaSupervisor]);
@@ -766,19 +773,48 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
     });
   } else if (tipo === 'control_autoclaves') {
     wsRows.push([
-      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Autoclave ID', 'Peso Proceso (lbs)', 'Nº Proceso', 'Temp Incubación (°C)', 'Firma Supervisor', 'Firma Coordinador',
+      'Fecha', 'Hora Captura', 'Responsable SGI', 'Observaciones', 'Autoclave ID', 
+      'Peso Total Bruto (lbs)', 'Peso Total Neto (lbs)',
+      'Carrito 1 Bruto (lbs)', 'Carrito 1 Neto (lbs)',
+      'Carrito 2 Bruto (lbs)', 'Carrito 2 Neto (lbs)',
+      'Carrito 3 Bruto (lbs)', 'Carrito 3 Neto (lbs)',
+      'Carrito 4 Bruto (lbs)', 'Carrito 4 Neto (lbs)',
+      'Carrito 5 Bruto (lbs)', 'Carrito 5 Neto (lbs)',
+      'Carrito 6 Bruto (lbs)', 'Carrito 6 Neto (lbs)',
+      'Nº Proceso', 'Temp Incubación (°C)', 'Firma Supervisor', 'Firma Coordinador',
       'Uso Ampolla Biológica', 'Uso Cinta Química', 'Identificación Indicador', 'Resultado Clínico', 'No Lote Fabricante', 'Temp Alcanzado', 'Presión Alcanzado', 'Tiempo Esterilización', 'Observaciones Proceso'
     ]);
     results.forEach(item => {
       const ind = item.tipoIndicador || {};
       const param = item.parametrosOperacion || {};
+      const pTotalBruto = item.pesoBrutoTotal !== undefined ? item.pesoBrutoTotal : (item.pesoProceso ? (item.pesoProceso + 1080) : 1730);
+      const pBruto1 = item.pesoBruto1 !== undefined ? item.pesoBruto1 : 300;
+      const pNeto1 = item.pesoNeto1 !== undefined ? item.pesoNeto1 : 120;
+      const pBruto2 = item.pesoBruto2 !== undefined ? item.pesoBruto2 : 300;
+      const pNeto2 = item.pesoNeto2 !== undefined ? item.pesoNeto2 : 120;
+      const pBruto3 = item.pesoBruto3 !== undefined ? item.pesoBruto3 : 300;
+      const pNeto3 = item.pesoNeto3 !== undefined ? item.pesoNeto3 : 120;
+      const pBruto4 = item.pesoBruto4 !== undefined ? item.pesoBruto4 : 300;
+      const pNeto4 = item.pesoNeto4 !== undefined ? item.pesoNeto4 : 120;
+      const pBruto5 = item.pesoBruto5 !== undefined ? item.pesoBruto5 : 300;
+      const pNeto5 = item.pesoNeto5 !== undefined ? item.pesoNeto5 : 120;
+      const pBruto6 = item.pesoBruto6 !== undefined ? item.pesoBruto6 : 230;
+      const pNeto6 = item.pesoNeto6 !== undefined ? item.pesoNeto6 : 50;
+
       wsRows.push([
         item.fecha || '',
         formatHoraRegistro(item.fechaRegistro),
         item.responsable || '',
         item.observaciones || '',
         item.noAutoclave || '',
+        pTotalBruto,
         item.pesoProceso !== undefined ? item.pesoProceso : '',
+        pBruto1, pNeto1,
+        pBruto2, pNeto2,
+        pBruto3, pNeto3,
+        pBruto4, pNeto4,
+        pBruto5, pNeto5,
+        pBruto6, pNeto6,
         item.noProceso || '',
         item.tempIncubacion !== undefined ? item.tempIncubacion : '',
         item.firmaSupervisor || '',

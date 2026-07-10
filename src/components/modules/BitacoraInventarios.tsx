@@ -182,8 +182,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                     id="date-input"
                     type="date"
                     value={fecha}
-                    className="w-full bg-slate-100 border border-slate-300 rounded text-xs pl-9 pr-2.5 py-2 outline-none cursor-not-allowed text-slate-500 font-semibold"
-                    disabled
+                    onChange={(e) => setFecha(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded text-xs pl-9 pr-2.5 py-2 outline-none focus:ring-1 focus:ring-emerald-500 text-slate-800 font-semibold"
                     required
                   />
                 </div>

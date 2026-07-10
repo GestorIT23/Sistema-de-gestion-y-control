@@ -634,7 +634,10 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                         'id', 'tipo', 'tipoTitulo', 'codigoFormato', 'fechaRegistro', 'fecha',
                         'filas', 'filasLeft', 'estadoGeneral', 'tempCongeladores', 'inspeccion',
                         'checklistBanos', 'abastecimientoBanos', 'checklistPrevia', 'tipoIndicador',
-                        'parametrosOperacion', 'tipoResiduo', 'tipoEmbalaje', 'responsable'
+                        'parametrosOperacion', 'tipoResiduo', 'tipoEmbalaje', 'responsable',
+                        'pesoBruto1', 'pesoBruto2', 'pesoBruto3', 'pesoBruto4', 'pesoBruto5', 'pesoBruto6',
+                        'pesoNeto1', 'pesoNeto2', 'pesoNeto3', 'pesoNeto4', 'pesoNeto5', 'pesoNeto6',
+                        'pesoBrutoTotal'
                       ];
 
                       return (
@@ -854,6 +857,24 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                               <span className="text-slate-600 uppercase font-sans text-[8.5px]">{k.replace(/([A-Z])/g, ' $1')}</span>
                                             </div>
                                           ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {log.tipo === 'control_autoclaves' && log.pesoBruto1 !== undefined && (
+                                      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs col-span-1 md:col-span-2">
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Detalle de Pesajes por Carrito (Lbs):</span>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
+                                          {[1, 2, 3, 4, 5, 6].map((num) => {
+                                            const gross = log[`pesoBruto${num}`];
+                                            const net = log[`pesoNeto${num}`];
+                                            return (
+                                              <div key={num} className="bg-[#F8FAFC] p-2 rounded border border-slate-100 text-center">
+                                                <span className="text-[8px] text-slate-500 font-bold block uppercase">Carrito {num}</span>
+                                                <span className="block mt-1 font-semibold text-slate-700">Bruto: {gross !== undefined ? gross : 0} lbs</span>
+                                                <span className="block text-emerald-700 font-extrabold mt-0.5">Neto: {net !== undefined ? net : 0} lbs</span>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       </div>
                                     )}

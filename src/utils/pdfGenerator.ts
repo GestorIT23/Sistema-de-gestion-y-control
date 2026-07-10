@@ -594,6 +594,20 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
   } else if (tipo === 'control_autoclaves') {
     // 8. Control Autoclaves
+    const pTotalBruto = data.pesoBrutoTotal !== undefined ? data.pesoBrutoTotal : (data.pesoProceso ? (data.pesoProceso + 1080) : 1730);
+    const pBruto1 = data.pesoBruto1 !== undefined ? data.pesoBruto1 : 300;
+    const pNeto1 = data.pesoNeto1 !== undefined ? data.pesoNeto1 : 120;
+    const pBruto2 = data.pesoBruto2 !== undefined ? data.pesoBruto2 : 300;
+    const pNeto2 = data.pesoNeto2 !== undefined ? data.pesoNeto2 : 120;
+    const pBruto3 = data.pesoBruto3 !== undefined ? data.pesoBruto3 : 300;
+    const pNeto3 = data.pesoNeto3 !== undefined ? data.pesoNeto3 : 120;
+    const pBruto4 = data.pesoBruto4 !== undefined ? data.pesoBruto4 : 300;
+    const pNeto4 = data.pesoNeto4 !== undefined ? data.pesoNeto4 : 120;
+    const pBruto5 = data.pesoBruto5 !== undefined ? data.pesoBruto5 : 300;
+    const pNeto5 = data.pesoNeto5 !== undefined ? data.pesoNeto5 : 120;
+    const pBruto6 = data.pesoBruto6 !== undefined ? data.pesoBruto6 : 230;
+    const pNeto6 = data.pesoNeto6 !== undefined ? data.pesoNeto6 : 50;
+
     drawSectionHeader('I. INFORMACIÓN TÉCNICA DEL CICLO DE AUTOCLAVE');
     drawGridInfo([
       { key: 'Fecha de Proceso', value: data.fecha },
@@ -602,8 +616,16 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Identificación Autoclave', value: data.noAutoclave },
       { key: 'Número Proceso', value: data.noProceso },
       { key: 'Línea Utilizada', value: data.lineaUtilizada || '' },
-      { key: 'Peso del Proceso', value: String(data.pesoProceso || 0) + ' lbs' },
-      { key: 'Temperatura Incubación', value: data.tempIncubacion }
+      { key: 'Temperatura Incubación', value: data.tempIncubacion },
+      { key: 'Tara por Carrito', value: '180 lbs' },
+      { key: 'Peso Total Bruto', value: String(pTotalBruto) + ' lbs' },
+      { key: 'Peso Total Neto (Proceso)', value: String(data.pesoProceso || 0) + ' lbs' },
+      { key: 'Peso Carrito 1', value: String(pBruto1) + ' lbs Bruto (Neto: ' + String(pNeto1) + ' lbs)' },
+      { key: 'Peso Carrito 2', value: String(pBruto2) + ' lbs Bruto (Neto: ' + String(pNeto2) + ' lbs)' },
+      { key: 'Peso Carrito 3', value: String(pBruto3) + ' lbs Bruto (Neto: ' + String(pNeto3) + ' lbs)' },
+      { key: 'Peso Carrito 4', value: String(pBruto4) + ' lbs Bruto (Neto: ' + String(pNeto4) + ' lbs)' },
+      { key: 'Peso Carrito 5', value: String(pBruto5) + ' lbs Bruto (Neto: ' + String(pNeto5) + ' lbs)' },
+      { key: 'Peso Carrito 6', value: String(pBruto6) + ' lbs Bruto (Neto: ' + String(pNeto6) + ' lbs)' }
     ]);
 
     drawSectionHeader('II. PARÁMETROS OPERATIVOS DE ESTERILIZACIÓN');

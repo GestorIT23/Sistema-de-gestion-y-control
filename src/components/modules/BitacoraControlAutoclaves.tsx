@@ -22,8 +22,26 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   // Form Fields
   const [noAutoclave, setNoAutoclave] = useState('1');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [pesoBruto, setPesoBruto] = useState(1730); // Default gross weight to yield 650 lbs net
-  const pesoProceso = Math.max(0, pesoBruto - 1080); // subtracting 1080 lbs tare of metal carts
+  const [pesoBruto1, setPesoBruto1] = useState(300);
+  const [pesoBruto2, setPesoBruto2] = useState(300);
+  const [pesoBruto3, setPesoBruto3] = useState(300);
+  const [pesoBruto4, setPesoBruto4] = useState(300);
+  const [pesoBruto5, setPesoBruto5] = useState(300);
+  const [pesoBruto6, setPesoBruto6] = useState(230);
+
+  const calcNeto = (gross: number) => {
+    return gross > 0 ? Math.max(0, gross - 180) : 0;
+  };
+
+  const pesoNeto1 = calcNeto(pesoBruto1);
+  const pesoNeto2 = calcNeto(pesoBruto2);
+  const pesoNeto3 = calcNeto(pesoBruto3);
+  const pesoNeto4 = calcNeto(pesoBruto4);
+  const pesoNeto5 = calcNeto(pesoBruto5);
+  const pesoNeto6 = calcNeto(pesoBruto6);
+
+  const pesoBrutoTotal = pesoBruto1 + pesoBruto2 + pesoBruto3 + pesoBruto4 + pesoBruto5 + pesoBruto6;
+  const pesoProceso = pesoNeto1 + pesoNeto2 + pesoNeto3 + pesoNeto4 + pesoNeto5 + pesoNeto6;
   const [responsable, setResponsable] = useState(userEmail || 'Líder de Control Biológico');
   const [noProceso, setNoProceso] = useState('');
   const [lineaUtilizada, setLineaUtilizada] = useState('Línea 01');
@@ -105,19 +123,40 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       firmaCoordinador,
       observacionesGeneralesProceso: observacionesParameters,
       observaciones,
+      pesoBruto1,
+      pesoBruto2,
+      pesoBruto3,
+      pesoBruto4,
+      pesoBruto5,
+      pesoBruto6,
+      pesoNeto1,
+      pesoNeto2,
+      pesoNeto3,
+      pesoNeto4,
+      pesoNeto5,
+      pesoNeto6,
+      pesoBrutoTotal,
       elaboro: 'Gerente Comercial Industrial',
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
       cambioControl: [
-        { version: '1.0', fecha: '13/06/2025', seccion: 'Todas', cambio: 'Establecimiento de protocolo químico-biológico para liberación de residuos estériles y virado de cinta testigo SGI', solicitante: 'Comité de Calidad' }
+        { version: '1.1', fecha: '09/07/2026', seccion: 'Sección de Pesajes', cambio: 'Actualización a 6 carritos de metal individuales, restando 180 lbs de tara por carrito', solicitante: 'Comité de Calidad' }
       ]
     };
 
     try {
       await addDoc(collection(db, 'bitacora_control_autoclaves'), nuevoRegistro);
       generateAndDownloadPDF('control_autoclaves', nuevoRegistro);
-      setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGI.', type: 'success' });
+      setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGI con el registro individual de 6 carritos.', type: 'success' });
       setObservaciones('');
+      
+      // Reset carritos weight inputs to defaults
+      setPesoBruto1(300);
+      setPesoBruto2(300);
+      setPesoBruto3(300);
+      setPesoBruto4(300);
+      setPesoBruto5(300);
+      setPesoBruto6(230);
       
       // Generate a new process number for the next entry
       const nextRandomNum = Math.floor(1000 + Math.random() * 9000);
@@ -218,30 +257,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso Bruto (Lbs):</label>
-                <input
-                  id="peso-bruto-val"
-                  type="number"
-                  value={pesoBruto}
-                  onChange={(e) => setPesoBruto(parseInt(e.target.value) || 0)}
-                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-bold outline-none text-center focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Peso Neto (-1080 Lbs Tara):</label>
-                <input
-                  id="peso-proceso-val"
-                  type="number"
-                  value={pesoProceso}
-                  readOnly
-                  disabled
-                  className="w-full bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 text-slate-600 font-bold outline-none text-center opacity-80 cursor-not-allowed"
-                />
-              </div>
-
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-1 md:col-span-4">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase">Nombre Del Responsable de Pruebas:</label>
                 <input
                   id="responsable-val"
@@ -251,6 +267,63 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                   className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none"
                   required
                 />
+              </div>
+            </div>
+
+            {/* PESAJES DE CARRITOS METÁLICOS */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 gap-2">
+                <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2 text-emerald-800">
+                  <Database className="w-5 h-5 text-emerald-600 animate-pulse" />
+                  Registro de Pesajes por Carrito Metálico (Libras)
+                </h4>
+                <div className="text-[10px] text-slate-500 font-mono font-bold bg-white border px-2.5 py-1 rounded">
+                  TARA POR CARRITO: 180 LBS
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                {[
+                  { label: 'Carrito 1', val: pesoBruto1, set: setPesoBruto1, net: pesoNeto1 },
+                  { label: 'Carrito 2', val: pesoBruto2, set: setPesoBruto2, net: pesoNeto2 },
+                  { label: 'Carrito 3', val: pesoBruto3, set: setPesoBruto3, net: pesoNeto3 },
+                  { label: 'Carrito 4', val: pesoBruto4, set: setPesoBruto4, net: pesoNeto4 },
+                  { label: 'Carrito 5', val: pesoBruto5, set: setPesoBruto5, net: pesoNeto5 },
+                  { label: 'Carrito 6', val: pesoBruto6, set: setPesoBruto6, net: pesoNeto6 },
+                ].map((cart, idx) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2 text-center shadow-xs">
+                    <span className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-tight">{cart.label}</span>
+                    <div className="space-y-1 font-mono">
+                      <label className="block text-[9px] text-slate-400 font-bold uppercase">P. Bruto (lbs):</label>
+                      <input
+                        type="number"
+                        value={cart.val}
+                        onChange={(e) => cart.set(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-slate-50 focus:bg-white border border-slate-300 rounded px-2 py-1 text-slate-800 font-bold text-center text-xs focus:border-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div className="pt-1.5 border-t border-slate-100 font-mono">
+                      <span className="block text-[9px] text-slate-400 font-bold uppercase">P. Neto:</span>
+                      <span className="text-xs font-extrabold text-emerald-700">{cart.net} lbs</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals Summary Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 bg-emerald-900 text-white rounded-lg font-mono text-center shadow-xs">
+                <div>
+                  <span className="text-[10px] uppercase text-emerald-300 font-bold block">Total Peso Bruto</span>
+                  <span className="text-lg font-extrabold">{pesoBrutoTotal} Lbs</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-emerald-300 font-bold block">Total Tara Restada</span>
+                  <span className="text-lg font-extrabold">{pesoBrutoTotal - pesoProceso} Lbs</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-emerald-300 font-bold block">Total Peso Neto (Proceso)</span>
+                  <span className="text-lg font-extrabold text-emerald-400">{pesoProceso} Lbs</span>
+                </div>
               </div>
             </div>
 
