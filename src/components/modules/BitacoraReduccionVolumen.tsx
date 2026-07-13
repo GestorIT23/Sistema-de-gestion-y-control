@@ -33,7 +33,7 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
     return `${hrs}:${mins}`;
   };
 
-  const [horaInicio] = useState(getCurrentTimeStr());
+  const [horaInicio, setHoraInicio] = useState(getCurrentTimeStr());
   const [horaFin, setHoraFin] = useState(() => {
     const now = new Date();
     now.setHours(now.getHours() + 2);
@@ -207,8 +207,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   id="fecha-proceso-val"
                   type="date"
                   value={fecha}
-                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-semibold outline-none cursor-not-allowed"
-                  disabled
+                  onChange={(e) => setFecha(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   required
                 />
               </div>
@@ -242,8 +242,8 @@ export default function BitacoraReduccionVolumenModule({ onBack, userEmail }: Pr
                   id="hora-inicio-val"
                   type="time"
                   value={horaInicio}
-                  className="w-full bg-slate-100 border border-slate-300 rounded px-2.5 py-1.5 text-slate-500 font-semibold outline-none cursor-not-allowed text-center"
-                  disabled
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-800 font-semibold outline-none text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
