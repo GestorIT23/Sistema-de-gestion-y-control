@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Download, Database, Snowflake, AlertTriangle, CheckSquare, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -379,6 +380,8 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
 
         {/* Sidebar History */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="cuarto_frio" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
               <Snowflake className="w-4 h-4 text-sky-450 animate-spin-slow" /> Control Térmico

@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -612,6 +613,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
         {/* Sidebar History (col-span-1) */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="control_autoclaves" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
               <Info className="w-4 h-4 text-emerald-450" /> Laboratorio BIOTRASH SGI

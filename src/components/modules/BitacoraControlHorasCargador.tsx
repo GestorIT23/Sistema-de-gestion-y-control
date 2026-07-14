@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -748,6 +749,8 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
 
         {/* Right column: recent registers log */}
         <div className="lg:col-span-5 bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-4">
+          <BulkUploadPanel tipo="control_horas_cargador" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="flex justify-between items-center border-b border-slate-200 pb-2">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-blue-500" /> Últimos Reportes de Horas

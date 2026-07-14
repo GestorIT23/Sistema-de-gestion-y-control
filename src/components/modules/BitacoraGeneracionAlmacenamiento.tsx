@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, MapPin, ArrowLeft, Download, Database, Plus, Trash2, LayoutList, Scale, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -545,6 +546,8 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
 
         {/* Sidebar History (col-span-1) */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="generacion_almacenamiento" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-white space-y-3 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-300 tracking-wider flex items-center gap-2">
               <Scale className="w-4 h-4 text-cyan-400" /> Control de Balanzas SGI

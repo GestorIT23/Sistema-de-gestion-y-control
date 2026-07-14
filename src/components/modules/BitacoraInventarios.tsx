@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, Clock, Plus, Trash2, ArrowLeft, Download, CheckCircle, Database, FileText, FileSpreadsheet } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 
 interface Props {
@@ -414,6 +415,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
 
         {/* History Checklist and Stats Sidebar */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="inventarios" userEmail={userEmail} onSuccess={fetchRegistros} />
           
           <div className="bg-slate-950 text-slate-100 rounded-xl p-6 shadow-md border border-slate-800 space-y-4">
             <h3 className="font-extrabold text-sm uppercase tracking-wider text-slate-200 flex items-center gap-2">

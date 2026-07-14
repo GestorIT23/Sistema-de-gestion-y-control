@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Download, Database, Flame, FileSpreadsheet, FileText } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -288,6 +289,8 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="disposicion_pirolisis" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="bg-gradient-to-br from-rose-950 to-red-950 text-white border border-rose-800/50 rounded-xl p-5 space-y-4 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
               <Flame className="w-5 h-5 text-rose-400 animate-pulse" /> SGI Pirólisis Industrial

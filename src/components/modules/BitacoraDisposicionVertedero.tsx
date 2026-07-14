@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Download, Database, Truck, Landmark, FileText, FileSpreadsheet, Plus, Trash } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -419,6 +420,8 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
+          <BulkUploadPanel tipo="disposicion_vertedero" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="bg-gradient-to-br from-amber-950 to-orange-950 text-white border border-amber-800/50 rounded-xl p-5 space-y-4 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
               <Landmark className="w-5 h-5 text-amber-400" /> Vertedero Sanitarios Autorizado

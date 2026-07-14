@@ -7,6 +7,7 @@ import FormFooter from '../FormFooter';
 import { Calendar, User, ArrowLeft, Plus, Trash2, Database, ShieldCheck, Info, AlertCircle, FileSpreadsheet, FileText, Sparkles, CheckCircle } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 
 interface Props {
   onBack: () => void;
@@ -474,6 +475,8 @@ export default function BitacoraControlUniformesModule({ onBack, userEmail }: Pr
 
         {/* Right historical reports columns */}
         <div className="lg:col-span-4 bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-4">
+          <BulkUploadPanel tipo="control_uniformes" userEmail={userEmail} onSuccess={fetchRegistros} />
+
           <div className="flex justify-between items-center border-b border-slate-200 pb-2">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 col-span-3">
               <Calendar className="w-4 h-4 text-[#8ec23f]" /> Entregas Completas Recientes
