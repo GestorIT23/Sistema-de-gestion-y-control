@@ -663,6 +663,29 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Firma Coordinador Procesos', value: data.firmaCoordinador || '' }
     ]);
 
+    if (data.capturaPanelAutoclave) {
+      drawSectionHeader('VI. CAPTURA DE PANEL DE AUTOCLAVE');
+      try {
+        if (y + 85 > pageHeight - 15) {
+          doc.addPage();
+          y = 35;
+          doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.setLineWidth(0.5);
+          doc.line(marginX, 12, pageWidth - marginX, 12);
+          doc.line(marginX, 12, marginX, pageHeight - 12);
+          doc.line(pageWidth - marginX, 12, pageWidth - marginX, pageHeight - 12);
+          doc.line(marginX, pageHeight - 12, pageWidth - marginX, pageHeight - 12);
+        }
+        const imgWidth = 100;
+        const imgHeight = 70;
+        const imgX = marginX + (pageWidth - marginX * 2 - imgWidth) / 2;
+        doc.addImage(data.capturaPanelAutoclave, 'JPEG', imgX, y, imgWidth, imgHeight);
+        y += imgHeight + 5;
+      } catch (imgError) {
+        console.error('Error rendering panel capture in PDF:', imgError);
+      }
+    }
+
   } else if (tipo === 'generacion_almacenamiento') {
     // 9. Generacion y Almacenamiento Temporal
     drawSectionHeader('I. INFORMACIÓN DEL ENTE GENERADOR');

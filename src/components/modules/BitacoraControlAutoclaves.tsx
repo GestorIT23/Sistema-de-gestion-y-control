@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/fir
 import { BitacoraControlAutoclaves } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText, FileSpreadsheet } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, ShieldCheck, Heart, AlertCircle, Info, FileText, FileSpreadsheet, Camera, Trash2, RefreshCw, Video } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
@@ -65,6 +65,64 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
   const [observacionesParameters, setObservacionesParameters] = useState('Presión estable a 75 Psi. Proceso acumulado en 21 min estándar.');
   const [observaciones, setObservaciones] = useState('');
+  const [capturaPanelAutoclave, setCapturaPanelAutoclave] = useState('');
+
+  // Camera state
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setStream(mediaStream);
+      setCameraActive(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 150);
+    } catch (err: any) {
+      console.error('Error al acceder a la cámara:', err);
+      setCameraError('No se pudo acceder a la cámara. Verifique los permisos o si otro dispositivo la está usando.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setCapturaPanelAutoclave(dataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [stream]);
   
   const [firmaSupervisor, setFirmaSupervisor] = useState('Ing. Daniel Marroquín');
   const [firmaCoordinador, setFirmaCoordinador] = useState('Licda. Ana Sofía de León');
@@ -137,6 +195,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       pesoNeto5,
       pesoNeto6,
       pesoBrutoTotal,
+      capturaPanelAutoclave,
       elaboro: 'Gerente Comercial Industrial',
       reviso: 'Comité ISO',
       aprobo: 'Gerente General',
@@ -150,6 +209,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       generateAndDownloadPDF('control_autoclaves', nuevoRegistro);
       setMsg({ text: 'Los resultados de control químico/biológico se han guardado exitosamente en Firestore y ya se generó el PDF oficial SGI con el registro individual de 6 carritos.', type: 'success' });
       setObservaciones('');
+      setCapturaPanelAutoclave('');
       
       // Reset carritos weight inputs to defaults
       setPesoBruto1(300);
@@ -576,6 +636,106 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
               </div>
             </div>
 
+            {/* Captura de Panel de Autoclave */}
+            <div className="space-y-2 border border-slate-200 p-4 rounded-lg bg-slate-50">
+              <label className="block text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                <Camera className="w-4 h-4 text-emerald-600" /> Captura de Panel de Autoclave:
+              </label>
+              
+              {capturaPanelAutoclave ? (
+                <div className="relative group rounded-lg overflow-hidden border border-slate-300 bg-black">
+                  <img
+                    src={capturaPanelAutoclave}
+                    alt="Captura de panel de autoclave"
+                    className="w-full max-h-80 object-contain mx-auto"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      className="px-3 py-1.5 bg-white text-slate-800 rounded-md text-xs font-semibold flex items-center gap-1 shadow-sm hover:bg-slate-100 transition"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Tomar Otra Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCapturaPanelAutoclave('')}
+                      className="px-3 py-1.5 bg-red-600 text-white rounded-md text-xs font-semibold flex items-center gap-1 shadow-sm hover:bg-red-700 transition"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                    </button>
+                  </div>
+                  <div className="bg-slate-900 text-white p-2 text-xs flex justify-between items-center">
+                    <span className="font-mono text-[10px]">✓ Foto de panel registrada</span>
+                    <button
+                      type="button"
+                      onClick={() => setCapturaPanelAutoclave('')}
+                      className="text-red-400 hover:text-red-300 font-bold flex items-center gap-1 text-[11px]"
+                    >
+                      <Trash2 className="w-3 h-3" /> Borrar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 bg-white text-center">
+                  {cameraActive ? (
+                    <div className="space-y-4">
+                      <div className="relative rounded-lg overflow-hidden bg-black max-w-md mx-auto">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-64 object-cover"
+                        />
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={capturePhoto}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-5 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md transition"
+                          >
+                            <Camera className="w-4 h-4" /> Capturar Foto
+                          </button>
+                          <button
+                            type="button"
+                            onClick={stopCamera}
+                            className="bg-slate-800 hover:bg-slate-700 text-white rounded-full px-4 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md transition"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        Alinee la cámara con el panel indicador de temperatura/presión del autoclave
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                        <Camera className="w-6 h-6" />
+                      </div>
+                      <div className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Presione el botón para activar la cámara de su dispositivo y documentar el panel del autoclave.
+                      </div>
+                      {cameraError && (
+                        <div className="text-red-600 text-xs font-medium bg-red-50 p-2 rounded border border-red-100 max-w-md mx-auto">
+                          {cameraError}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={startCamera}
+                        className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 mx-auto transition shadow-sm"
+                      >
+                        <Video className="w-4 h-4 text-emerald-450" /> Iniciar Cámara / Tomar Foto
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* General Observations */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase">Observaciones Generales de Laboratorio:</label>
@@ -641,7 +801,14 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                       <span>{reg.fecha}</span>
                       <span className="text-emerald-700 font-bold">{reg.pesoProceso} Lbs</span>
                     </div>
-                    <div className="text-slate-500 mt-1 font-mono text-[9px] truncate">Máq: {reg.noAutoclave}</div>
+                    <div className="text-slate-500 mt-1 font-mono text-[9px] truncate flex items-center justify-between">
+                      <span>Máq: {reg.noAutoclave} | Proc: {reg.noProceso}</span>
+                      {reg.capturaPanelAutoclave && (
+                        <span className="text-emerald-600 font-bold flex items-center gap-0.5" title="Captura de panel disponible">
+                          <Camera className="w-2.5 h-2.5" /> Foto
+                        </span>
+                      )}
+                    </div>
                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/50">
                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-mono ${reg.resultadoIndicador.includes('NEGATIVO') ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-850'}`}>
                          {reg.resultadoIndicador.includes('NEGATIVO') ? 'LIBERADO' : 'RETENIDO'}

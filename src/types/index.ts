@@ -197,6 +197,7 @@ export interface BitacoraControlAutoclaves extends BaseBitacora {
   pesoNeto5?: number;
   pesoNeto6?: number;
   pesoBrutoTotal?: number;
+  capturaPanelAutoclave?: string;
 }
 
 // 9. Bitacora Generación y Almacenamiento Temporal de RPBI

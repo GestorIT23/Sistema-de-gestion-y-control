@@ -72,6 +72,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearConfirmText, setClearConfirmText] = useState('');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Custom Logo Configuration state
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -267,6 +268,41 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
     }
   };
 
+  const handleDownloadAllPDFs = async () => {
+    if (results.length === 0) {
+      setMsg({ text: 'No hay datos en el reporte actual para descargar.', type: 'error' });
+      return;
+    }
+
+    setDownloadProgress({ current: 0, total: results.length });
+    setMsg({ 
+      text: `Iniciando la descarga masiva de ${results.length} reportes PDF basados en el filtro temporal activo...`, 
+      type: 'info' 
+    });
+
+    try {
+      for (let i = 0; i < results.length; i++) {
+        setDownloadProgress({ current: i + 1, total: results.length });
+        const log = results[i];
+        await generateAndDownloadPDF(log.tipo, log);
+        // Wait 450ms between downloads to avoid browser download blocking
+        await new Promise(resolve => setTimeout(resolve, 450));
+      }
+      setMsg({ 
+        text: `¡Descarga masiva completada! Se han descargado exitosamente ${results.length} reportes individuales en formato PDF.`, 
+        type: 'success' 
+      });
+    } catch (err: any) {
+      console.error('Error during bulk PDF download:', err);
+      setMsg({ 
+        text: `Error al generar la descarga masiva de PDFs: ${err.message || err}`, 
+        type: 'error' 
+      });
+    } finally {
+      setDownloadProgress(null);
+    }
+  };
+
   const formatWeekSelectionRange = () => {
     const range = getWeekRange(selectedWeek);
     if (!range.start) return '';
@@ -303,6 +339,24 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
             className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[11px] font-bold px-3 py-1.5 rounded flex items-center gap-1.5 transition"
           >
             <Trash2 className="w-3.5 h-3.5" /> Vaciar Todo
+          </button>
+          <button
+            onClick={handleDownloadAllPDFs}
+            disabled={results.length === 0 || downloadProgress !== null}
+            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-[11px] font-bold px-4 py-1.5 rounded flex items-center gap-1.5 transition"
+            title="Descarga todos los PDF filtrados uno por uno automáticamente"
+          >
+            {downloadProgress ? (
+              <>
+                <RefreshCcw className="w-3.5 h-3.5 animate-spin text-red-105" />
+                Descargando ({downloadProgress.current}/{downloadProgress.total})
+              </>
+            ) : (
+              <>
+                <FileText className="w-3.5 h-3.5 text-red-100" />
+                Descargar PDFs ({results.length})
+              </>
+            )}
           </button>
           <button
             onClick={handleExportExcel}
