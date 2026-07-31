@@ -18,6 +18,7 @@ import BitacoraInsumosQuimicosModule from './components/modules/BitacoraInsumosQ
 import BitacoraInventariosSGIModule from './components/modules/BitacoraInventariosSGI';
 import BitacoraControlUniformesModule from './components/modules/BitacoraControlUniformes';
 import BitacoraControlHorasCargadorModule from './components/modules/BitacoraControlHorasCargador';
+import BitacoraDesinfeccionAgenteQuimicoModule from './components/modules/BitacoraDesinfeccionAgenteQuimico';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
 import DashboardAnalytics from './components/DashboardAnalytics';
@@ -83,7 +84,7 @@ export default function App() {
             'disposicion_vertedero', 'control_incineracion', 'cuarto_frio', 
             'reduccion_volumen', 'control_autoclaves', 'generacion_almacenamiento', 
             'lavado_banos', 'insumos_quimicos', 'inventarios_sgc', 
-            'control_uniformes', 'control_horas_cargador'
+            'control_uniformes', 'control_horas_cargador', 'desinfeccion_agente_quimico'
           ]
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
@@ -245,6 +246,13 @@ export default function App() {
       case 'control_horas_cargador':
         return (
           <BitacoraControlHorasCargadorModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'desinfeccion_agente_quimico':
+        return (
+          <BitacoraDesinfeccionAgenteQuimicoModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />

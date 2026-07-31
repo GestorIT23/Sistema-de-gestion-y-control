@@ -45,6 +45,7 @@ export const AVAILABLE_MODULES = [
   { id: 'inventarios_sgc', title: 'BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGI', code: 'F-OPR-000-12' },
   { id: 'control_uniformes', title: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA Y EPP', code: 'F-OPR-000-13' },
   { id: 'control_horas_cargador', title: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL', code: 'F-OPR-000-14' },
+  { id: 'desinfeccion_agente_quimico', title: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / DESINFECCIÓN', code: 'F-OPR-000-15' },
 ];
 
 interface Props {

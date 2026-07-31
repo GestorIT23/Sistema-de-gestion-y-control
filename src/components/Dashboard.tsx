@@ -21,7 +21,8 @@ import {
   Pocket,
   PackageOpen,
   ShieldCheck,
-  Gauge
+  Gauge,
+  Droplets
 } from 'lucide-react';
 import { Usuario } from '../types';
 import DashboardAnalytics from './DashboardAnalytics';
@@ -46,7 +47,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     insumos_quimicos: 0,
     inventarios_sgc: 0,
     control_uniformes: 0,
-    control_horas_cargador: 0
+    control_horas_cargador: 0,
+    desinfeccion_agente_quimico: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -75,7 +77,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'insumos_quimicos', col: 'bitacora_insumos_quimicos' },
         { key: 'inventarios_sgc', col: 'bitacora_inventarios_sgc' },
         { key: 'control_uniformes', col: 'bitacora_control_uniformes' },
-        { key: 'control_horas_cargador', col: 'bitacora_control_horas_cargador' }
+        { key: 'control_horas_cargador', col: 'bitacora_control_horas_cargador' },
+        { key: 'desinfeccion_agente_quimico', col: 'bitacora_desinfeccion_agente_quimico' }
       ];
 
       const newCounts = {
@@ -92,7 +95,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         insumos_quimicos: 0,
         inventarios_sgc: 0,
         control_uniformes: 0,
-        control_horas_cargador: 0
+        control_horas_cargador: 0,
+        desinfeccion_agente_quimico: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -276,6 +280,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
       tag: 'Maquinaria',
       stats: `${counts.control_horas_cargador} registros`
+    },
+    {
+      id: 'desinfeccion_agente_quimico',
+      title: 'Bitácora de Desinfección',
+      subtitle: 'Control de aplicación de agente químico desinfectante',
+      code: 'BIOTRASH 4.0. F-OPR-000-15',
+      icon: <Droplets className="w-5 h-5 text-emerald-600" />,
+      color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
+      tag: 'Bioseguridad',
+      stats: `${counts.desinfeccion_agente_quimico || 0} registros`
     },
     {
       id: 'dashboard_analitico',

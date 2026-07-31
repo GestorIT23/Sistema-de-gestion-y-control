@@ -149,6 +149,15 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             { Fecha: today, Responsable: userEmail, Observaciones: 'Bitácora de cargador frontal', Turno: 'Matutino', 'No Reporte': 'REP-5541', 'Codigo Unidad': 'CARG-02', 'Marca Modelo': 'CAT 924K', Anio: '2019', 'Nombre Operador': 'Gerson Castillo', 'Codigo Empleado': 'EMP-401', 'Area Asignada': 'Patio de Celdas', 'Supervisor Cargo': 'Supervisor SGI', 'Lectura Inicial Horometro': 1420.5, 'Lectura Final Horometro': 1426.0, 'Total Operado Horas': 5.5, 'Hora Inicio': '07:00', 'Hora Termino': '13:00', 'Horas Pausa Inactividad': 0.5, 'Tipo Actividad Principal': 'Movimiento de pacas', 'Tipo Material Trabajado': 'Plástico triturado', 'Descripcion Actividades': 'Operación estándar sin percances', 'Nivel Combustible Inicio': '1/2 Tanque', 'Litros Cargados': 40, 'Nivel Combustible Final': 'Full Tanque', 'Estado Equipo (Bueno/Falla leve/Falla grave/Equipo parado)': 'Bueno — sin novedades', 'Descripcion Fallas Observaciones': 'Todo conforme', 'Nivel Aceite Motor Previa (Si/No)': 'Si', 'Nivel Refrigerante Previa (Si/No)': 'Si', 'Presion Llantas Previa (Si/No)': 'Si', 'Estado Cuchara Previa (Si/No)': 'Si', 'Luces Senales Previa (Si/No)': 'Si', 'Frenos Previa (Si/No)': 'Si', 'Cinturon Seg Previa (Si/No)': 'Si', 'Alarma Reversa Previa (Si/No)': 'Si', 'Extintor Previa (Si/No)': 'Si', 'Documentos Previa (Si/No)': 'Si', 'Firma Operador': 'Gerson C.', 'Firma Supervisor': 'SGI Supervisor' }
           ]
         };
+      case 'desinfeccion_agente_quimico':
+        return {
+          filename: 'Formato_Desinfeccion_Agente_Quimico.xlsx',
+          sheetName: 'Desinfección',
+          columns: ['Fecha', 'Responsable', 'Hora Inicio', 'Hora Fin', 'Quimico', 'Dosis', 'Cantidad Gl', 'Metodo Manual Mochila (Si/No)', 'Metodo Aspersion (Si/No)', 'Recepcion (Si/No)', 'Cuarto Frio (Si/No)', 'Autoclaves (Si/No)', 'Trituradoras (Si/No)', 'Compactadora (Si/No)', 'Lavado (Si/No)', 'Incinerador (Si/No)', 'Patio Maniobras (Si/No)', 'Ingreso (Si/No)', 'Lavanderia (Si/No)', 'Muro Perimetral (Si/No)', 'Comedor (Si/No)', 'Taller (Si/No)', 'Identificacion Insumos', 'Trazabilidad Cargas Lote', 'EPP Respirador (Si/No)', 'EPP Traje Impermeable (Si/No)', 'EPP Careta (Si/No)', 'EPP Guantes (Si/No)', 'Observaciones', 'Firma Operador', 'Firma Supervisor'],
+          samples: [
+            { Fecha: today, Responsable: userEmail, 'Hora Inicio': '08:00', 'Hora Fin': '08:30', Quimico: 'Innibith', Dosis: '50.00%', 'Cantidad Gl': 10.0, 'Metodo Manual Mochila (Si/No)': 'Si', 'Metodo Aspersion (Si/No)': 'Si', 'Recepcion (Si/No)': 'Si', 'Cuarto Frio (Si/No)': 'Si', 'Autoclaves (Si/No)': 'Si', 'Trituradoras (Si/No)': 'Si', 'Compactadora (Si/No)': 'Si', 'Lavado (Si/No)': 'Si', 'Incinerador (Si/No)': 'Si', 'Patio Maniobras (Si/No)': 'Si', 'Ingreso (Si/No)': 'Si', 'Lavanderia (Si/No)': 'Si', 'Muro Perimetral (Si/No)': 'Si', 'Comedor (Si/No)': 'Si', 'Taller (Si/No)': 'Si', 'Identificacion Insumos': 'Relación agua-químico 1:1', 'Trazabilidad Cargas Lote': 'Vincular pesaje en recepción', 'EPP Respirador (Si/No)': 'Si', 'EPP Traje Impermeable (Si/No)': 'Si', 'EPP Careta (Si/No)': 'Si', 'EPP Guantes (Si/No)': 'Si', Observaciones: 'Desinfección general de planta', 'Firma Operador': 'Ing. Daniel M.', 'Firma Supervisor': 'Licda. Ana S.' }
+          ]
+        };
       default:
         return {
           filename: 'Formato_Generico.xlsx',
@@ -656,6 +665,60 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               },
               firmaOperador: row['Firma Operador'] || '',
               firmaSupervisor: row['Firma Supervisor'] || ''
+            });
+          });
+        } else if (tipo === 'desinfeccion_agente_quimico') {
+          jsonData.forEach((row) => {
+            recordsToSave.push({
+              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              responsable: row.Responsable || userEmail,
+              horaInicio: row['Hora Inicio'] || '08:00',
+              horaFin: row['Hora Fin'] || '08:30',
+              quimico: row.Quimico || 'Innibith',
+              dosis: row.Dosis || '50.00%',
+              cantidadGl: parseNum(row['Cantidad Gl']) || 10.0,
+              metodoAplicacion: {
+                manualMochila: isYes(row['Metodo Manual Mochila (Si/No)']),
+                aspersion: isYes(row['Metodo Aspersion (Si/No)'])
+              },
+              areasTratadas: {
+                recepcion: isYes(row['Recepcion (Si/No)']),
+                cuartoFrio: isYes(row['Cuarto Frio (Si/No)']),
+                autoclaves: isYes(row['Autoclaves (Si/No)']),
+                trituradoras: isYes(row['Trituradoras (Si/No)']),
+                compactadora: isYes(row['Compactadora (Si/No)']),
+                lavado: isYes(row['Lavado (Si/No)']),
+                incinerador: isYes(row['Incinerador (Si/No)']),
+                patioManiobras: isYes(row['Patio Maniobras (Si/No)']),
+                ingreso: isYes(row['Ingreso (Si/No)']),
+                lavanderia: isYes(row['Lavanderia (Si/No)']),
+                muroPerimetral: isYes(row['Muro Perimetral (Si/No)']),
+                comedor: isYes(row['Comedor (Si/No)']),
+                taller: isYes(row['Taller (Si/No)'])
+              },
+              identificacionInsumos: row['Identificacion Insumos'] || '',
+              trazabilidadCargasLote: row['Trazabilidad Cargas Lote'] || '',
+              verificacionEPP: {
+                respiradorCartuchos: isYes(row['EPP Respirador (Si/No)']),
+                trajeImpermeable: isYes(row['EPP Traje Impermeable (Si/No)']),
+                careta: isYes(row['EPP Careta (Si/No)']),
+                guantesNitriloNeopreno: isYes(row['EPP Guantes (Si/No)'])
+              },
+              observaciones: row.Observaciones || 'Carga masiva desinfección',
+              firmaOperador: row['Firma Operador'] || 'Operador SGI',
+              firmaSupervisor: row['Firma Supervisor'] || 'Supervisor SGI',
+              elaboro: 'Gerente Comercial Industrial',
+              reviso: 'Comité ISO',
+              aprobo: 'Gerente General',
+              cambioControl: [
+                {
+                  version: '1.0',
+                  fecha: '23/10/2018',
+                  seccion: 'Sección Inicial',
+                  cambio: 'Emisión inicial de la bitácora de desinfección',
+                  solicitante: 'Comité ISO'
+                }
+              ]
             });
           });
         }

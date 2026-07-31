@@ -84,7 +84,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
-    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' }
+    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
+    desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -932,6 +933,61 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Observaciones de Fallas', value: data.descripcionFallasObservaciones || 'Ninguna' },
       { key: 'Firma Operador de Turno', value: data.firmaOperador || '' },
       { key: 'Firma Supervisor de Planta', value: data.firmaSupervisor || '' }
+    ]);
+  } else if (tipo === 'desinfeccion_agente_quimico') {
+    // 15. Control de Aplicacion de Agente Quimico / Desinfeccion
+    drawSectionHeader('I. INFORMACIÓN GENERAL Y APLICADOR');
+    drawGridInfo([
+      { key: 'Fecha de Proceso', value: data.fecha || '' },
+      { key: 'Hora Captura', value: horaCaptura },
+      { key: 'Horario Ejecución', value: `${data.horaInicio || ''} - ${data.horaFin || ''}` },
+      { key: 'Operador Responsable', value: data.responsable || '' },
+      { key: 'Elaboró', value: data.elaboro || 'Gerente Comercial Industrial' },
+      { key: 'Revisó', value: data.reviso || 'Comité ISO' },
+      { key: 'Aprobó', value: data.aprobo || 'Gerente General' }
+    ]);
+
+    drawSectionHeader('II. PARÁMETROS DEL QUÍMICO Y MÉTODO DE APLICACIÓN');
+    const met = data.metodoAplicacion || {};
+    drawGridInfo([
+      { key: 'Químico / Desinfectante', value: data.quimico || '' },
+      { key: 'Dosis / Concentración', value: data.dosis || '' },
+      { key: 'Cantidad Gl', value: `${data.cantidadGl || 0} Gl` },
+      { key: 'Manual (Mochila)', value: met.manualMochila ? '(APLICADO)' : '(NO)' },
+      { key: 'Aspersión', value: met.aspersion ? '(APLICADO)' : '(NO)' }
+    ]);
+
+    drawSectionHeader('III. ÁREAS Y UBICACIONES TRATADAS (13 ÁREAS PLANTA)');
+    const ar = data.areasTratadas || {};
+    const tableHeaders = ['ÁREA PLANTA', 'APLICADO', 'ÁREA PLANTA', 'APLICADO'];
+    const tableWidths = [60, 30, 60, 30];
+    const tableRows = [
+      ['Recepción', ar.recepcion ? 'SI [X]' : 'NO [ ]', 'Patio maniobras', ar.patioManiobras ? 'SI [X]' : 'NO [ ]'],
+      ['Cuarto frío', ar.cuartoFrio ? 'SI [X]' : 'NO [ ]', 'Ingreso', ar.ingreso ? 'SI [X]' : 'NO [ ]'],
+      ['Auto claves', ar.autoclaves ? 'SI [X]' : 'NO [ ]', 'Lavandería', ar.lavanderia ? 'SI [X]' : 'NO [ ]'],
+      ['Trituradoras', ar.trituradoras ? 'SI [X]' : 'NO [ ]', 'Muro perimetral', ar.muroPerimetral ? 'SI [X]' : 'NO [ ]'],
+      ['Compactadora', ar.compactadora ? 'SI [X]' : 'NO [ ]', 'Comedor', ar.comedor ? 'SI [X]' : 'NO [ ]'],
+      ['Lavado', ar.lavado ? 'SI [X]' : 'NO [ ]', 'Taller', ar.taller ? 'SI [X]' : 'NO [ ]'],
+      ['Incinerador', ar.incinerador ? 'SI [X]' : 'NO [ ]', '-', '-']
+    ];
+    drawDataTable(tableHeaders, tableWidths, tableRows);
+
+    drawSectionHeader('IV. PUNTOS CLAVE, INSTRUCCIONES Y VERIFICACIÓN DE SEGURIDAD (EPP)');
+    const epp = data.verificacionEPP || {};
+    drawGridInfo([
+      { key: 'Identificación de Insumos', value: data.identificacionInsumos || 'N/A' },
+      { key: 'Trazabilidad de Cargas / Lote', value: data.trazabilidadCargasLote || 'N/A' },
+      { key: 'Respirador Vapores/Ácidos', value: epp.respiradorCartuchos ? 'CUMPLE [X]' : 'NO [ ]' },
+      { key: 'Traje Impermeable', value: epp.trajeImpermeable ? 'CUMPLE [X]' : 'NO [ ]' },
+      { key: 'Careta Protección Facial', value: epp.careta ? 'CUMPLE [X]' : 'NO [ ]' },
+      { key: 'Guantes Nitrilo / Neopreno', value: epp.guantesNitriloNeopreno ? 'CUMPLE [X]' : 'NO [ ]' }
+    ]);
+
+    drawSectionHeader('V. OBSERVACIONES Y FIRMAS DE VALIDACIÓN SGI');
+    drawGridInfo([
+      { key: 'Observaciones Generales', value: data.observaciones || 'Sin novedades' },
+      { key: 'Firma Operador Aplicador', value: data.firmaOperador || '' },
+      { key: 'Firma Supervisor SGI', value: data.firmaSupervisor || '' }
     ]);
   }
 

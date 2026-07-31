@@ -44,6 +44,7 @@ const BITACORAS_INFO = [
   { id: 'inventarios_sgc', title: 'Inventario General SGI', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
   { id: 'control_uniformes', title: 'Control de Uniformes de Planta', col: 'bitacora_control_uniformes', code: 'F-OPR-000-13' },
   { id: 'control_horas_cargador', title: 'Control de Horas de Trabajo', col: 'bitacora_control_horas_cargador', code: 'F-OPR-000-14' },
+  { id: 'desinfeccion_agente_quimico', title: 'Control de Aplicación de Agente Químico', col: 'bitacora_desinfeccion_agente_quimico', code: 'F-OPR-000-15' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {

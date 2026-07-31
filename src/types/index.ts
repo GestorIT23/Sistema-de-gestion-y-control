@@ -364,6 +364,57 @@ export interface BitacoraControlHorasCargador extends BaseBitacora {
   firmaSupervisor: string;
 }
 
+// 15. Bitacora Control de Aplicacion de Agente Quimico / Desinfeccion
+export interface AreaDesinfeccion {
+  nombreArea: string;
+  aplico: boolean;
+  horaInicia?: string;
+  horaTermina?: string;
+  quimico?: string;
+  dosis?: string;
+  cantidadGl?: number;
+  metodoManual?: boolean;
+  metodoAspersion?: boolean;
+}
+
+export interface BitacoraDesinfeccionAgenteQuimico extends BaseBitacora {
+  horaInicio: string;
+  horaFin: string;
+  quimico: string;
+  dosis: string;
+  cantidadGl: number;
+  metodoAplicacion: {
+    manualMochila: boolean;
+    aspersion: boolean;
+  };
+  areasTratadas: {
+    recepcion: boolean;
+    cuartoFrio: boolean;
+    autoclaves: boolean;
+    trituradoras: boolean;
+    compactadora: boolean;
+    lavado: boolean;
+    incinerador: boolean;
+    patioManiobras: boolean;
+    ingreso: boolean;
+    lavanderia: boolean;
+    muroPerimetral: boolean;
+    comedor: boolean;
+    taller: boolean;
+  };
+  identificacionInsumos: string;
+  trazabilidadCargasLote: string;
+  verificacionEPP: {
+    respiradorCartuchos: boolean;
+    trajeImpermeable: boolean;
+    careta: boolean;
+    guantesNitriloNeopreno: boolean;
+  };
+  firmaOperador: string;
+  firmaSupervisor: string;
+  filasAreas?: AreaDesinfeccion[];
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -379,4 +430,5 @@ export type BitacoraEntry =
   | { tipo: 'insumos_quimicos'; data: BitacoraInsumosQuimicos }
   | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGI }
   | { tipo: 'control_uniformes'; data: BitacoraControlUniformes }
-  | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador };
+  | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador }
+  | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico };

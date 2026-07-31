@@ -53,6 +53,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
+    desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -529,6 +530,53 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Observaciones de Fallas:', data.descripcionFallasObservaciones || '']);
     wsRows.push(['Firma Operador de Turno:', data.firmaOperador || '']);
     wsRows.push(['Firma Supervisor de Planta:', data.firmaSupervisor || '']);
+  } else if (tipo === 'desinfeccion_agente_quimico') {
+    wsRows.push(['I. INFORMACIÓN GENERAL Y APLICADOR']);
+    wsRows.push(['Fecha de Proceso:', data.fecha || '']);
+    wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
+    wsRows.push(['Horario Ejecución:', `${data.horaInicio || ''} - ${data.horaFin || ''}`]);
+    wsRows.push(['Operador Responsable:', data.responsable || '']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['II. PARÁMETROS DEL QUÍMICO Y MÉTODO']);
+    wsRows.push(['Químico / Desinfectante:', data.quimico || '']);
+    wsRows.push(['Dosis / Concentración:', data.dosis || '']);
+    wsRows.push(['Cantidad Gl:', `${data.cantidadGl || 0} Gl`]);
+    wsRows.push(['Método Manual (Mochila):', data.metodoAplicacion?.manualMochila ? 'SÍ' : 'NO']);
+    wsRows.push(['Método Aspersión:', data.metodoAplicacion?.aspersion ? 'SÍ' : 'NO']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['III. ÁREAS Y UBICACIONES TRATADAS (13 ÁREAS)']);
+    const ar = data.areasTratadas || {};
+    wsRows.push(['Recepción:', ar.recepcion ? 'SÍ' : 'NO']);
+    wsRows.push(['Cuarto frío:', ar.cuartoFrio ? 'SÍ' : 'NO']);
+    wsRows.push(['Auto claves:', ar.autoclaves ? 'SÍ' : 'NO']);
+    wsRows.push(['Trituradoras:', ar.trituradoras ? 'SÍ' : 'NO']);
+    wsRows.push(['Compactadora:', ar.compactadora ? 'SÍ' : 'NO']);
+    wsRows.push(['Lavado:', ar.lavado ? 'SÍ' : 'NO']);
+    wsRows.push(['Incinerador:', ar.incinerador ? 'SÍ' : 'NO']);
+    wsRows.push(['Patio maniobras:', ar.patioManiobras ? 'SÍ' : 'NO']);
+    wsRows.push(['Ingreso:', ar.ingreso ? 'SÍ' : 'NO']);
+    wsRows.push(['Lavandería:', ar.lavanderia ? 'SÍ' : 'NO']);
+    wsRows.push(['Muro perimetral:', ar.muroPerimetral ? 'SÍ' : 'NO']);
+    wsRows.push(['Comedor:', ar.comedor ? 'SÍ' : 'NO']);
+    wsRows.push(['Taller:', ar.taller ? 'SÍ' : 'NO']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['IV. PUNTOS CLAVE Y SEGURIDAD EPP']);
+    wsRows.push(['Identificación de Insumos:', data.identificacionInsumos || '']);
+    wsRows.push(['Trazabilidad Cargas / Lote:', data.trazabilidadCargasLote || '']);
+    const epp = data.verificacionEPP || {};
+    wsRows.push(['EPP Respirador Vapores/Ácidos:', epp.respiradorCartuchos ? 'CUMPLE' : 'NO']);
+    wsRows.push(['EPP Traje Impermeable:', epp.trajeImpermeable ? 'CUMPLE' : 'NO']);
+    wsRows.push(['EPP Careta Protección Facial:', epp.careta ? 'CUMPLE' : 'NO']);
+    wsRows.push(['EPP Guantes Nitrilo/Neopreno:', epp.guantesNitriloNeopreno ? 'CUMPLE' : 'NO']);
+    wsRows.push([]); // separator
+
+    wsRows.push(['V. OBSERVACIONES Y FIRMAS SGI']);
+    wsRows.push(['Observaciones Generales:', data.observaciones || '']);
+    wsRows.push(['Firma Operador:', data.firmaOperador || '']);
+    wsRows.push(['Firma Supervisor SGI:', data.firmaSupervisor || '']);
   }
 
   // Draw Control de Cambios standard at the end of the sheet
@@ -588,7 +636,8 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
-    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' }
+    control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
+    desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA SGI' };
@@ -989,6 +1038,39 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
         item.descripcionActividades || '',
         item.estadoEquipo || '',
         item.descripcionFallasObservaciones || '',
+        item.firmaOperador || '',
+        item.firmaSupervisor || ''
+      ]);
+    });
+  } else if (tipo === 'desinfeccion_agente_quimico') {
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Horario Ejecución', 'Responsable', 'Químico', 'Dosis', 'Cantidad Gl', 'Manual Mochila', 'Aspersión',
+      'Áreas Tratadas Count', 'Identificación Insumos', 'Trazabilidad Lote', 'EPP Vapores', 'EPP Impermeable', 'EPP Careta', 'EPP Guantes',
+      'Observaciones', 'Firma Operador', 'Firma Supervisor'
+    ]);
+    results.forEach(item => {
+      const ar = item.areasTratadas || {};
+      const totalAreas = Object.values(ar).filter(Boolean).length;
+      const met = item.metodoAplicacion || {};
+      const epp = item.verificacionEPP || {};
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        `${item.horaInicio || ''} - ${item.horaFin || ''}`,
+        item.responsable || '',
+        item.quimico || '',
+        item.dosis || '',
+        item.cantidadGl !== undefined ? item.cantidadGl : '',
+        met.manualMochila ? 'SÍ' : 'NO',
+        met.aspersion ? 'SÍ' : 'NO',
+        `${totalAreas} / 13`,
+        item.identificacionInsumos || '',
+        item.trazabilidadCargasLote || '',
+        epp.respiradorCartuchos ? 'SI' : 'NO',
+        epp.trajeImpermeable ? 'SI' : 'NO',
+        epp.careta ? 'SI' : 'NO',
+        epp.guantesNitriloNeopreno ? 'SI' : 'NO',
+        item.observaciones || '',
         item.firmaOperador || '',
         item.firmaSupervisor || ''
       ]);
