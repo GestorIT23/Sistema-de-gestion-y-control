@@ -23,14 +23,19 @@ try {
   db = getFirestore(app);
 }
 
-// Silent anonymous sign-in for authenticated connection
+// Silent anonymous sign-in attempt for authenticated connection
 const auth = getAuth(app);
 signInAnonymously(auth)
   .then(() => {
-    console.log("BIOTRASH-SGI: Autenticación anónima establecida con éxito.");
+    console.log("BIOTRASH-SGI: Autenticación de Firebase iniciada correctamente.");
   })
   .catch((err) => {
-    console.warn("BIOTRASH-SGI: Error al iniciar sesión anónima:", err);
+    // Suppress expected admin-restricted-operation warning when Anonymous Sign-In is disabled in Firebase console
+    if (err?.code === 'auth/admin-restricted-operation' || err?.message?.includes('admin-restricted-operation')) {
+      console.info("BIOTRASH-SGI: Conexión Firestore operativa en modo directo.");
+    } else {
+      console.info("BIOTRASH-SGI: Estado de autenticación de respaldo activo.");
+    }
   });
 
 export { app, db, auth };

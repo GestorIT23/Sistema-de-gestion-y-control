@@ -183,14 +183,15 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
 
       // Sort by fecha or fechaRegistro descending
       tempResults.sort((a, b) => {
-        const dateA = a.fecha || a.fechaRegistro || '';
-        const dateB = b.fecha || b.fechaRegistro || '';
+        const dateA = String(a.fecha || a.fechaRegistro || '');
+        const dateB = String(b.fecha || b.fechaRegistro || '');
         return dateB.localeCompare(dateA);
       });
 
       // Apply dynamic period filtering
       const filtered = tempResults.filter(item => {
-        const itemDateStr = item.fecha || (item.fechaRegistro ? item.fechaRegistro.split('T')[0] : '');
+        const itemDateRaw = item.fecha || (item.fechaRegistro ? String(item.fechaRegistro).split('T')[0] : '');
+        const itemDateStr = String(itemDateRaw || '');
         if (!itemDateStr) return false;
 
         switch (filterType) {

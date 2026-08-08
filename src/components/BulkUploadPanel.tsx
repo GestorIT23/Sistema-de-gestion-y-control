@@ -187,7 +187,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
     reader.onload = async (evt) => {
       try {
         const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
@@ -207,6 +207,60 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           return isNaN(n) ? 0 : n;
         };
 
+        const parseExcelDate = (val: any): string => {
+          if (val === null || val === undefined || val === '') {
+            return new Date().toISOString().split('T')[0];
+          }
+
+          // If JS Date object
+          if (val instanceof Date) {
+            if (!isNaN(val.getTime())) {
+              const yyyy = val.getFullYear();
+              const mm = String(val.getMonth() + 1).padStart(2, '0');
+              const dd = String(val.getDate()).padStart(2, '0');
+              return `${yyyy}-${mm}-${dd}`;
+            }
+          }
+
+          // Handle Excel serial date numbers (e.g. 46240)
+          const rawVal = typeof val === 'string' ? val.trim() : val;
+          const num = typeof rawVal === 'number' ? rawVal : (typeof rawVal === 'string' && /^\d+(\.\d+)?$/.test(rawVal) ? parseFloat(rawVal) : NaN);
+          if (!isNaN(num) && num > 20000 && num < 100000) {
+            // Excel serial date formula offset
+            const dateObj = new Date(Math.round((num - 25569) * 86400 * 1000));
+            if (!isNaN(dateObj.getTime())) {
+              const yyyy = dateObj.getUTCFullYear();
+              const mm = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+              const dd = String(dateObj.getUTCDate()).padStart(2, '0');
+              return `${yyyy}-${mm}-${dd}`;
+            }
+          }
+
+          const str = String(val).trim();
+
+          // If YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+            return str.slice(0, 10);
+          }
+
+          // If DD/MM/YYYY or DD-MM-YYYY or D/M/YYYY
+          const ddmmyyyy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+          if (ddmmyyyy) {
+            const day = ddmmyyyy[1].padStart(2, '0');
+            const month = ddmmyyyy[2].padStart(2, '0');
+            const year = ddmmyyyy[3];
+            return `${year}-${month}-${day}`;
+          }
+
+          // Fallback parsing
+          const parsed = new Date(str);
+          if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString().split('T')[0];
+          }
+
+          return new Date().toISOString().split('T')[0];
+        };
+
         const recordsToSave: any[] = [];
 
         // Dynamic multi-row grouping or single row parsing based on module
@@ -214,10 +268,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Turno + Area
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row.Turno}_${row.Area}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row.Turno}_${row.Area}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 turno: row.Turno || 'Matutino',
                 area: row.Area || 'Planta',
                 responsable: row.Responsable || userEmail,
@@ -240,10 +295,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Responsable
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row.Responsable}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row.Responsable}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalContenedores: parseNum(row['Total Contenedores']),
@@ -270,10 +326,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Responsable
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row.Responsable}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row.Responsable}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalLibras: parseNum(row['Total Libras']),
@@ -296,10 +353,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Responsable
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row.Responsable}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row.Responsable}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalViajes: parseNum(row['Total Viajes']),
@@ -327,10 +385,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Hora Inicio + Hora Fin
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row['Hora Inicio']}_${row['Hora Fin']}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row['Hora Inicio']}_${row['Hora Fin']}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 incinerador: row.Incinerador || 'Incinerador 1',
@@ -359,10 +418,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Ente Generador + No Ticket Bascula
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row['Ente Generador']}_${row['No Ticket Bascula']}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row['Ente Generador']}_${row['No Ticket Bascula']}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 enteGenerador: row['Ente Generador'] || '',
@@ -406,10 +466,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Turno
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row.Turno}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row.Turno}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 turno: row.Turno || 'Matutino',
@@ -434,10 +495,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Area Fisica
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row['Area Fisica']}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row['Area Fisica']}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 areaFisica: row['Area Fisica'] || '',
@@ -461,10 +523,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           // Group by Fecha + Responsable Entrega
           const groups: { [key: string]: any } = {};
           jsonData.forEach((row) => {
-            const key = `${row.Fecha}_${row['Responsable Entrega']}`;
+            const rowFecha = parseExcelDate(row.Fecha || row.fecha);
+            const key = `${rowFecha}_${row['Responsable Entrega']}`;
             if (!groups[key]) {
               groups[key] = {
-                fecha: row.Fecha || new Date().toISOString().split('T')[0],
+                fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 responsableEntrega: row['Responsable Entrega'] || userEmail,
@@ -496,7 +559,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'cuarto_frio') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               cuartoFrio: row['Cuarto Frio'] || 'Sección Fría',
@@ -529,7 +592,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'reduccion_volumen') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               noTrituradora: row['No Trituradora'] || 'Trituradora T-100',
@@ -554,7 +617,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'control_autoclaves') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               noAutoclave: row['No Autoclave'] || '',
@@ -598,7 +661,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'lavado_banos') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               turno: row.Turno || 'Matutino',
@@ -625,7 +688,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'control_horas_cargador') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               turno: row.Turno || 'Matutino',
@@ -670,7 +733,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         } else if (tipo === 'desinfeccion_agente_quimico') {
           jsonData.forEach((row) => {
             recordsToSave.push({
-              fecha: row.Fecha || new Date().toISOString().split('T')[0],
+              fecha: parseExcelDate(row.Fecha || row.fecha),
               responsable: row.Responsable || userEmail,
               horaInicio: row['Hora Inicio'] || '08:00',
               horaFin: row['Hora Fin'] || '08:30',

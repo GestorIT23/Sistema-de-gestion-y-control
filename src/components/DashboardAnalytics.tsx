@@ -267,7 +267,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
             message: `Temperatura superior al límite estándar de 3°C detectada (${tEntrada}°C / ${tSalida}°C).`,
             date: item.fecha || 'Reciente',
             badge: 'ISO 14001 - F-OPR-000-6',
-            controlNo: `FRIO-${(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-TC`
+            controlNo: `FRIO-${String(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-TC`
           });
         }
       });
@@ -286,7 +286,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
               message: `Omisión de Equipo de Protección Personal reglamentario por el colaborador: ${f.colaborador || 'Personal'}.`,
               date: item.fecha || 'Reciente',
               badge: 'ISO 45001 - F-OPR-000-13',
-              controlNo: `UNIF-${(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-EPP`
+              controlNo: `UNIF-${String(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-EPP`
             });
           }
         });
@@ -307,7 +307,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
               message: `Nivel bajo de inventario crítico: ${r.producto || 'Insumo'} (${finalStock} unidades restantes).`,
               date: item.fecha || 'Reciente',
               badge: 'Stock SGI - F-OPR-000-11',
-              controlNo: `CHEM-${(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-STK`
+              controlNo: `CHEM-${String(item.fecha || '').replace(/-/g, '').slice(2) || 'SGI'}-STK`
             });
           }
         });
@@ -403,7 +403,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
     });
 
     const parsedActualData = Object.values(dataMap)
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
       .slice(-7);
 
     // Merge actual data on top of baseline if actual database is mostly empty

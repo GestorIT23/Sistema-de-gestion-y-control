@@ -607,7 +607,8 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   XLSX.utils.book_append_sheet(wb, ws, 'SGI FORMATO');
 
   // Write and Save
-  const outputFileName = `${meta.code}_${tipo}_${(data.fecha || new Date().toISOString().split('T')[0]).replace(/\//g, '-')}.xlsx`;
+  const fechaVal = String(data.fecha || new Date().toISOString().split('T')[0]);
+  const outputFileName = `${meta.code}_${tipo}_${fechaVal.replace(/\//g, '-')}.xlsx`;
   XLSX.writeFile(wb, outputFileName);
 }
 

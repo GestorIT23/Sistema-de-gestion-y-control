@@ -292,8 +292,9 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   }
 
   // Truncate function
-  function truncateText(str: string, maxLen: number) {
-    if (!str) return 'N/A';
+  function truncateText(val: any, maxLen: number): string {
+    if (val === null || val === undefined || val === '') return 'N/A';
+    const str = String(val);
     return str.length > maxLen ? str.slice(0, maxLen - 3) + '...' : str;
   }
 
@@ -1010,7 +1011,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   drawFooter();
 
   // Save / Action Download trigger
-  const escapedFileName = `${meta.code}_${tipo}_${data.fecha.replace(/\//g, '-')}.pdf`;
+  const fechaVal = String(data.fecha || new Date().toISOString().split('T')[0]);
+  const escapedFileName = `${meta.code}_${tipo}_${fechaVal.replace(/\//g, '-')}.pdf`;
   doc.save(escapedFileName);
 }
 
