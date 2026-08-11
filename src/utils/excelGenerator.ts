@@ -54,6 +54,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
+    checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -1074,6 +1075,31 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
         item.observaciones || '',
         item.firmaOperador || '',
         item.firmaSupervisor || ''
+      ]);
+    });
+  } else if (tipo === 'checklist_diario_planta') {
+    wsRows.push(['--- LISTADO DE REGISTROS CHECKLIST DIARIO DE PLANTA (F-OPR-000-16) ---']);
+    wsRows.push([
+      'Fecha Proceso', 'Hora Captura', 'Turno', 'Área / Zona', 'Inspector / Responsable',
+      'Puntaje HSE (%)', 'Puntaje Calidad (%)', 'Puntaje MNT (%)', 'Puntaje 5S (%)', 'PUNTAGE GLOBAL (%)',
+      'Tendencia', 'Diferencia vs Anterior (%)', 'Observaciones Generales'
+    ]);
+    results.forEach(item => {
+      const ar = item.avanceRetroceso || {};
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.turno || 'Matutino',
+        item.areaZona || '',
+        item.responsable || item.inspector || '',
+        item.puntajeHse !== undefined ? `${Math.round(item.puntajeHse)}%` : '0%',
+        item.puntajeCalidad !== undefined ? `${Math.round(item.puntajeCalidad)}%` : '0%',
+        item.puntajeMantenimiento !== undefined ? `${Math.round(item.puntajeMantenimiento)}%` : '0%',
+        item.puntaje5s !== undefined ? `${Math.round(item.puntaje5s)}%` : '0%',
+        item.puntajeGlobal !== undefined ? `${Math.round(item.puntajeGlobal)}%` : '0%',
+        ar.tendencia || 'Estable',
+        ar.diferenciaGlobal !== undefined ? `${ar.diferenciaGlobal >= 0 ? '+' : ''}${ar.diferenciaGlobal.toFixed(1)}%` : '0%',
+        item.observaciones || ''
       ]);
     });
   }

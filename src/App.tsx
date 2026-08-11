@@ -19,6 +19,7 @@ import BitacoraInventariosSGIModule from './components/modules/BitacoraInventari
 import BitacoraControlUniformesModule from './components/modules/BitacoraControlUniformes';
 import BitacoraControlHorasCargadorModule from './components/modules/BitacoraControlHorasCargador';
 import BitacoraDesinfeccionAgenteQuimicoModule from './components/modules/BitacoraDesinfeccionAgenteQuimico';
+import BitacoraChecklistDiarioPlantaModule from './components/modules/BitacoraChecklistDiarioPlanta';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
 import DashboardAnalytics from './components/DashboardAnalytics';
@@ -253,6 +254,13 @@ export default function App() {
       case 'desinfeccion_agente_quimico':
         return (
           <BitacoraDesinfeccionAgenteQuimicoModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'checklist_diario_planta':
+        return (
+          <BitacoraChecklistDiarioPlantaModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />

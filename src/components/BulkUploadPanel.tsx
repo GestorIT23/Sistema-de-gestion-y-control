@@ -158,6 +158,15 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             { Fecha: today, Responsable: userEmail, 'Hora Inicio': '08:00', 'Hora Fin': '08:30', Quimico: 'Innibith', Dosis: '50.00%', 'Cantidad Gl': 10.0, 'Metodo Manual Mochila (Si/No)': 'Si', 'Metodo Aspersion (Si/No)': 'Si', 'Recepcion (Si/No)': 'Si', 'Cuarto Frio (Si/No)': 'Si', 'Autoclaves (Si/No)': 'Si', 'Trituradoras (Si/No)': 'Si', 'Compactadora (Si/No)': 'Si', 'Lavado (Si/No)': 'Si', 'Incinerador (Si/No)': 'Si', 'Patio Maniobras (Si/No)': 'Si', 'Ingreso (Si/No)': 'Si', 'Lavanderia (Si/No)': 'Si', 'Muro Perimetral (Si/No)': 'Si', 'Comedor (Si/No)': 'Si', 'Taller (Si/No)': 'Si', 'Identificacion Insumos': 'Relación agua-químico 1:1', 'Trazabilidad Cargas Lote': 'Vincular pesaje en recepción', 'EPP Respirador (Si/No)': 'Si', 'EPP Traje Impermeable (Si/No)': 'Si', 'EPP Careta (Si/No)': 'Si', 'EPP Guantes (Si/No)': 'Si', Observaciones: 'Desinfección general de planta', 'Firma Operador': 'Ing. Daniel M.', 'Firma Supervisor': 'Licda. Ana S.' }
           ]
         };
+      case 'checklist_diario_planta':
+        return {
+          filename: 'Formato_Checklist_Diario_Planta.xlsx',
+          sheetName: 'Checklist Planta',
+          columns: ['Fecha', 'Turno', 'Area', 'Responsable', 'Puntaje HSE', 'Puntaje Calidad', 'Puntaje Mantenimiento', 'Puntaje 5S', 'Observaciones'],
+          samples: [
+            { Fecha: today, Turno: 'Matutino', Area: 'Planta Principal', Responsable: userEmail, 'Puntaje HSE': 100, 'Puntaje Calidad': 100, 'Puntaje Mantenimiento': 90, 'Puntaje 5S': 95, Observaciones: 'Carga inicial checklist' }
+          ]
+        };
       default:
         return {
           filename: 'Formato_Generico.xlsx',
@@ -782,6 +791,30 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                   solicitante: 'Comité ISO'
                 }
               ]
+            });
+          });
+        } else if (tipo === 'checklist_diario_planta') {
+          jsonData.forEach((row: any) => {
+            recordsToSave.push({
+              fecha: parseExcelDate(row.Fecha),
+              turno: row.Turno || 'Matutino',
+              areaZona: row.Area || row['Area / Zona'] || 'Planta Principal',
+              inspector: row.Responsable || row.Inspector || userEmail,
+              responsable: row.Responsable || row.Inspector || userEmail,
+              puntajeHse: parseNum(row['Puntaje HSE'] || 100),
+              puntajeCalidad: parseNum(row['Puntaje Calidad'] || 100),
+              puntajeMantenimiento: parseNum(row['Puntaje Mantenimiento'] || 100),
+              puntaje5s: parseNum(row['Puntaje 5S'] || 100),
+              puntajeGlobal: parseNum(row['Puntaje Global'] || 98),
+              observaciones: row.Observaciones || 'Inspección importada masivamente',
+              seccionHse: [],
+              seccionCalidad: [],
+              seccionMantenimiento: [],
+              seccion5s: [],
+              firmas: {
+                inspector: row.Responsable || 'Inspector SGI',
+                gerentePlanta: 'Ing. Manuel López — Gerente de Planta'
+              }
             });
           });
         }

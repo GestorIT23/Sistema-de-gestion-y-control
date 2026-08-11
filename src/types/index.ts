@@ -415,6 +415,46 @@ export interface BitacoraDesinfeccionAgenteQuimico extends BaseBitacora {
   filasAreas?: AreaDesinfeccion[];
 }
 
+// 16. Checklist Diario de Planta - Formato F-OPR-000-16
+export interface ItemChecklist {
+  codigo: string;
+  punto: string;
+  referencia: string;
+  estatus: 'CUMPLE' | 'PARCIAL' | 'NO_CUMPLE' | 'NO_APLICA';
+  comentario?: string;
+}
+
+export interface BitacoraChecklistDiarioPlanta extends BaseBitacora {
+  turno: 'Matutino' | 'Vespertino' | 'Nocturno';
+  areaZona: string;
+  inspector: string;
+  
+  // 4 Sections with verification items
+  seccionHse: ItemChecklist[];
+  seccionCalidad: ItemChecklist[];
+  seccionMantenimiento: ItemChecklist[];
+  seccion5s: ItemChecklist[];
+
+  // Scores
+  puntajeHse: number;
+  puntajeCalidad: number;
+  puntajeMantenimiento: number;
+  puntaje5s: number;
+  puntajeGlobal: number;
+
+  // Trend / Historical Comparison
+  avanceRetroceso?: {
+    puntajeAnteriorGlobal?: number;
+    diferenciaGlobal?: number;
+    tendencia?: 'Mejora' | 'Retroceso' | 'Estable';
+  };
+
+  firmas?: {
+    inspector: string;
+    gerentePlanta: string;
+  };
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -431,4 +471,5 @@ export type BitacoraEntry =
   | { tipo: 'inventarios_sgc'; data: BitacoraInventariosSGI }
   | { tipo: 'control_uniformes'; data: BitacoraControlUniformes }
   | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador }
-  | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico };
+  | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico }
+  | { tipo: 'checklist_diario_planta'; data: BitacoraChecklistDiarioPlanta };

@@ -48,7 +48,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     inventarios_sgc: 0,
     control_uniformes: 0,
     control_horas_cargador: 0,
-    desinfeccion_agente_quimico: 0
+    desinfeccion_agente_quimico: 0,
+    checklist_diario_planta: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -78,7 +79,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'inventarios_sgc', col: 'bitacora_inventarios_sgc' },
         { key: 'control_uniformes', col: 'bitacora_control_uniformes' },
         { key: 'control_horas_cargador', col: 'bitacora_control_horas_cargador' },
-        { key: 'desinfeccion_agente_quimico', col: 'bitacora_desinfeccion_agente_quimico' }
+        { key: 'desinfeccion_agente_quimico', col: 'bitacora_desinfeccion_agente_quimico' },
+        { key: 'checklist_diario_planta', col: 'bitacora_checklist_diario_planta' }
       ];
 
       const newCounts = {
@@ -96,7 +98,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         inventarios_sgc: 0,
         control_uniformes: 0,
         control_horas_cargador: 0,
-        desinfeccion_agente_quimico: 0
+        desinfeccion_agente_quimico: 0,
+        checklist_diario_planta: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -290,6 +293,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
       tag: 'Bioseguridad',
       stats: `${counts.desinfeccion_agente_quimico || 0} registros`
+    },
+    {
+      id: 'checklist_diario_planta',
+      title: 'Checklist Diario de Planta',
+      subtitle: 'Auditoría con Informe Ejecutivo e Evaluación Radial',
+      code: 'BIOTRASH 4.2. F-OPR-000-16',
+      icon: <ShieldCheck className="w-5 h-5 text-blue-600" />,
+      color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
+      tag: 'Informe Ejecutivo',
+      stats: `${counts.checklist_diario_planta || 0} registros`
     },
     {
       id: 'dashboard_analitico',

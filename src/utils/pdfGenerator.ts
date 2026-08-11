@@ -21,6 +21,175 @@ function formatHoraRegistro(isoString?: string): string {
 }
 
 /**
+ * Canvas Radar Chart Generator for Executive SGI Checklist Reports
+ */
+export function generateRadarChartCanvas(
+  scores: { hse: number; calidad: number; mantenimiento: number; fivestar: number },
+  previousScores?: { hse: number; calidad: number; mantenimiento: number; fivestar: number }
+): string {
+  if (typeof document === 'undefined') return '';
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 550;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+
+  // Background
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Border frame
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+  // Title
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 18px Helvetica, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('EVALUACIÓN RADIAL DE PLANTA - ANÁLISIS SGI (%)', 300, 42);
+
+  // Radar chart config
+  const cx = 300;
+  const cy = 270;
+  const radius = 165;
+  const axes = [
+    { label: 'SEGURIDAD (HSE)', val: scores.hse, angle: -Math.PI / 2 },
+    { label: 'CALIDAD Y NORMA', val: scores.calidad, angle: 0 },
+    { label: 'MANTENIMIENTO Y EQUIPOS', val: scores.mantenimiento, angle: Math.PI / 2 },
+    { label: 'INSTALACIONES (5S)', val: scores.fivestar, angle: Math.PI }
+  ];
+
+  const levels = [0.25, 0.50, 0.75, 1.00];
+
+  // Draw concentric grid polygons
+  levels.forEach(level => {
+    ctx.beginPath();
+    ctx.strokeStyle = level === 1.0 ? '#94A3B8' : '#E2E8F0';
+    ctx.lineWidth = level === 1.0 ? 1.5 : 1;
+    axes.forEach((axis, i) => {
+      const x = cx + Math.cos(axis.angle) * (radius * level);
+      const y = cy + Math.sin(axis.angle) * (radius * level);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.stroke();
+
+    // Level label on top
+    ctx.fillStyle = '#64748B';
+    ctx.font = '10px Helvetica, Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${Math.round(level * 100)}%`, cx + 5, cy - radius * level + 12);
+  });
+
+  // Draw axis lines and labels
+  axes.forEach((axis) => {
+    ctx.beginPath();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(cx, cy);
+    const endX = cx + Math.cos(axis.angle) * radius;
+    const endY = cy + Math.sin(axis.angle) * radius;
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Axis label positioning
+    const labelX = cx + Math.cos(axis.angle) * (radius + 40);
+    const labelY = cy + Math.sin(axis.angle) * (radius + 22);
+    ctx.fillStyle = '#0F172A';
+    ctx.font = 'bold 12px Helvetica, Arial, sans-serif';
+    ctx.textAlign = 'center';
+
+    ctx.fillText(`${axis.label}`, labelX, labelY);
+    ctx.fillStyle = axis.val >= 90 ? '#16A34A' : axis.val >= 75 ? '#2563EB' : '#DC2626';
+    ctx.font = 'bold 13px Helvetica, Arial, sans-serif';
+    ctx.fillText(`[${Math.round(axis.val)}%]`, labelX, labelY + 15);
+  });
+
+  // Draw Previous / Historical Baseline Polygon if available
+  if (previousScores) {
+    const prevAxes = [
+      previousScores.hse,
+      previousScores.calidad,
+      previousScores.mantenimiento,
+      previousScores.fivestar
+    ];
+    ctx.beginPath();
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = '#F59E0B'; // Amber
+    ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+    axes.forEach((axis, i) => {
+      const valRatio = Math.max(0, Math.min(100, prevAxes[i])) / 100;
+      const x = cx + Math.cos(axis.angle) * (radius * valRatio);
+      const y = cy + Math.sin(axis.angle) * (radius * valRatio);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw Current Audit Data Polygon
+  ctx.beginPath();
+  ctx.strokeStyle = '#2563EB'; // Blue
+  ctx.lineWidth = 3.5;
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.28)';
+  axes.forEach((axis, i) => {
+    const valRatio = Math.max(0, Math.min(100, axis.val)) / 100;
+    const x = cx + Math.cos(axis.angle) * (radius * valRatio);
+    const y = cy + Math.sin(axis.angle) * (radius * valRatio);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Dots at current vertices
+  axes.forEach((axis) => {
+    const valRatio = Math.max(0, Math.min(100, axis.val)) / 100;
+    const x = cx + Math.cos(axis.angle) * (radius * valRatio);
+    const y = cy + Math.sin(axis.angle) * (radius * valRatio);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#1D4ED8';
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Legend at bottom
+  const legendY = 510;
+  ctx.fillStyle = '#2563EB';
+  ctx.fillRect(120, legendY - 10, 18, 12);
+  ctx.strokeStyle = '#1D4ED8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(120, legendY - 10, 18, 12);
+
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 11px Helvetica, Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Auditoría Actual (Estado Evaluado)', 145, legendY);
+
+  if (previousScores) {
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(370, legendY - 10, 18, 12);
+    ctx.strokeRect(370, legendY - 10, 18, 12);
+
+    ctx.fillStyle = '#1E293B';
+    ctx.fillText('Promedio Anterior (Avances/Retrocesos)', 395, legendY);
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
+/**
  * Highly polished PDF generation utility for SGI BIOTRASH S.A.
  * Translates SGI operation data into elegant, official corporate documents.
  */
@@ -85,7 +254,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
-    desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' }
+    desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
+    checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -989,6 +1159,124 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Observaciones Generales', value: data.observaciones || 'Sin novedades' },
       { key: 'Firma Operador Aplicador', value: data.firmaOperador || '' },
       { key: 'Firma Supervisor SGI', value: data.firmaSupervisor || '' }
+    ]);
+  } else if (tipo === 'checklist_diario_planta') {
+    // 16. Checklist Diario de Planta - Executive Report with Radar Chart
+    drawSectionHeader('I. INFORMACIÓN GENERAL Y METADATOS DE AUDITORÍA DE PLANTA');
+    drawGridInfo([
+      { key: 'Fecha Auditoría', value: data.fecha || '' },
+      { key: 'Turno Operativo', value: data.turno || 'Matutino' },
+      { key: 'Área / Zona Evaluada', value: data.areaZona || 'Planta Principal' },
+      { key: 'Inspector / Responsable', value: data.responsable || data.inspector || '' },
+      { key: 'Hora Registro SGI', value: horaCaptura },
+      { key: 'Código Formato SGI', value: 'F-OPR-000-16' }
+    ]);
+
+    drawSectionHeader('II. RESUMEN EJECUTIVO DE CUMPLIMIENTO POR EJES EVALUADOS');
+    
+    // Scores
+    const scoreHse = Math.round(data.puntajeHse || 0);
+    const scoreCal = Math.round(data.puntajeCalidad || 0);
+    const scoreMnt = Math.round(data.puntajeMantenimiento || 0);
+    const score5s = Math.round(data.puntaje5s || 0);
+    const scoreGlobal = Math.round(data.puntajeGlobal || 0);
+
+    const getEstadoStr = (val: number) => val >= 90 ? 'EXCELENTE' : val >= 75 ? 'SATISFACTORIO' : 'CRÍTICO';
+
+    const summaryHeaders = ['EJE / SECCIÓN EVALUADA', 'PUNTAJE (%)', 'ESTATUS SGI', 'DESCRIPCIÓN DE CUMPLIMIENTO'];
+    const summaryWidths = [60, 30, 35, 55];
+    const summaryRows = [
+      ['SECCIÓN 1 — SEGURIDAD (HSE)', `${scoreHse}%`, getEstadoStr(scoreHse), 'Equipos de protección, extintores y bioseguridad'],
+      ['SECCIÓN 2 — CALIDAD Y NORMATIVO', `${scoreCal}%`, getEstadoStr(scoreCal), 'Autoclaves, bitácoras y trazabilidad de residuos'],
+      ['SECCIÓN 3 — MANTENIMIENTO Y EQUIPOS', `${scoreMnt}%`, getEstadoStr(scoreMnt), 'Equipos térmicos, básculas y contingencias'],
+      ['SECCIÓN 4 — INSTALACIONES (5S)', `${score5s}%`, getEstadoStr(score5s), 'Orden, limpieza y condiciones ambientales'],
+      ['ÍNDICE GLOBAL DE CONFORMIDAD', `${scoreGlobal}%`, getEstadoStr(scoreGlobal), 'EVALUACIÓN GLOBAL INTEGRADA DE PLANTA']
+    ];
+    drawDataTable(summaryHeaders, summaryWidths, summaryRows);
+
+    // Section III: Radar Chart Visual Image
+    drawSectionHeader('III. EVALUACIÓN RADIAL DE ASPECTOS DÉBILES Y FORTALEZAS (GRÁFICA RADIAL SGI)');
+    try {
+      const scoresObj = { hse: scoreHse, calidad: scoreCal, mantenimiento: scoreMnt, fivestar: score5s };
+      let prevScoresObj;
+      if (data.avanceRetroceso?.puntajeAnteriorGlobal !== undefined) {
+        const prevAvg = data.avanceRetroceso.puntajeAnteriorGlobal || scoreGlobal;
+        prevScoresObj = { hse: prevAvg, calidad: prevAvg, mantenimiento: prevAvg, fivestar: prevAvg };
+      }
+      const chartDataUrl = generateRadarChartCanvas(scoresObj, prevScoresObj);
+      if (chartDataUrl) {
+        doc.addImage(chartDataUrl, 'PNG', marginX + 30, y, 120, 100);
+        y += 104;
+      }
+    } catch (e) {
+      console.warn('Could not generate radar chart canvas for PDF:', e);
+    }
+
+    // Section IV: Analysis of Strengths & Weaknesses
+    drawSectionHeader('IV. DIAGNÓSTICO EJECUTIVO: FORTALEZAS Y ASPECTOS DÉBILES / HALLAZGOS');
+    
+    const allItems = [
+      ...(data.seccionHse || []),
+      ...(data.seccionCalidad || []),
+      ...(data.seccionMantenimiento || []),
+      ...(data.seccion5s || [])
+    ];
+    const hallazgos = allItems.filter((i: any) => i.estatus === 'NO_CUMPLE' || i.estatus === 'PARCIAL');
+    const fortalezasCount = allItems.filter((i: any) => i.estatus === 'CUMPLE').length;
+
+    let txtFortalezas = `Se identificaron ${fortalezasCount} de ${allItems.length} puntos en nivel de CUMPLIMIENTO TOTAL (100%). La planta mantiene estándares operativos sólidos en las áreas principales.`;
+    
+    let txtHallazgos = 'No se registraron hallazgos críticos ni desviaciones en la presente inspección.';
+    if (hallazgos.length > 0) {
+      txtHallazgos = `Se detectaron ${hallazgos.length} aspectos débiles / desviaciones que requieren acción inmediata:\n` +
+        hallazgos.map((h: any) => `• [${h.codigo}] ${h.punto}: Estatus ${h.estatus} ${h.comentario ? `(${h.comentario})` : ''}`).join('\n');
+    }
+
+    drawGridInfo([
+      { key: 'Fortalezas de Planta', value: txtFortalezas },
+      { key: 'Aspectos Débiles y Desviaciones', value: txtHallazgos }
+    ]);
+
+    // Section V: Avances o Retrocesos
+    drawSectionHeader('V. TENDENCIA Y EVALUACIÓN DE AVANCES O RETROCESOS');
+    let txtTendencia = 'Auditoría inicial de referencia para el historial SGI.';
+    if (data.avanceRetroceso) {
+      const dif = data.avanceRetroceso.diferenciaGlobal || 0;
+      const tend = data.avanceRetroceso.tendencia || 'Estable';
+      const prevVal = data.avanceRetroceso.puntajeAnteriorGlobal || scoreGlobal;
+      txtTendencia = `Comparativa vs Registro Anterior (${prevVal}%): Tendencia de ${tend.toUpperCase()} (${dif >= 0 ? '+' : ''}${dif.toFixed(1)}%). ` +
+        (dif > 0 ? 'Las acciones correctivas aplicadas reflejan mejoras operacionales en la planta.' : dif < 0 ? 'Se requiere reforzar controles preventivos en los rubros con retroceso.' : 'Desempeño constante.');
+    }
+    drawGridInfo([
+      { key: 'Diagnóstico de Tendencia SGI', value: txtTendencia },
+      { key: 'Observaciones Generales Inspector', value: data.observaciones || 'Sin observaciones adicionales.' }
+    ]);
+
+    // Section VI: Desglose completo de puntos (Table on new page)
+    doc.addPage();
+    drawHeader();
+    drawSectionHeader('VI. DESGLOSE DETALLADO DE PUNTOS DE VERIFICACIÓN (34 PUNTOS)');
+    
+    const dtlHeaders = ['CÓDIGO', 'PUNTO DE VERIFICACIÓN', 'NORMATIVA', 'ESTATUS', 'COMENTARIO / EVIDENCIA'];
+    const dtlWidths = [18, 65, 37, 22, 38];
+    const dtlRows: any[] = [];
+
+    allItems.forEach((item: any) => {
+      dtlRows.push([
+        item.codigo || '',
+        item.punto || '',
+        item.referencia || '',
+        item.estatus || 'CUMPLE',
+        item.comentario || 'Conforme'
+      ]);
+    });
+    drawDataTable(dtlHeaders, dtlWidths, dtlRows);
+
+    drawSectionHeader('VII. FIRMAS Y CERTIFICACIÓN DE LA AUDITORÍA');
+    const firmas = data.firmas || {};
+    drawGridInfo([
+      { key: 'Inspector / Responsable Evaluador', value: firmas.inspector || data.responsable || '' },
+      { key: 'Gerente de Planta / Vo.Bo.', value: firmas.gerentePlanta || 'Ing. Manuel López — Gerente de Planta' }
     ]);
   }
 
