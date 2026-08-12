@@ -468,56 +468,188 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     return str.length > maxLen ? str.slice(0, maxLen - 3) + '...' : str;
   }
 
-  // --- DRAW SIMPLE DATA TABLE ---
+  // --- DRAW TEXT CARD (MULTILINE PARAGRAPHS & CARDS) ---
+  function drawTextCard(title: string, content: string | string[], variant: 'normal' | 'success' | 'warning' | 'danger' = 'normal') {
+    doc.setFontSize(7.5);
+    const cardWidth = pageWidth - (marginX * 2) - 2;
+    const printableWidth = cardWidth - 8;
+
+    const rawLines: string[] = typeof content === 'string' ? content.split('\n') : content;
+    const allWrappedLines: string[] = [];
+
+    rawLines.forEach(rawLine => {
+      if (!rawLine.trim()) return;
+      doc.setFont('Helvetica', 'normal');
+      const wrapped = doc.splitTextToSize(rawLine, printableWidth);
+      allWrappedLines.push(...wrapped);
+    });
+
+    const lineStep = 3.8;
+    const headerHeight = title ? 6 : 0;
+    const boxHeight = headerHeight + (allWrappedLines.length * lineStep) + 6;
+
+    if (y + boxHeight > pageHeight - 18) {
+      doc.addPage();
+      drawHeader();
+    }
+
+    if (variant === 'success') {
+      doc.setFillColor(240, 253, 244);
+      doc.setDrawColor(187, 247, 208);
+    } else if (variant === 'danger') {
+      doc.setFillColor(254, 242, 242);
+      doc.setDrawColor(254, 202, 202);
+    } else if (variant === 'warning') {
+      doc.setFillColor(254, 252, 232);
+      doc.setDrawColor(254, 240, 138);
+    } else {
+      doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
+      doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+    }
+
+    doc.rect(marginX + 1, y, cardWidth, boxHeight, 'F');
+    doc.setLineWidth(0.3);
+    doc.rect(marginX + 1, y, cardWidth, boxHeight, 'S');
+
+    let currentY = y + 4.5;
+
+    if (title) {
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      if (variant === 'success') doc.setTextColor(22, 101, 52);
+      else if (variant === 'danger') doc.setTextColor(153, 27, 27);
+      else if (variant === 'warning') doc.setTextColor(146, 64, 14);
+      else doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+
+      doc.text(title, marginX + 4, currentY);
+      currentY += 5.5;
+    }
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
+
+    allWrappedLines.forEach(line => {
+      doc.text(line, marginX + 4, currentY);
+      currentY += lineStep;
+    });
+
+    y += boxHeight + 4;
+  }
+
+  // --- DRAW MULTILINE DATA TABLE ---
   function drawDataTable(headers: string[], widths: number[], rows: any[][]) {
     doc.setLineWidth(0.15);
     doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
 
-    // Table Header
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, 7, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    
-    let currentX = marginX + 3;
-    headers.forEach((h, idx) => {
-      doc.text(h, currentX, y + 4.8);
-      currentX += widths[idx];
-    });
+    function renderTableHeader() {
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, 7, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(7);
+      
+      let currentX = marginX + 3;
+      headers.forEach((h, idx) => {
+        doc.text(h, currentX, y + 4.8);
+        currentX += widths[idx];
+      });
 
-    y += 7;
+      y += 7;
+    }
+
+    renderTableHeader();
 
     // Table Rows
-    doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
     rows.forEach((row, rIdx) => {
-      let rowX = marginX + 3;
-      row.forEach((cell, cIdx) => {
-        const hName = String(headers[cIdx] || '').toUpperCase();
-        const isPesoCol = hName.includes('PESO') || hName.includes('LIBRAS') || hName.includes('PESAJE') || hName.includes('CANTIDAD') || hName.includes('PACAS');
+      const cellLinesList: string[][] = [];
+      let maxLinesInRow = 1;
 
-        if (isPesoCol) {
-          doc.setFillColor(209, 250, 229); // soft green
-          doc.rect(rowX - 2, y, widths[cIdx], 6.5, 'F');
-          doc.setTextColor(6, 95, 70); // deep emerald
+      row.forEach((cell, cIdx) => {
+        const colWidth = widths[cIdx] || 30;
+        const printableWidth = colWidth - 3;
+        const cellStr = cell !== null && cell !== undefined ? String(cell) : '';
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        const lines = doc.splitTextToSize(cellStr, printableWidth);
+        const validLines = lines.length > 0 ? lines : [''];
+        cellLinesList.push(validLines);
+        if (validLines.length > maxLinesInRow) {
+          maxLinesInRow = validLines.length;
+        }
+      });
+
+      const lineStep = 3.5;
+      const rowHeight = Math.max(6.5, maxLinesInRow * lineStep + 2.5);
+
+      if (y + rowHeight > pageHeight - 18) {
+        doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+        doc.line(marginX + 1, y, pageWidth - marginX - 1, y);
+
+        doc.addPage();
+        drawHeader();
+        renderTableHeader();
+      }
+
+      let rowX = marginX + 3;
+      cellLinesList.forEach((lines, cIdx) => {
+        const colWidth = widths[cIdx] || 30;
+        const cellRawVal = String(row[cIdx] || '').trim();
+        const upperVal = cellRawVal.toUpperCase();
+        const hName = String(headers[cIdx] || '').toUpperCase();
+        
+        const isPesoCol = hName.includes('PESO') || hName.includes('LIBRAS') || hName.includes('PESAJE') || hName.includes('CANTIDAD') || hName.includes('PACAS');
+        const isStatusCol = hName.includes('ESTATUS') || hName.includes('ESTADO');
+
+        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE')) {
+          doc.setFillColor(220, 252, 231);
+          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO')) {
+          doc.setFillColor(254, 226, 226);
+          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO')) {
+          doc.setFillColor(254, 243, 199);
+          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+        } else if (isPesoCol) {
+          doc.setFillColor(209, 250, 229);
+          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+        } else if (rIdx % 2 === 1) {
+          doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
+          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+        }
+
+        doc.setFontSize(6.5);
+        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE')) {
+          doc.setTextColor(22, 101, 52);
+          doc.setFont('Helvetica', 'bold');
+        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO')) {
+          doc.setTextColor(153, 27, 27);
+          doc.setFont('Helvetica', 'bold');
+        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO')) {
+          doc.setTextColor(146, 64, 14);
+          doc.setFont('Helvetica', 'bold');
+        } else if (isPesoCol) {
+          doc.setTextColor(6, 95, 70);
           doc.setFont('Helvetica', 'bold');
         } else {
-          if (rIdx % 2 === 1) {
-            doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
-            doc.rect(rowX - 2, y, widths[cIdx], 6.5, 'F');
-          }
           doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
           doc.setFont('Helvetica', 'normal');
         }
 
-        doc.setFontSize(7);
-        doc.text(String(cell || ''), rowX, y + 4.2);
-        rowX += widths[cIdx];
+        lines.forEach((lineStr, lineIdx) => {
+          doc.text(lineStr, rowX, y + 4.0 + lineIdx * lineStep);
+        });
+
+        rowX += colWidth;
       });
 
-      doc.line(marginX + 1, y + 6.5, pageWidth - marginX - 1, y + 6.5);
-      y += 6.5;
+      doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+      doc.setLineWidth(0.1);
+      doc.line(marginX + 1, y + rowHeight, pageWidth - marginX - 1, y + rowHeight);
+      
+      y += rowHeight;
     });
 
     y += 4;
@@ -1184,10 +1316,10 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     const getEstadoStr = (val: number) => val >= 90 ? 'EXCELENTE' : val >= 75 ? 'SATISFACTORIO' : 'CRÍTICO';
 
     const summaryHeaders = ['EJE / SECCIÓN EVALUADA', 'PUNTAJE (%)', 'ESTATUS SGI', 'DESCRIPCIÓN DE CUMPLIMIENTO'];
-    const summaryWidths = [60, 30, 35, 55];
+    const summaryWidths = [55, 25, 30, 70];
     const summaryRows = [
       ['SECCIÓN 1 — SEGURIDAD (HSE)', `${scoreHse}%`, getEstadoStr(scoreHse), 'Equipos de protección, extintores y bioseguridad'],
-      ['SECCIÓN 2 — CALIDAD Y NORMATIVO', `${scoreCal}%`, getEstadoStr(scoreCal), 'Autoclaves, bitácoras y trazabilidad de residuos'],
+      ['SECCIÓN 2 — CALIDAD Y NORMATIVO', `${scoreCal}%`, getEstadoStr(scoreCal), 'Autoclaves, bitácoras y cumplimiento normativo'],
       ['SECCIÓN 3 — MANTENIMIENTO Y EQUIPOS', `${scoreMnt}%`, getEstadoStr(scoreMnt), 'Equipos térmicos, básculas y contingencias'],
       ['SECCIÓN 4 — INSTALACIONES (5S)', `${score5s}%`, getEstadoStr(score5s), 'Orden, limpieza y condiciones ambientales'],
       ['ÍNDICE GLOBAL DE CONFORMIDAD', `${scoreGlobal}%`, getEstadoStr(scoreGlobal), 'EVALUACIÓN GLOBAL INTEGRADA DE PLANTA']
@@ -1205,8 +1337,12 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       }
       const chartDataUrl = generateRadarChartCanvas(scoresObj, prevScoresObj);
       if (chartDataUrl) {
-        doc.addImage(chartDataUrl, 'PNG', marginX + 30, y, 120, 100);
-        y += 104;
+        if (y + 80 > pageHeight - 18) {
+          doc.addPage();
+          drawHeader();
+        }
+        doc.addImage(chartDataUrl, 'PNG', marginX + 45, y, 90, 75);
+        y += 79;
       }
     } catch (e) {
       console.warn('Could not generate radar chart canvas for PDF:', e);
@@ -1224,18 +1360,18 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     const hallazgos = allItems.filter((i: any) => i.estatus === 'NO_CUMPLE' || i.estatus === 'PARCIAL');
     const fortalezasCount = allItems.filter((i: any) => i.estatus === 'CUMPLE').length;
 
-    let txtFortalezas = `Se identificaron ${fortalezasCount} de ${allItems.length} puntos en nivel de CUMPLIMIENTO TOTAL (100%). La planta mantiene estándares operativos sólidos en las áreas principales.`;
-    
-    let txtHallazgos = 'No se registraron hallazgos críticos ni desviaciones en la presente inspección.';
-    if (hallazgos.length > 0) {
-      txtHallazgos = `Se detectaron ${hallazgos.length} aspectos débiles / desviaciones que requieren acción inmediata:\n` +
-        hallazgos.map((h: any) => `• [${h.codigo}] ${h.punto}: Estatus ${h.estatus} ${h.comentario ? `(${h.comentario})` : ''}`).join('\n');
-    }
+    const txtFortalezas = `Se identificaron ${fortalezasCount} de ${allItems.length} puntos de verificación en nivel de CUMPLIMIENTO TOTAL (100%). La planta mantiene estándares operativos sólidos en los rubros auditados.`;
+    drawTextCard('FORTALEZAS OPERATIVAS DE PLANTA', txtFortalezas, 'success');
 
-    drawGridInfo([
-      { key: 'Fortalezas de Planta', value: txtFortalezas },
-      { key: 'Aspectos Débiles y Desviaciones', value: txtHallazgos }
-    ]);
+    if (hallazgos.length > 0) {
+      const hallazgosLines = [
+        `Se detectaron ${hallazgos.length} aspectos débiles / desviaciones que requieren acción inmediata:`,
+        ...hallazgos.map((h: any) => `• [${h.codigo}] ${h.punto} — Estatus: ${h.estatus}${h.comentario ? ` (Observación: ${h.comentario})` : ''}`)
+      ];
+      drawTextCard('ASPECTOS DÉBILES Y HALLAZGOS CRÍTICOS', hallazgosLines, 'danger');
+    } else {
+      drawTextCard('ASPECTOS DÉBILES Y HALLAZGOS CRÍTICOS', 'No se registraron hallazgos ni desviaciones en la presente inspección de planta.', 'normal');
+    }
 
     // Section V: Avances o Retrocesos
     drawSectionHeader('V. TENDENCIA Y EVALUACIÓN DE AVANCES O RETROCESOS');
@@ -1247,10 +1383,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       txtTendencia = `Comparativa vs Registro Anterior (${prevVal}%): Tendencia de ${tend.toUpperCase()} (${dif >= 0 ? '+' : ''}${dif.toFixed(1)}%). ` +
         (dif > 0 ? 'Las acciones correctivas aplicadas reflejan mejoras operacionales en la planta.' : dif < 0 ? 'Se requiere reforzar controles preventivos en los rubros con retroceso.' : 'Desempeño constante.');
     }
-    drawGridInfo([
-      { key: 'Diagnóstico de Tendencia SGI', value: txtTendencia },
-      { key: 'Observaciones Generales Inspector', value: data.observaciones || 'Sin observaciones adicionales.' }
-    ]);
+    drawTextCard('DIAGNÓSTICO DE TENDENCIA SGI', txtTendencia, 'warning');
+
+    if (data.observaciones) {
+      drawTextCard('OBSERVACIONES GENERALES DEL INSPECTOR', data.observaciones, 'normal');
+    }
 
     // Section VI: Desglose completo de puntos (Table on new page)
     doc.addPage();
