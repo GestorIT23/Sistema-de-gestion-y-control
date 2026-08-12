@@ -68,8 +68,6 @@ const DEFAULT_CALIDAD: ItemChecklist[] = [
   { codigo: 'CAL-04', punto: 'Manifiestos de traslado de residuos peligrosos actualizados y firmados por generador/transportista', referencia: 'NOM-055-SEMARNAT · LGEEPA Art. 151', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'CAL-05', punto: 'Segregación correcta de residuos por tipo y categoría (RPBI, RP, RNP) en contenedores identificados', referencia: 'NOM-087 · NOM-052-SEMARNAT-2005', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'CAL-06', punto: 'Plan de Manejo de Residuos Peligrosos vigente y accesible para inspección', referencia: 'SEMARNAT · LGEEPA', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'CAL-07', punto: 'Trazabilidad de residuos: cada lote puede rastrearse desde recepción hasta disposición final', referencia: 'ISO 9001:2015 §8.5.2', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'CAL-08', punto: 'Certificados de tratamiento/destrucción emitidos para los residuos procesados del día anterior', referencia: 'NOM-087 · NOM-052', estatus: 'CUMPLE', comentario: '' },
 ];
 
 const DEFAULT_MANTENIMIENTO: ItemChecklist[] = [
@@ -470,7 +468,7 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
                 </span>
               </div>
               <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
-                Evaluación en tiempo real sobre 34 puntos de control normativo. Al guardar, el sistema genera automáticamente el <strong>Informe Ejecutivo PDF con Gráfica Radial</strong>.
+                Evaluación en tiempo real sobre 32 puntos de control normativo. Al guardar, el sistema genera automáticamente el <strong>Informe Ejecutivo PDF con Gráfica Radial</strong>.
               </p>
             </div>
 
@@ -508,7 +506,7 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
             <div className="bg-white border border-[#E2E8F0] p-3 rounded-lg shadow-sm">
               <span className="text-[10px] font-mono text-slate-500 font-bold uppercase block">2. CALIDAD & NORMA</span>
               <span className="text-xl font-bold font-mono text-slate-800 block mt-1">{scoreCalidad}%</span>
-              <span className="text-[10px] text-slate-400 font-medium">8 Puntos Evaluados</span>
+              <span className="text-[10px] text-slate-400 font-medium">6 Puntos Evaluados</span>
             </div>
             <div className="bg-white border border-[#E2E8F0] p-3 rounded-lg shadow-sm">
               <span className="text-[10px] font-mono text-slate-500 font-bold uppercase block">3. MANTENIMIENTO</span>

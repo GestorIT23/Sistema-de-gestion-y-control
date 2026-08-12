@@ -1255,7 +1255,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     // Section VI: Desglose completo de puntos (Table on new page)
     doc.addPage();
     drawHeader();
-    drawSectionHeader('VI. DESGLOSE DETALLADO DE PUNTOS DE VERIFICACIÓN (34 PUNTOS)');
+    drawSectionHeader(`VI. DESGLOSE DETALLADO DE PUNTOS DE VERIFICACIÓN (${allItems.length} PUNTOS)`);
     
     const dtlHeaders = ['CÓDIGO', 'PUNTO DE VERIFICACIÓN', 'NORMATIVA', 'ESTATUS', 'COMENTARIO / EVIDENCIA'];
     const dtlWidths = [18, 65, 37, 22, 38];
