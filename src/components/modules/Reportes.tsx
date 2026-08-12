@@ -22,6 +22,7 @@ import FormHeader from '../FormHeader';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { sanitizeBiotrashObject } from '../../utils/textSanitizer';
+import { isAuthorizedToDelete } from '../../utils/authUtils';
 
 interface Props {
   onBack: () => void;
@@ -220,6 +221,22 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const canDelete = isAuthorizedToDelete(userEmail);
+
+  const handleDeleteSingleRecord = async (log: any) => {
+    if (!window.confirm(`¿Está seguro de que desea eliminar el registro ${log.codigoFormato || ''} (${log.id})?`)) return;
+    try {
+      const bitInfo = BITACORAS_INFO.find(b => b.id === log.tipo);
+      const colName = bitInfo && bitInfo.col !== 'all' ? bitInfo.col : (log.tipo || 'bitacora_inventarios');
+      await deleteDoc(doc(db, colName, log.id));
+      setResults(prev => prev.filter(r => r.id !== log.id));
+      setMsg({ text: 'Registro eliminado exitosamente de Firebase.', type: 'success' });
+    } catch (e: any) {
+      console.error('Error al eliminar registro:', e);
+      setMsg({ text: `Error al eliminar el registro: ${e.message || e}`, type: 'error' });
     }
   };
 
@@ -723,13 +740,24 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                               )}
                             </td>
                             <td className="px-4 py-3 text-right whitespace-nowrap">
-                              <button
-                                onClick={() => setExpandedLog(isExpanded ? null : log.id)}
-                                className="text-[10px] font-extrabold text-[#3B82F6] hover:text-blue-700 hover:underline uppercase flex items-center justify-end gap-0.5 ml-auto"
-                              >
-                                {isExpanded ? 'Ocultar' : 'Detalles'} 
-                                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                {canDelete && (
+                                  <button
+                                    onClick={() => handleDeleteSingleRecord(log)}
+                                    className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-2 py-1 rounded text-[10px] border border-rose-200 transition cursor-pointer flex items-center gap-1"
+                                    title="Eliminar Registro"
+                                  >
+                                    <Trash2 className="w-3 h-3 text-rose-600" /> Eliminar
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                                  className="text-[10px] font-extrabold text-[#3B82F6] hover:text-blue-700 hover:underline uppercase flex items-center justify-end gap-0.5"
+                                >
+                                  {isExpanded ? 'Ocultar' : 'Detalles'} 
+                                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                           {isExpanded && (
@@ -786,6 +814,15 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                       >
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Descargar Excel SGI
                                       </button>
+                                      {canDelete && (
+                                        <button
+                                          onClick={() => handleDeleteSingleRecord(log)}
+                                          className="bg-rose-700 hover:bg-rose-800 text-white text-[9.5px] font-extrabold px-3 py-1.5 rounded flex items-center gap-1.5 transition uppercase tracking-wide cursor-pointer shadow-xs"
+                                          title="Eliminar este registro de Firebase"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" /> Eliminar Registro
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
 

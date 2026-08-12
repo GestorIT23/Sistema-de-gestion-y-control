@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
 import type { BitacoraChecklistDiarioPlanta, ItemChecklist } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
@@ -27,7 +27,8 @@ import {
   Award,
   AlertTriangle,
   HelpCircle,
-  BarChart3
+  BarChart3,
+  Trash2
 } from 'lucide-react';
 import { 
   Radar, 
@@ -42,6 +43,7 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
+import { isAuthorizedToDelete } from '../../utils/authUtils';
 
 interface Props {
   onBack: () => void;
@@ -140,6 +142,19 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const canDelete = isAuthorizedToDelete(userEmail);
+
+  const handleDelete = async (docId: string) => {
+    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+    try {
+      await deleteDoc(doc(db, 'bitacora_checklist_diario_planta', docId));
+      fetchRegistros();
+    } catch (err) {
+      console.error('Error al eliminar registro:', err);
+      alert('Error al eliminar el registro de la base de datos.');
     }
   };
 
@@ -868,12 +883,23 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-right">
-                      <button
-                        onClick={() => generateAndDownloadPDF('checklist_diario_planta', item)}
-                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-2.5 py-1 rounded text-[10px] border border-blue-200 transition cursor-pointer"
-                      >
-                        PDF Informe
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => generateAndDownloadPDF('checklist_diario_planta', item)}
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-2.5 py-1 rounded text-[10px] border border-blue-200 transition cursor-pointer"
+                        >
+                          PDF Informe
+                        </button>
+                        {canDelete && item.id && (
+                          <button
+                            onClick={() => handleDelete(item.id!)}
+                            className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-2 py-1 rounded text-[10px] border border-rose-200 transition cursor-pointer flex items-center gap-1"
+                            title="Eliminar Registro"
+                          >
+                            <Trash2 className="w-3 h-3 text-rose-600" /> Eliminar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

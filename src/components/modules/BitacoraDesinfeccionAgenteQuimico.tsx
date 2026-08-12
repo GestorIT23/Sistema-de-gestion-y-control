@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, limit , deleteDoc, doc} from 'firebase/firestore';
 import { BitacoraDesinfeccionAgenteQuimico } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
@@ -22,11 +22,12 @@ import {
   MapPin, 
   CheckCircle2,
   Sparkles
-} from 'lucide-react';
+, Trash2} from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
+import { isAuthorizedToDelete } from '../../utils/authUtils';
 
 interface Props {
   onBack: () => void;
@@ -114,6 +115,19 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
       setLoading(false);
     }
   };
+  const canDelete = isAuthorizedToDelete(userEmail);
+
+  const handleDelete = async (docId: string) => {
+    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+    try {
+      await deleteDoc(doc(db, 'bitacora_desinfeccion_agente_quimico', docId));
+      fetchRegistros();
+    } catch (err) {
+      console.error('Error al eliminar registro:', err);
+      alert('Error al eliminar el registro de la base de datos.');
+    }
+  };
+
 
   const handleToggleArea = (key: keyof typeof areas) => {
     setAreas((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -659,6 +673,19 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
                         >
                           <FileText className="w-3 h-3 text-emerald-400" /> PDF
                         </button>
+                        {canDelete && reg.id && (
+                          <>
+                            <span className="text-slate-300 font-mono text-[10px]">|</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(reg.id!)}
+                              className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
+                              title="Eliminar Registro"
+                            >
+                              <Trash2 className="w-3 h-3 text-rose-600" /> Eliminar
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
