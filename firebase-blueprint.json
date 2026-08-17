@@ -106,12 +106,41 @@
         "fechaCreacion": { "type": "string" }
       },
       "required": ["email", "nombre", "rol"]
+    },
+    "RegistroRecoleccion": {
+      "title": "Reporte de Recolección de Residuos",
+      "description": "Registro y carga en lote de recolecciones en ruta (Histórico, Diario, Semanal, Mensual)",
+      "type": "object",
+      "properties": {
+        "codigoCliente": { "type": "string" },
+        "nombreCliente": { "type": "string" },
+        "codigoUbicacion": { "type": "string" },
+        "nombreUbicacion": { "type": "string" },
+        "fechaVisita": { "type": "string" },
+        "numeroRecibo": { "type": "string" },
+        "codigoRuta": { "type": "string" },
+        "ruta": { "type": "string" },
+        "categoria": { "type": "string" },
+        "producto": { "type": "string" },
+        "medida": { "type": "string" },
+        "unidades": { "type": "number" },
+        "horaVisita": { "type": "string" },
+        "tipoCarga": { "type": "string", "enum": ["historica", "diario", "semanal", "mensual"] },
+        "loteCargaId": { "type": "string" },
+        "fechaRegistro": { "type": "string" },
+        "creadoPor": { "type": "string" }
+      },
+      "required": ["codigoCliente", "nombreCliente", "fechaVisita", "numeroRecibo", "ruta", "unidades"]
     }
   },
   "firestore": {
     "usuarios": {
       "schema": "Usuario",
       "description": "Colaboradores con roles específicos para control de acceso"
+    },
+    "reportes_recoleccion": {
+      "schema": "RegistroRecoleccion",
+      "description": "Colección de reportes y cargas en lote de recolección"
     },
     "bitacora_inventarios": {
       "schema": "BitacoraInventarios",

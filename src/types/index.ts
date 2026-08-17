@@ -524,6 +524,46 @@ export interface BitacoraControl360Vehiculos extends BaseBitacora {
   firmaPlanta?: string;
 }
 
+// 18. Reporte de Recolección (Batch / Histórico / Diario / Semanal / Mensual)
+export type TipoCargaRecoleccion = 'historica' | 'diario' | 'semanal' | 'mensual';
+
+export interface RegistroRecoleccion {
+  id?: string;
+  codigoCliente: string;
+  nombreCliente: string;
+  codigoUbicacion: string;
+  nombreUbicacion: string;
+  fechaVisita: string; // YYYY-MM-DD
+  numeroRecibo: string;
+  codigoRuta: string;
+  ruta: string;
+  categoria: string;
+  producto: string;
+  medida: string; // Lb, Kg, Bolsas, Cajas, Galones, Unidades, etc.
+  unidades: number;
+  horaVisita: string; // HH:MM
+  
+  // Metadata operacional y de trazabilidad
+  tipoCarga: TipoCargaRecoleccion;
+  loteCargaId?: string;
+  nombreArchivoOrigen?: string;
+  fechaRegistro: string; // ISO String
+  creadoPor: string;
+  observaciones?: string;
+}
+
+export interface LoteCargaRecoleccion {
+  id?: string;
+  loteId: string;
+  fechaCarga: string;
+  tipoCarga: TipoCargaRecoleccion;
+  totalRegistros: number;
+  totalUnidades: number;
+  nombreArchivo?: string;
+  usuario: string;
+  rutasInvolucradas: string[];
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -542,4 +582,5 @@ export type BitacoraEntry =
   | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador }
   | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico }
   | { tipo: 'checklist_diario_planta'; data: BitacoraChecklistDiarioPlanta }
-  | { tipo: 'control_360_vehiculos'; data: BitacoraControl360Vehiculos };
+  | { tipo: 'control_360_vehiculos'; data: BitacoraControl360Vehiculos }
+  | { tipo: 'reporte_recoleccion'; data: RegistroRecoleccion };

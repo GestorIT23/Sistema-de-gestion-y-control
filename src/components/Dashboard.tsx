@@ -23,7 +23,9 @@ import {
   ShieldCheck,
   Gauge,
   Droplets,
-  Truck
+  Truck,
+  UploadCloud,
+  Layers
 } from 'lucide-react';
 import { Usuario } from '../types';
 import DashboardAnalytics from './DashboardAnalytics';
@@ -51,7 +53,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     control_horas_cargador: 0,
     desinfeccion_agente_quimico: 0,
     checklist_diario_planta: 0,
-    control_360_vehiculos: 0
+    control_360_vehiculos: 0,
+    reporte_recoleccion: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -83,7 +86,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'control_horas_cargador', col: 'bitacora_control_horas_cargador' },
         { key: 'desinfeccion_agente_quimico', col: 'bitacora_desinfeccion_agente_quimico' },
         { key: 'checklist_diario_planta', col: 'bitacora_checklist_diario_planta' },
-        { key: 'control_360_vehiculos', col: 'bitacora_control_360_vehiculos' }
+        { key: 'control_360_vehiculos', col: 'bitacora_control_360_vehiculos' },
+        { key: 'reporte_recoleccion', col: 'reportes_recoleccion' }
       ];
 
       const newCounts = {
@@ -103,7 +107,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         control_horas_cargador: 0,
         desinfeccion_agente_quimico: 0,
         checklist_diario_planta: 0,
-        control_360_vehiculos: 0
+        control_360_vehiculos: 0,
+        reporte_recoleccion: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -317,6 +322,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
       tag: 'Transporte RPBI',
       stats: `${counts.control_360_vehiculos || 0} boletas`
+    },
+    {
+      id: 'reporte_recoleccion',
+      title: 'Reporte de Recolección (Batch / Lote)',
+      subtitle: 'Carga masiva histórica, diaria, semanal y mensual de rutas',
+      code: 'BIOTRASH 4.2. F-OPR-000-18',
+      icon: <UploadCloud className="w-5 h-5 text-emerald-600 animate-bounce" />,
+      color: 'border-emerald-300 hover:border-emerald-500 focus:ring-emerald-500 bg-emerald-50/20',
+      tag: 'Carga Masiva',
+      stats: `${counts.reporte_recoleccion || 0} registros`
     },
     {
       id: 'dashboard_analitico',

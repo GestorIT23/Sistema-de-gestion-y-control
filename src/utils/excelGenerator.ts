@@ -56,6 +56,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
     control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE RPBI' },
+    reporte_recoleccion: { code: 'F-OPR-000-18', name: 'REPORTE DE RECOLECCIÓN DE RESIDUOS (CARGA EN LOTE)' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -1142,6 +1143,48 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
     });
   }
 
+  if (tipo === 'reporte_recoleccion') {
+    wsRows.push(['--- REGISTROS DE RECOLECCIÓN EN RUTA (CARGAS BATCH / HISTÓRICO) ---']);
+    wsRows.push([
+      'CODIGO CLIENTE',
+      'NOMBRE CLIENTE',
+      'CODIGO UBICACION',
+      'NOMBRE UBICACION',
+      'FECHA VISITA',
+      'NUMERO RECIBO',
+      'CODIGO RUTA',
+      'RUTA',
+      'CATEGORIA',
+      'PRODUCTO',
+      'MEDIDA',
+      'UNIDADES',
+      'HORA DE VISITA',
+      'TIPO CARGA',
+      'LOTE ID',
+      'USUARIO REGISTRO'
+    ]);
+    results.forEach((item: any) => {
+      wsRows.push([
+        item.codigoCliente || '',
+        item.nombreCliente || '',
+        item.codigoUbicacion || '',
+        item.nombreUbicacion || '',
+        item.fechaVisita || '',
+        item.numeroRecibo || '',
+        item.codigoRuta || '',
+        item.ruta || '',
+        item.categoria || '',
+        item.producto || '',
+        item.medida || 'Lb',
+        Number(item.unidades) || 0,
+        item.horaVisita || '',
+        item.tipoCarga ? item.tipoCarga.toUpperCase() : 'HISTORICA',
+        item.loteCargaId || '',
+        item.creadoPor || ''
+      ]);
+    });
+  }
+
   // Draw Control de Cambios SGI standard at the bottom
   wsRows.push([]);
   wsRows.push(['--- SISTEMA SGI CONTROL DE CAMBIOS ---']);
@@ -1168,3 +1211,94 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
   const outputFileName = `${meta.code}_Consolidado_${tipo}_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, outputFileName);
 }
+
+/**
+ * Downloads a clean Excel template with the exact required columns for batch uploading
+ */
+export function downloadRecoleccionTemplate(): void {
+  const headers = [
+    'CODIGO CLIENTE',
+    'NOMBRE CLIENTE',
+    'CODIGO UBICACION',
+    'NOMBRE UBICACION',
+    'FECHA VISITA',
+    'NUMERO RECIBO',
+    'CODIGO RUTA',
+    'RUTA',
+    'CATEGORIA',
+    'PRODUCTO',
+    'MEDIDA',
+    'UNIDADES',
+    'HORA DE VISITA'
+  ];
+
+  const sampleRows = [
+    [
+      'CLI-1001',
+      'HOSPITAL GENERAL DE GUATEMALA',
+      'UB-01',
+      'SEDE CENTRAL - QUIRÓFANOS',
+      '2026-08-17',
+      'REC-88401',
+      'R-01',
+      'RUTA CAPITAL NORTE',
+      'RPBI BIOINFECCIOSO',
+      'DESECHOS BIOLÓGICO-INFECCIOSOS',
+      'Lb',
+      45.5,
+      '08:30'
+    ],
+    [
+      'CLI-1001',
+      'HOSPITAL GENERAL DE GUATEMALA',
+      'UB-02',
+      'LABORATORIO CLÍNICO CENTRAL',
+      '2026-08-17',
+      'REC-88402',
+      'R-01',
+      'RUTA CAPITAL NORTE',
+      'PUNZOCORTANTES',
+      'GUARDIANES DE AGUJAS Y BISTURÍS',
+      'Lb',
+      12.0,
+      '09:00'
+    ],
+    [
+      'CLI-2045',
+      'CLÍNICA MÉDICA LAS AMÉRICAS',
+      'UB-01',
+      'CONSULTORIOS GENERALES',
+      '2026-08-17',
+      'REC-88403',
+      'R-02',
+      'RUTA MIXCO - ZONA 11',
+      'RPBI BIOINFECCIOSO',
+      'BOLSAS ROJAS REGLAMENTARIAS',
+      'Lb',
+      28.75,
+      '10:15'
+    ],
+    [
+      'CLI-3088',
+      'CENTRO DE DIAGNÓSTICO INTEGRAL',
+      'UB-01',
+      'ÁREA DE TOMA DE MUESTRAS',
+      '2026-08-17',
+      'REC-88404',
+      'R-03',
+      'RUTA CARRETERA A EL SALVADOR',
+      'ANATOMOPATOLÓGICOS',
+      'RESTOS DE TEJIDOS Y ÓRGANOS',
+      'Lb',
+      18.2,
+      '11:45'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Plantilla Recolección');
+  XLSX.writeFile(wb, `Plantilla_Reporte_Recoleccion_BIOTRASH.xlsx`);
+}
+

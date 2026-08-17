@@ -21,6 +21,7 @@ import BitacoraControlHorasCargadorModule from './components/modules/BitacoraCon
 import BitacoraDesinfeccionAgenteQuimicoModule from './components/modules/BitacoraDesinfeccionAgenteQuimico';
 import BitacoraChecklistDiarioPlantaModule from './components/modules/BitacoraChecklistDiarioPlanta';
 import BitacoraControl360VehiculosModule from './components/modules/BitacoraControl360Vehiculos';
+import ReporteRecoleccionModule from './components/modules/ReporteRecoleccion';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
 import DashboardAnalytics from './components/DashboardAnalytics';
@@ -270,6 +271,13 @@ export default function App() {
       case 'control_360_vehiculos':
         return (
           <BitacoraControl360VehiculosModule
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'reporte_recoleccion':
+        return (
+          <ReporteRecoleccionModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />
