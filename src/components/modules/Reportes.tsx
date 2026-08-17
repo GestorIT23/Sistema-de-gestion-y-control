@@ -46,6 +46,8 @@ const BITACORAS_INFO = [
   { id: 'control_uniformes', title: 'Control de Uniformes de Planta', col: 'bitacora_control_uniformes', code: 'F-OPR-000-13' },
   { id: 'control_horas_cargador', title: 'Control de Horas de Trabajo', col: 'bitacora_control_horas_cargador', code: 'F-OPR-000-14' },
   { id: 'desinfeccion_agente_quimico', title: 'Control de Aplicación de Agente Químico', col: 'bitacora_desinfeccion_agente_quimico', code: 'F-OPR-000-15' },
+  { id: 'checklist_diario_planta', title: 'Checklist Diario de Planta e Informe Ejecutivo', col: 'bitacora_checklist_diario_planta', code: 'F-OPR-000-16' },
+  { id: 'control_360_vehiculos', title: 'Control 360° de Vehículos (Transporte RPBI)', col: 'bitacora_control_360_vehiculos', code: 'F-OPR-000-17' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {

@@ -46,6 +46,8 @@ export const AVAILABLE_MODULES = [
   { id: 'control_uniformes', title: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA Y EPP', code: 'F-OPR-000-13' },
   { id: 'control_horas_cargador', title: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL', code: 'F-OPR-000-14' },
   { id: 'desinfeccion_agente_quimico', title: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / DESINFECCIÓN', code: 'F-OPR-000-15' },
+  { id: 'checklist_diario_planta', title: 'CHECKLIST DIARIO DE PLANTA E INFORME EJECUTIVO', code: 'F-OPR-000-16' },
+  { id: 'control_360_vehiculos', title: 'SISTEMA DE CONTROL 360° DE VEHÍCULOS (TRANSPORTE RPBI)', code: 'F-OPR-000-17' },
 ];
 
 interface Props {

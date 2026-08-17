@@ -255,7 +255,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     control_uniformes: { code: 'F-OPR-13', name: 'BITÁCORA DE CONTROL DE UNIFORMES DE PLANTA' },
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
-    checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' }
+    checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
+    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE RPBI' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -1414,6 +1415,58 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawGridInfo([
       { key: 'Inspector / Responsable Evaluador', value: firmas.inspector || data.responsable || '' },
       { key: 'Gerente de Planta / Vo.Bo.', value: firmas.gerentePlanta || 'Ing. Manuel López — Gerente de Planta' }
+    ]);
+  } else if (tipo === 'control_360_vehiculos') {
+    // 17. Control 360 de Vehiculos
+    drawSectionHeader('I. IDENTIFICACIÓN DE RUTA Y UNIDAD (F-OPR-000-17)');
+    drawGridInfo([
+      { key: 'Folio Boleta', value: data.folio || 'N/A' },
+      { key: 'Fecha de Operación', value: data.fecha || '' },
+      { key: 'Turno', value: data.turno || 'AM' },
+      { key: 'Centro / Distribuidora', value: data.centro || '' },
+      { key: 'Ruta Asignada', value: data.ruta || '' },
+      { key: 'Placa del Vehículo', value: `${data.placa || ''} (${data.estadoPlaca || 'Activa'})` },
+      { key: 'Tipo de Vehículo', value: data.tipoVehiculo || '' },
+      { key: 'Conductor Asignado', value: data.conductor || data.piloto || '' },
+      { key: 'Kilometraje Inicial', value: `${data.kmSalida || 0} km` },
+      { key: 'Contenedores Rojos Limpios/Vacíos', value: `${data.contenedoresRojosLimpiosVacios || 0} unidades` },
+      { key: 'Km Salida / Llegada', value: `${data.kmSalida || 0} km  ➔  ${data.kmLlegada || 0} km` },
+      { key: 'Km Totales Recorridos', value: `${data.kmRecorridos || 0} km` },
+      { key: 'Horario Salida / Retorno', value: `${data.horaSalida || ''} - ${data.horaLlegadaFinal || ''}` }
+    ]);
+
+    drawSectionHeader('II. INSPECCIÓN PRE-OPERACIONAL 360° (MECÁNICA Y BIOSEGURIDAD)');
+    const mec = data.checklistMecanico || {};
+    const bio = data.checklistBioseguridad || {};
+
+    const inspHeaders = ['RUBRO / SISTEMA EVALUADO', 'ESTADO', 'RUBRO / SISTEMA EVALUADO', 'ESTADO'];
+    const inspWidths = [60, 35, 60, 35];
+    const inspRows = [
+      ['Frenos (Servicio y Emergencia) [CRÍTICO]', String(mec.frenos || 'Cumple'), 'Sello Hermético de Caja [CRÍTICO]', String(bio.selloHermetico || 'Cumple')],
+      ['Llantas (Presión y Labrado) [CRÍTICO]', String(mec.llantas || 'Cumple'), 'Señalización Biohazard [CRÍTICO]', String(bio.biohazardVisible || 'Cumple')],
+      ['Luces y Señalización', String(mec.luces || 'Cumple'), 'Desinfección Previa Verificada [CRÍTICO]', String(bio.desinfeccionPrevia || 'Cumple')],
+      ['Extintor ABC Vigente [CRÍTICO]', String(mec.extintor || 'Cumple'), 'Kit de Derrames Completo [CRÍTICO]', String(bio.kitDerrame || 'Cumple')],
+      ['Cinturones de Seguridad', String(mec.cinturones || 'Cumple'), 'EPP Completo a Bordo [CRÍTICO]', String(bio.eppCompleto || 'Cumple')],
+      ['Espejos Retrovisores', String(mec.espejos || 'Cumple'), '—', '—'],
+      ['Nivel de Combustible y Fluidos', String(mec.combustible || 'Cumple'), '—', '—'],
+      ['Botiquín Primeros Auxilios', String(mec.botiquin || 'Cumple'), '—', '—']
+    ];
+    drawDataTable(inspHeaders, inspWidths, inspRows);
+
+    drawSectionHeader('III. ENTREGA EN PLANTA, DESINFECCIÓN POST-RUTA Y FIRMAS');
+    drawGridInfo([
+      { key: 'Hora Llegada a Planta', value: data.horaLlegadaPlanta || 'N/A' },
+      { key: 'Peso Entregado en Báscula', value: `${data.pesoEntregadoLbs !== undefined ? data.pesoEntregadoLbs : (data.pesoEntregadoKg || 0)} lb (libras)` },
+      { key: 'Recibido en Planta por', value: data.recibidoPorPlanta || 'N/A' },
+      { key: 'Descarga Completa (100%)', value: data.descargaCompleta ? 'SÍ (CONFORME)' : 'NO' },
+      { key: 'Lavado Interior Furgón', value: data.limpiezaInterior ? 'SÍ (CONFORME)' : 'NO' },
+      { key: 'Desinfectante Utilizado', value: data.desinfectanteUtilizado || 'Hipoclorito de Sodio 1%' },
+      { key: 'Tiempo Contacto', value: `${data.tiempoContactoMinutos || 10} min (Hora Fin: ${data.horaFinDesinfeccion || ''})` },
+      { key: 'Novedades de Ruta', value: data.novedadesRuta || 'Sin novedades reportadas' },
+      { key: 'Acciones Correctivas', value: data.accionesCorrectivas || 'Ninguna requerida' },
+      { key: 'Firma Conductor', value: data.firmaConductor || data.conductor || '' },
+      { key: 'Firma Supervisor SGI', value: data.firmaSupervisor || 'Supervisor de Flota' },
+      { key: 'Firma Planta Recepción', value: data.firmaPlanta || data.recibidoPorPlanta || '' }
     ]);
   }
 

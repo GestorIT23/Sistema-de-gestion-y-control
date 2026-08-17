@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control 360° de Vehículos - Transporte de Desechos Bioinfecciosos</title>
+  <style>
+    /* ==========================================================================
+       VARIABLES Y RESET
+       ========================================================================== */
+    :root {
+      --primary: #1a3a5c;
+      --primary-light: #2c5282;
+      --primary-subtle: #ebf4ff;
+      --success: #1a7a4a;
+      --success-light: #2ecc71;
+      --success-bg: #eafaf1;
+      --danger: #c0392b;
+      --danger-light: #e74c3c;
+      --danger-bg: #fdedec;
+      --warning: #e67e22;
+      --warning-light: #f39c12;
+      --warning-bg: #fef5e7;
+      --observe: #2980b9;
+      --observe-bg: #ebf5fb;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --radius: 8px;
+      --radius-sm: 4px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--slate-800);
+      background-color: #f4f7fa;
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       CABECERA PRINCIPAL & BRANDING
+       ========================================================================== */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #0d2238 100%);
+      color: #ffffff;
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      border-bottom: 3px solid var(--success);
+    }
+
+    .header-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .biohazard-badge {
+      background-color: var(--warning);
+      color: #ffffff;
+      font-size: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      box-shadow: 0 0 12px rgba(230, 126, 34, 0.4);
+    }
+
+    .header-titles h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+      color: #ffffff;
+    }
+
+    .header-titles p {
+      font-size: 12px;
+      color: var(--slate-300);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge-norma {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       BARRA DE NAVEGACIÓN (TABS)
+       ========================================================================== */
+    .nav-tabs-wrapper {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--slate-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .nav-tabs {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      padding: 0 12px;
+    }
+
+    .tab-button {
+      background: none;
+      border: none;
+      padding: 14px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--slate-600);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-button:hover {
+      color: var(--primary);
+      background-color: var(--primary-subtle);
+    }
+
+    .tab-button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 700;
+      background-color: #ffffff;
+    }
+
+    /* ==========================================================================
+       CONTENEDOR PRINCIPAL
+       ========================================================================== */
+    .main-content {
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 16px 40px 16px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       COMPONENTES GENÉRICOS & CARDS
+       ========================================================================== */
+    .card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover { background-color: var(--primary-light); }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #ffffff;
+    }
+    .btn-success:hover { background-color: #145f39; }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: #ffffff;
+    }
+    .btn-danger:hover { background-color: var(--danger-light); }
+
+    .btn-outline {
+      background-color: #ffffff;
+      border-color: var(--slate-300);
+      color: var(--slate-700);
+    }
+    .btn-outline:hover {
+      background-color: var(--slate-100);
+      border-color: var(--slate-400);
+    }
+
+    /* ==========================================================================
+       PESTAÑA 1: INSTRUCCIONES
+       ========================================================================== */
+    .instructions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .instruction-card {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .instruction-card.green { border-left-color: var(--success); }
+    .instruction-card.orange { border-left-color: var(--warning); }
+    .instruction-card.red { border-left-color: var(--danger); }
+
+    .instruction-card h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .instruction-card p, .instruction-card li {
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.5;
+    }
+
+    .instruction-card ul {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+
+    /* ==========================================================================
+       PESTAÑA 2: ÁRBOL DE DECISIÓN
+       ========================================================================== */
+    .selector-block {
+      margin-bottom: 20px;
+    }
+
+    .selector-label {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--slate-700);
+      margin-bottom: 8px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .center-buttons, .day-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .center-btn {
+      flex: 1 1 180px;
+      padding: 12px 14px;
+      background-color: var(--slate-50);
+      border: 2px solid var(--slate-300);
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .center-btn:hover {
+      border-color: var(--primary-light);
+      background-color: var(--primary-subtle);
+    }
+
+    .center-btn.active {
+      border-color: var(--primary);
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(26, 58, 92, 0.25);
+    }
+
+    .day-btn {
+      flex: 1 1 100px;
+      padding: 10px 8px;
+      background-color: var(--slate-50);
+      border: 2px solid var(--slate-300);
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .day-btn:hover:not(:disabled) {
+      border-color: var(--success);
+      background-color: var(--success-bg);
+    }
+
+    .day-btn.active {
+      border-color: var(--success);
+      background-color: var(--success);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(26, 122, 74, 0.25);
+    }
+
+    .day-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background-color: var(--slate-200);
+      border-color: var(--slate-300);
+      color: var(--slate-500);
+      text-decoration: line-through;
+    }
+
+    .decision-results-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .result-box {
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--slate-200);
+    }
+
+    .result-box.operan {
+      background-color: var(--success-bg);
+      border-color: #a3e4d7;
+    }
+
+    .result-box.no-operan {
+      background-color: var(--danger-bg);
+      border-color: #f5b7b1;
+    }
+
+    .result-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .result-box.operan .result-title { color: var(--success); }
+    .result-box.no-operan .result-title { color: var(--danger); }
+
+    .route-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      background-color: #ffffff;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .route-name {
+      font-weight: 700;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       PESTAÑA 3: FORMULARIO 360°
+       ========================================================================== */
+    .form-section {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: linear-gradient(to right, var(--slate-100), #ffffff);
+      border-bottom: 2px solid var(--primary);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .section-body {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group.col-span-2 {
+      grid-column: span 2;
+    }
+
+    .form-group.col-span-full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--slate-700);
+    }
+
+    .form-label.required::after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    .form-control {
+      padding: 8px 10px;
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      color: var(--slate-800);
+      background-color: #ffffff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.15);
+    }
+
+    .form-control[readonly] {
+      background-color: var(--slate-100);
+      cursor: not-allowed;
+      color: var(--slate-600);
+      font-weight: 600;
+    }
+
+    /* Placas Alert */
+    .placa-alert {
+      display: none;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background-color: var(--warning-bg);
+      border: 1px solid var(--warning);
+      color: #935116;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-top: 6px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .placa-alert.visible {
+      display: flex;
+    }
+
+    /* Checklist Pre-operacional */
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 18px;
+    }
+
+    .checklist-group {
+      background-color: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .checklist-group-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--slate-800);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--slate-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background-color: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      transition: background-color 0.15s;
+    }
+
+    .check-item:hover {
+      background-color: var(--primary-subtle);
+    }
+
+    .check-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .check-left input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--success);
+      cursor: pointer;
+    }
+
+    .check-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate-800);
+      cursor: pointer;
+    }
+
+    .tag-priority {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .tag-critico {
+      background-color: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #f5b7b1;
+    }
+
+    .tag-requerido {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid #f9e79f;
+    }
+
+    .tag-observar {
+      background-color: var(--observe-bg);
+      color: var(--observe);
+      border: 1px solid #aed6f1;
+    }
+
+    /* Banner Bloqueo Crítico */
+    .critical-alert-banner {
+      background-color: var(--danger-bg);
+      border: 2px solid var(--danger);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .critical-alert-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .critical-icon {
+      font-size: 26px;
+      color: var(--danger);
+    }
+
+    .critical-text h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--danger);
+    }
+
+    .critical-text p {
+      font-size: 12.5px;
+      color: #78281f;
+    }
+
+    .critical-badge-count {
+      background-color: var(--danger);
+      color: #ffffff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .critical-badge-count.all-good {
+      background-color: var(--success);
+    }
+
+    /* Tabla de Recolección */
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 12px;
+    }
+
+    .table-data {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      background-color: #ffffff;
+    }
+
+    .table-data th, .table-data td {
+      border: 1px solid var(--slate-200);
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    .table-data th {
+      background-color: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .table-data tbody tr:hover {
+      background-color: var(--slate-50);
+    }
+
+    .table-data tfoot {
+      background-color: var(--slate-100);
+      font-weight: 800;
+    }
+
+    .table-data tfoot td {
+      border-top: 2px solid var(--primary);
+    }
+
+    .input-cell {
+      width: 100%;
+      border: 1px solid transparent;
+      padding: 4px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      background: transparent;
+    }
+
+    .input-cell:focus {
+      outline: none;
+      background-color: #ffffff;
+      border-color: var(--primary-light);
+    }
+
+    /* Firmas Box */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .signature-card {
+      border: 1px dashed var(--slate-300);
+      border-radius: var(--radius);
+      padding: 14px;
+      background-color: var(--slate-50);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 110px;
+    }
+
+    .signature-line {
+      border-top: 1px solid var(--slate-400);
+      margin-top: 40px;
+      padding-top: 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate-700);
+    }
+
+    .legal-notice {
+      background-color: #eef2f7;
+      border-left: 4px solid var(--primary);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--slate-700);
+      font-weight: 600;
+      margin-top: 14px;
+    }
+
+    /* ==========================================================================
+       PESTAÑA 4: MATRIZ DE RUTAS
+       ========================================================================== */
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #ffffff;
+    }
+
+    .matrix-table th, .matrix-table td {
+      border: 1px solid var(--slate-200);
+      padding: 9px 12px;
+      text-align: center;
+    }
+
+    .matrix-table th {
+      background-color: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .matrix-center-header {
+      background-color: var(--slate-800) !important;
+      color: #ffffff !important;
+      text-align: left !important;
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 8px 14px !important;
+    }
+
+    .day-active {
+      background-color: var(--success-bg);
+      color: var(--success);
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .day-inactive {
+      background-color: var(--slate-50);
+      color: var(--slate-300);
+    }
+
+    /* ==========================================================================
+       PESTAÑA 5: LISTADO DE PLACAS
+       ========================================================================== */
+    .placas-filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .placas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .placa-chip {
+      background: #ffffff;
+      border: 2px solid var(--slate-300);
+      border-radius: var(--radius);
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 800;
+      font-size: 14px;
+      font-family: monospace;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .placa-chip.activa {
+      border-color: var(--success);
+      background-color: var(--success-bg);
+      color: var(--success);
+    }
+    .placa-chip.activa:hover {
+      background-color: var(--success);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .placa-chip.espera {
+      border-color: var(--warning);
+      background-color: var(--warning-bg);
+      color: #b9770e;
+    }
+    .placa-chip.espera:hover {
+      background-color: var(--warning);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    /* ==========================================================================
+       PESTAÑA 6: NORMATIVA 509-2001
+       ========================================================================== */
+    .norma-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .norma-card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      border: 1px solid var(--slate-200);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .norma-article {
+      display: inline-block;
+      background-color: var(--primary);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .norma-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 8px;
+    }
+
+    .norma-card p, .norma-card li {
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.5;
+    }
+
+    .norma-card ul {
+      padding-left: 20px;
+      margin-top: 6px;
+    }
+
+    .sanciones-card {
+      border: 2px solid var(--danger);
+      background-color: var(--danger-bg);
+    }
+
+    .sanciones-card .norma-article {
+      background-color: var(--danger);
+    }
+
+    /* ==========================================================================
+       ESTILOS DE IMPRESIÓN (@media print)
+       ========================================================================== */
+    @media print {
+      body {
+        background-color: #ffffff;
+        font-size: 11px;
+        color: #000000;
+      }
+
+      .app-header,
+      .nav-tabs-wrapper,
+      .placas-filter-bar,
+      .btn,
+      #tab-instrucciones,
+      #tab-arbol,
+      #tab-matriz,
+      #tab-placas,
+      #tab-norma {
+        display: none !important;
+      }
+
+      #tab-formulario {
+        display: block !important;
+      }
+
+      .main-content {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .form-section {
+        border: 1px solid #000000 !important;
+        box-shadow: none !important;
+        margin-bottom: 12px !important;
+        page-break-inside: avoid;
+      }
+
+      .section-header {
+        background: #e2e8f0 !important;
+        border-bottom: 1px solid #000000 !important;
+        padding: 6px 10px !important;
+      }
+
+      .section-title {
+        color: #000000 !important;
+        font-size: 12px !important;
+      }
+
+      .form-control, .input-cell {
+        border: 1px solid #999999 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10.5px !important;
+        padding: 3px 5px !important;
+      }
+
+      .table-data th {
+        background-color: #e2e8f0 !important;
+        color: #000000 !important;
+        border: 1px solid #000000 !important;
+        font-size: 10px !important;
+      }
+
+      .table-data td {
+        border: 1px solid #000000 !important;
+        font-size: 10px !important;
+        padding: 4px 3px !important;
+      }
+
+      .critical-alert-banner {
+        border: 1px solid #000000 !important;
+        background: #f1f1f1 !important;
+        padding: 6px 10px !important;
+      }
+
+      .critical-alert-banner h4,
+      .critical-alert-banner p {
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       CABECERA DE LA APLICACIÓN
+       ========================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="biohazard-badge">☣</div>
+        <div class="header-titles">
+          <h1>SISTEMA DE CONTROL 360° DE VEHÍCULOS</h1>
+          <p>TRANSPORTE Y LOGÍSTICA DE DESECHOS BIOINFECCIOSOS Y HOSPITALARIOS</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="badge-norma">Acuerdo Gubernativo 509-2001 (MSPAS)</span>
+        <button type="button" class="btn btn-outline" onclick="window.print()" title="Imprimir Formulario A4">
+          🖨️ Imprimir Formulario
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       BARRA DE PESTAÑAS (TABS)
+       ========================================================================== -->
+  <nav class="nav-tabs-wrapper">
+    <div class="nav-tabs">
+      <button type="button" class="tab-button active" onclick="switchTab('tab-instrucciones')">
+        📋 Instrucciones
+      </button>
+      <button type="button" class="tab-button" onclick="switchTab('tab-arbol')">
+        🌳 Árbol de Decisión
+      </button>
+      <button type="button" class="tab-button" onclick="switchTab('tab-formulario')">
+        📝 Formulario 360°
+      </button>
+      <button type="button" class="tab-button" onclick="switchTab('tab-matriz')">
+        🗺️ Matriz de Rutas
+      </button>
+      <button type="button" class="tab-button" onclick="switchTab('tab-placas')">
+        🔢 Placas
+      </button>
+      <button type="button" class="tab-button" onclick="switchTab('tab-norma')">
+        ⚖️ Norma 509-2001
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==========================================================================
+       CONTENIDO PRINCIPAL
+       ========================================================================== -->
+  <main class="main-content">
+
+    <!-- ========================================================================
+         PESTAÑA 1: INSTRUCCIONES
+         ======================================================================== -->
+    <section id="tab-instrucciones" class="tab-pane active">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📋 Guía Operativa del Sistema de Control 360°</h2>
+          <button type="button" class="btn btn-primary" onclick="switchTab('tab-arbol')">
+            Ir al Árbol de Decisión ➔
+          </button>
+        </div>
+        <p style="color: var(--slate-600); font-size: 13.5px;">
+          Este sistema estandariza la verificación técnica, mecánica y de bioseguridad para todas las unidades
+          que transportan residuos biosanitarios, punzocortantes, patológicos y especiales en Guatemala, garantizando
+          el cumplimiento estricto del <strong>Acuerdo Gubernativo 509-2001</strong> del MSPAS y del MARN.
+        </p>
+
+        <div class="instructions-grid">
+          <div class="instruction-card">
+            <h3>🌳 1. Árbol de Decisión</h3>
+            <p>Permite validar al instante si una ruta tiene autorización operativa en el día seleccionado:</p>
+            <ul>
+              <li>Seleccione el <strong>Centro/Distribuidora</strong>.</li>
+              <li>Seleccione el <strong>Día de la semana</strong>.</li>
+              <li>Las rutas se clasificarán automáticamente en <strong style="color: var(--success);">Operativas (✅)</strong> o <strong style="color: var(--danger);">No Operativas (⛔)</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card green">
+            <h3>📝 2. Inspección Pre-Operacional</h3>
+            <p>Evaluación obligatoria antes de que la unidad salga de la base:</p>
+            <ul>
+              <li><strong>Ítems Críticos (🔴):</strong> Bloquean la salida si no están verificados.</li>
+              <li><strong>Ítems Requeridos (🟡):</strong> Elementos indispensables de operación y bioseguridad.</li>
+              <li><strong>Ítems a Observar (🔵):</strong> Niveles e insumos de soporte.</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card orange">
+            <h3>🔢 3. Control de Placas</h3>
+            <p>Diferenciación de unidades para resguardo legal:</p>
+            <ul>
+              <li><strong>Placas Activas (🟢):</strong> Disponibles para despacho inmediato.</li>
+              <li><strong>Placas En Espera (🟠):</strong> Requieren autorización escrita y explícita del Jefe de Flota.</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card red">
+            <h3>⚖️ 4. Marco Legal y Archivo</h3>
+            <p>Conforme al Artículo 15 del Acuerdo 509-2001:</p>
+            <ul>
+              <li>Los manifiestos y boletas de control 360° deben <strong>archivarse por un mínimo de 5 años</strong>.</li>
+              <li>Disponibles para auditorías del MSPAS, MARN e inspectores de SGI.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 2: ÁRBOL DE DECISIÓN INTERACTIVO
+         ======================================================================== -->
+    <section id="tab-arbol" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🌳 Árbol de Decisión de Rutas Operativas</h2>
+          <span style="font-size: 12.5px; color: var(--slate-600);">Filtro dinámico de centros y días</span>
+        </div>
+
+        <!-- Paso 1: Selección de Centro -->
+        <div class="selector-block">
+          <span class="selector-label">1. Seleccione el Centro o Distribuidora:</span>
+          <div class="center-buttons" id="arbol-centers">
+            <!-- Renderizado dinámico vía JS -->
+          </div>
+        </div>
+
+        <!-- Paso 2: Selección de Día -->
+        <div class="selector-block">
+          <span class="selector-label">2. Seleccione el Día de la Semana:</span>
+          <div class="day-buttons" id="arbol-days">
+            <!-- Renderizado dinámico vía JS -->
+          </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="decision-results-container">
+          <!-- Rutas que SÍ operan -->
+          <div class="result-box operan">
+            <h3 class="result-title">✅ Rutas que SÍ Operan (<span id="count-operan">0</span>)</h3>
+            <div id="list-operan">
+              <!-- Renderizado dinámico -->
+            </div>
+          </div>
+
+          <!-- Rutas que NO operan -->
+          <div class="result-box no-operan">
+            <h3 class="result-title">⛔ Rutas que NO Operan (<span id="count-no-operan">0</span>)</h3>
+            <div id="list-no-operan">
+              <!-- Renderizado dinámico -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 3: FORMULARIO 360° COMPLETO
+         ======================================================================== -->
+    <section id="tab-formulario" class="tab-pane">
+      
+      <!-- Alerta Bloqueo Crítico (Checklist B) -->
+      <div id="critical-alert-banner" class="critical-alert-banner">
+        <div class="critical-alert-content">
+          <div class="critical-icon">⚠️</div>
+          <div class="critical-text">
+            <h4 id="critical-alert-title">BLOQUEO PRE-OPERACIONAL DE SALIDA ACTIVO</h4>
+            <p id="critical-alert-desc">El vehículo no puede iniciar ruta hasta verificar todos los ítems críticos obligatorios.</p>
+          </div>
+        </div>
+        <div id="critical-badge-count" class="critical-badge-count">
+          8 ítems críticos sin verificar
+        </div>
+      </div>
+
+      <form id="form-control-360" onsubmit="event.preventDefault();">
+
+        <!-- ====================================================================
+             SECCIÓN A: IDENTIFICACIÓN DEL VEHÍCULO Y RUTA
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN A — Identificación del Vehículo y Ruta</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Datos Generales</span>
+          </div>
+          <div class="section-body">
+            <div class="form-grid">
+              
+              <div class="form-group">
+                <label class="form-label required" for="f-fecha">Fecha de Operación</label>
+                <input type="date" id="f-fecha" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-turno">Turno</label>
+                <select id="f-turno" class="form-control" required>
+                  <option value="AM">Diurno / AM</option>
+                  <option value="PM">Vespertino / PM</option>
+                  <option value="Nocturno">Nocturno</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-folio">Folio de Control</label>
+                <input type="text" id="f-folio" class="form-control" readonly>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-centro">Centro / Distribuidora</label>
+                <select id="f-centro" class="form-control" onchange="onCentroChange()" required>
+                  <!-- Opciones dinámicas -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-ruta">Ruta Asignada</label>
+                <select id="f-ruta" class="form-control" required>
+                  <!-- Opciones dinámicas según centro -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-placa">No. de Placa</label>
+                <select id="f-placa" class="form-control" onchange="onPlacaChange()" required>
+                  <!-- Opciones dinámicas agrupadas (Activas / En Espera) -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-tipo-vehiculo">Tipo de Vehículo</label>
+                <input type="text" id="f-tipo-vehiculo" class="form-control" placeholder="Ej. Camión Isuzu FTR / Motocicleta" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-conductor">Nombre Completo del Conductor</label>
+                <input type="text" id="f-conductor" class="form-control" placeholder="Nombre y Apellidos" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-licencia">No. de Licencia</label>
+                <input type="text" id="f-licencia" class="form-control" placeholder="Ej. 1234567890101" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-tipo-licencia">Tipo de Licencia</label>
+                <select id="f-tipo-licencia" class="form-control" required>
+                  <option value="A">Tipo A (Pesado / Especial)</option>
+                  <option value="B">Tipo B (Mediano / Liviano)</option>
+                  <option value="C">Tipo C (Liviano Particular)</option>
+                  <option value="M">Tipo M (Motocicleta)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-telefono">Teléfono de Contacto</label>
+                <input type="tel" id="f-telefono" class="form-control" placeholder="Ej. 5555-1234" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-mspas">No. Autorización Especial MSPAS</label>
+                <input type="text" id="f-mspas" class="form-control" value="MSPAS-DRACES-TR-2024-089" required>
+              </div>
+
+            </div>
+
+            <!-- Advertencia si selecciona placa en espera -->
+            <div id="placa-warning" class="placa-alert">
+              <span>⚠️</span>
+              <div>
+                <strong>UNIDAD EN ESPERA SELECCIONADA:</strong> Esta placa requiere autorización escrita y firma explícita del Jefe de Flota previo a iniciar la ruta.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             SECCIÓN B: INSPECCIÓN PRE-OPERACIONAL (CHECKLIST)
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN B — Inspección Pre-Operacional (Checklist de Salida)</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Verificación Mecánica y Bioseguridad</span>
+          </div>
+          <div class="section-body">
+            <div class="checklist-grid">
+              
+              <!-- Grupo 1: Estado Mecánico -->
+              <div class="checklist-group">
+                <div class="checklist-group-title">
+                  <span>⚙️ GRUPO 1: Estado Mecánico</span>
+                  <span style="font-size: 11px; color: var(--slate-500);">8 Elementos</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_frenos" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_frenos">Frenos (Servicio y Emergencia)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_llantas" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_llantas">Llantas (Presión y Labrado)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_luces" class="chk-item-regular">
+                    <label class="check-label" for="chk_luces">Luces (Altas, Bajas, Pide-Vías)</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_extintor" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_extintor">Extintor Vigente (Tipo ABC)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_cinturones" class="chk-item-regular">
+                    <label class="check-label" for="chk_cinturones">Cinturones de Seguridad</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_espejos" class="chk-item-regular">
+                    <label class="check-label" for="chk_espejos">Espejos Retrovisores y Panorámicos</label>
+                  </div>
+                  <span class="tag-priority tag-observar">🔵 OBSERVAR</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_combustible" class="chk-item-regular">
+                    <label class="check-label" for="chk_combustible">Nivel de Combustible y Fluidos</label>
+                  </div>
+                  <span class="tag-priority tag-observar">🔵 OBSERVAR</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_botiquin" class="chk-item-regular">
+                    <label class="check-label" for="chk_botiquin">Botiquín de Primeros Auxilios</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+              </div>
+
+              <!-- Grupo 2: Compartimento y Bioseguridad -->
+              <div class="checklist-group">
+                <div class="checklist-group-title">
+                  <span>☣️ GRUPO 2: Compartimento y Bioseguridad</span>
+                  <span style="font-size: 11px; color: var(--slate-500);">8 Elementos</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_sello" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_sello">Sello Hermético de Caja / Furgón</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_biohazard" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_biohazard">Señalización Biohazard Visible</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_desinfeccion_previa" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_desinfeccion_previa">Desinfección Previa Verificada</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_contenedores" class="chk-item-regular">
+                    <label class="check-label" for="chk_contenedores">Contenedores Punzocortantes Disponibles</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_bolsas" class="chk-item-regular">
+                    <label class="check-label" for="chk_bolsas">Bolsas Rojas Reglamentarias (Calibre)</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_kit_derrame" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_kit_derrame">Kit de Derrames Completo (Absorbente)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_epp" class="chk-critico" onchange="updateCriticalChecklist()">
+                    <label class="check-label" for="chk_epp">EPP Completo a Bordo (Guantes, Mascarilla, Lentes)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 CRÍTICO</span>
+                </div>
+
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_documentos" class="chk-item-regular">
+                    <label class="check-label" for="chk_documentos">Documentos y Manifiestos a Bordo</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Campos adicionales Sección B -->
+            <div class="form-grid" style="margin-top: 16px;">
+              <div class="form-group">
+                <label class="form-label required" for="f-hora-salida">Hora de Salida</label>
+                <input type="time" id="f-hora-salida" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-km-salida">Kilometraje de Salida</label>
+                <input type="number" id="f-km-salida" class="form-control" placeholder="Ej. 125430" oninput="calculateKmRecorridos()" required>
+              </div>
+
+              <div class="form-group col-span-2">
+                <label class="form-label" for="f-obs-salida">Observaciones de Salida</label>
+                <input type="text" id="f-obs-salida" class="form-control" placeholder="Novedades mecánicas o de equipo">
+              </div>
+            </div>
+
+            <div class="signatures-grid">
+              <div class="signature-card">
+                <span style="font-size: 11px; font-weight: 700; color: var(--slate-500);">CONDUCTOR QUE RECIBE LA UNIDAD:</span>
+                <div class="signature-line">Firma del Conductor</div>
+              </div>
+              <div class="signature-card">
+                <span style="font-size: 11px; font-weight: 700; color: var(--slate-500);">SUPERVISOR QUE AUTORIZA DESPACHO:</span>
+                <div class="signature-line">Firma y Sello de Supervisión</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             SECCIÓN C: REGISTRO DE PUNTOS DE RECOLECCIÓN
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN C — Registro de Puntos de Recolección</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Generadores y Manifiestos</span>
+          </div>
+          <div class="section-body">
+            <div class="table-responsive">
+              <table class="table-data" id="table-recoleccion">
+                <thead>
+                  <tr>
+                    <th style="width: 35px; text-align: center;">No.</th>
+                    <th style="min-width: 170px;">Generador / Establecimiento</th>
+                    <th style="min-width: 130px;">Tipo de Desecho</th>
+                    <th style="width: 85px; text-align: center;">Bolsas / Cont.</th>
+                    <th style="width: 85px; text-align: center;">Peso (kg)</th>
+                    <th style="min-width: 100px;">No. Manifiesto</th>
+                    <th style="width: 75px; text-align: center;">Llegada</th>
+                    <th style="width: 75px; text-align: center;">Salida</th>
+                    <th style="min-width: 100px;">Firma Responsable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- 5 Filas Editables -->
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">1</td>
+                    <td><input type="text" class="input-cell" placeholder="Hospital / Clínica / Laboratorio"></td>
+                    <td>
+                      <select class="input-cell">
+                        <option value="Punzocortante">Punzocortante</option>
+                        <option value="Patológico">Patológico</option>
+                        <option value="Farmacéutico">Farmacéutico</option>
+                        <option value="Anatomopatológico">Anatomopatológico</option>
+                        <option value="Líquido corporal">Líquido corporal</option>
+                        <option value="Mixto">Mixto</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="input-cell calc-bolsas" placeholder="0" min="0" oninput="calculateTotalesC()" style="text-align: center;"></td>
+                    <td><input type="number" step="0.01" class="input-cell calc-peso" placeholder="0.00" min="0" oninput="calculateTotalesC()" style="text-align: right;"></td>
+                    <td><input type="text" class="input-cell" placeholder="MAN-00123"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="text" class="input-cell" placeholder="Nombre / Firma"></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">2</td>
+                    <td><input type="text" class="input-cell" placeholder="Hospital / Clínica / Laboratorio"></td>
+                    <td>
+                      <select class="input-cell">
+                        <option value="Punzocortante">Punzocortante</option>
+                        <option value="Patológico">Patológico</option>
+                        <option value="Farmacéutico">Farmacéutico</option>
+                        <option value="Anatomopatológico">Anatomopatológico</option>
+                        <option value="Líquido corporal">Líquido corporal</option>
+                        <option value="Mixto">Mixto</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="input-cell calc-bolsas" placeholder="0" min="0" oninput="calculateTotalesC()" style="text-align: center;"></td>
+                    <td><input type="number" step="0.01" class="input-cell calc-peso" placeholder="0.00" min="0" oninput="calculateTotalesC()" style="text-align: right;"></td>
+                    <td><input type="text" class="input-cell" placeholder="MAN-00124"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="text" class="input-cell" placeholder="Nombre / Firma"></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">3</td>
+                    <td><input type="text" class="input-cell" placeholder="Hospital / Clínica / Laboratorio"></td>
+                    <td>
+                      <select class="input-cell">
+                        <option value="Punzocortante">Punzocortante</option>
+                        <option value="Patológico">Patológico</option>
+                        <option value="Farmacéutico">Farmacéutico</option>
+                        <option value="Anatomopatológico">Anatomopatológico</option>
+                        <option value="Líquido corporal">Líquido corporal</option>
+                        <option value="Mixto">Mixto</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="input-cell calc-bolsas" placeholder="0" min="0" oninput="calculateTotalesC()" style="text-align: center;"></td>
+                    <td><input type="number" step="0.01" class="input-cell calc-peso" placeholder="0.00" min="0" oninput="calculateTotalesC()" style="text-align: right;"></td>
+                    <td><input type="text" class="input-cell" placeholder="MAN-00125"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="text" class="input-cell" placeholder="Nombre / Firma"></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">4</td>
+                    <td><input type="text" class="input-cell" placeholder="Hospital / Clínica / Laboratorio"></td>
+                    <td>
+                      <select class="input-cell">
+                        <option value="Punzocortante">Punzocortante</option>
+                        <option value="Patológico">Patológico</option>
+                        <option value="Farmacéutico">Farmacéutico</option>
+                        <option value="Anatomopatológico">Anatomopatológico</option>
+                        <option value="Líquido corporal">Líquido corporal</option>
+                        <option value="Mixto">Mixto</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="input-cell calc-bolsas" placeholder="0" min="0" oninput="calculateTotalesC()" style="text-align: center;"></td>
+                    <td><input type="number" step="0.01" class="input-cell calc-peso" placeholder="0.00" min="0" oninput="calculateTotalesC()" style="text-align: right;"></td>
+                    <td><input type="text" class="input-cell" placeholder="MAN-00126"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="text" class="input-cell" placeholder="Nombre / Firma"></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">5</td>
+                    <td><input type="text" class="input-cell" placeholder="Hospital / Clínica / Laboratorio"></td>
+                    <td>
+                      <select class="input-cell">
+                        <option value="Punzocortante">Punzocortante</option>
+                        <option value="Patológico">Patológico</option>
+                        <option value="Farmacéutico">Farmacéutico</option>
+                        <option value="Anatomopatológico">Anatomopatológico</option>
+                        <option value="Líquido corporal">Líquido corporal</option>
+                        <option value="Mixto">Mixto</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="input-cell calc-bolsas" placeholder="0" min="0" oninput="calculateTotalesC()" style="text-align: center;"></td>
+                    <td><input type="number" step="0.01" class="input-cell calc-peso" placeholder="0.00" min="0" oninput="calculateTotalesC()" style="text-align: right;"></td>
+                    <td><input type="text" class="input-cell" placeholder="MAN-00127"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="time" class="input-cell"></td>
+                    <td><input type="text" class="input-cell" placeholder="Nombre / Firma"></td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 800;">TOTALES DE RUTA:</td>
+                    <td style="text-align: center; font-weight: 800;" id="total-bolsas">0</td>
+                    <td style="text-align: right; font-weight: 800;" id="total-peso">0.00 kg</td>
+                    <td colspan="4"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="form-grid" style="margin-top: 14px;">
+              <div class="form-group col-span-2">
+                <label class="form-label" for="f-incidencias">Incidencias o Anormalidades Durante la Ruta</label>
+                <input type="text" id="f-incidencias" class="form-control" placeholder="Tráfico, derrames menores contenidos, demoras en generador, etc.">
+              </div>
+              <div class="form-group col-span-2">
+                <label class="form-label" for="f-no-visitados">Generadores No Visitados y Justificación</label>
+                <input type="text" id="f-no-visitados" class="form-control" placeholder="Establecimiento cerrado, falta de acceso, etc.">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             SECCIÓN D: ENTREGA EN PLANTA DE TRATAMIENTO
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN D — Entrega en Planta de Tratamiento</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Descarga y Custodia</span>
+          </div>
+          <div class="section-body">
+            <div class="form-grid">
+              
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-nombre">Nombre de Planta Autorizada</label>
+                <input type="text" id="f-planta-nombre" class="form-control" value="Planta Biotrash Tratamiento Térmico" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-aut">No. Autorización MSPAS / MARN</label>
+                <input type="text" id="f-planta-aut" class="form-control" value="MARN-EIA-2023-456" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-llegada">Hora de Llegada a Planta</label>
+                <input type="time" id="f-planta-llegada" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-peso">Peso Total Entregado (kg)</label>
+                <input type="number" step="0.01" id="f-planta-peso" class="form-control" placeholder="0.00" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-sello">No. de Sello / Precinto</label>
+                <input type="text" id="f-planta-sello" class="form-control" placeholder="Ej. PRE-98432" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-manifiesto-final">No. Manifiesto Final Consolidado</label>
+                <input type="text" id="f-planta-manifiesto-final" class="form-control" placeholder="Ej. MAN-FIN-2024-87" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-receptor">Nombre del Receptor en Planta</label>
+                <input type="text" id="f-planta-receptor" class="form-control" placeholder="Operador de Planta" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-planta-salida">Hora de Salida de Planta</label>
+                <input type="time" id="f-planta-salida" class="form-control" required>
+              </div>
+
+            </div>
+
+            <div class="signatures-grid">
+              <div class="signature-card">
+                <span style="font-size: 11px; font-weight: 700; color: var(--slate-500);">OPERADOR RECEPTOR EN PLANTA DE TRATAMIENTO:</span>
+                <div class="signature-line">Firma y Sello de Recepción</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             SECCIÓN E: INSPECCIÓN POST-OPERACIONAL Y DESINFECCIÓN
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN E — Inspección Post-Operacional y Desinfección</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Cierre de Ruta y Sanitización</span>
+          </div>
+          <div class="section-body">
+            
+            <div class="checklist-grid">
+              <!-- Checklist Regreso -->
+              <div class="checklist-group">
+                <div class="checklist-group-title">
+                  <span>🏁 Estado de la Unidad al Regreso</span>
+                  <span style="font-size: 11px; color: var(--slate-500);">4 Verificaciones</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_vacio">
+                    <label class="check-label" for="chk_vacio">Compartimento de carga 100% vacío</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 OBLIGATORIO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_sin_derrames">
+                    <label class="check-label" for="chk_sin_derrames">Sin derrames ni lixiviados en furgón</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 OBLIGATORIO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_epp_desechado">
+                    <label class="check-label" for="chk_epp_desechado">EPP descartable desechado en rojo</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_sin_danos">
+                    <label class="check-label" for="chk_sin_danos">Sin daños estructurales ni colisiones</label>
+                  </div>
+                  <span class="tag-priority tag-observar">🔵 OBSERVAR</span>
+                </div>
+              </div>
+
+              <!-- Checklist Desinfección -->
+              <div class="checklist-group">
+                <div class="checklist-group-title">
+                  <span>🧴 Proceso de Desinfección y Lavado</span>
+                  <span style="font-size: 11px; color: var(--slate-500);">4 Pasos Técnicos</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_lavado_ext">
+                    <label class="check-label" for="chk_lavado_ext">Lavado exterior con agua a presión</label>
+                  </div>
+                  <span class="tag-priority tag-requerido">🟡 REQUERIDO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_lavado_int">
+                    <label class="check-label" for="chk_lavado_int">Lavado interior del compartimento</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 OBLIGATORIO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_aplicacion_desinf">
+                    <label class="check-label" for="chk_aplicacion_desinf">Aplicación de solución desinfectante</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 OBLIGATORIO</span>
+                </div>
+                <div class="check-item">
+                  <div class="check-left">
+                    <input type="checkbox" id="chk_tiempo_contacto">
+                    <label class="check-label" for="chk_tiempo_contacto">Tiempo de contacto respetado (mín. 10 min)</label>
+                  </div>
+                  <span class="tag-priority tag-critico">🔴 OBLIGATORIO</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Campos adicionales Sección E -->
+            <div class="form-grid" style="margin-top: 16px;">
+              <div class="form-group">
+                <label class="form-label required" for="f-desinfectante">Producto Desinfectante</label>
+                <select id="f-desinfectante" class="form-control" required>
+                  <option value="Hipoclorito de sodio">Hipoclorito de Sodio</option>
+                  <option value="Amonio cuaternario">Amonio Cuaternario (5ta Gen)</option>
+                  <option value="Glutaraldehído">Glutaraldehído</option>
+                  <option value="Otro">Otro Producto Autorizado</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-concentracion">Concentración (%)</label>
+                <input type="text" id="f-concentracion" class="form-control" value="1.0 % (10,000 ppm)" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-hora-desinf">Hora de Desinfección</label>
+                <input type="time" id="f-hora-desinf" class="form-control" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-resp-desinf">Responsable de Desinfección</label>
+                <input type="text" id="f-resp-desinf" class="form-control" placeholder="Nombre del Operario" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-km-llegada">Kilometraje de Llegada</label>
+                <input type="number" id="f-km-llegada" class="form-control" placeholder="Ej. 125580" oninput="calculateKmRecorridos()" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-km-recorridos">Km Recorridos (Calculado)</label>
+                <input type="text" id="f-km-recorridos" class="form-control" value="0 km" readonly style="font-weight: 800; color: var(--primary);">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             SECCIÓN F: CIERRE Y VALIDACIÓN
+             ==================================================================== -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">SECCIÓN F — Cierre y Validación del Turno</h3>
+            <span style="font-size: 11.5px; color: var(--slate-600); font-weight: 600;">Cierre Legal</span>
+          </div>
+          <div class="section-body">
+            <div class="form-grid">
+              
+              <div class="form-group col-span-2">
+                <label class="form-label" for="f-obs-generales">Observaciones Generales del Turno</label>
+                <textarea id="f-obs-generales" rows="2" class="form-control" placeholder="Resumen de jornada, estados climáticos, etc."></textarea>
+              </div>
+
+              <div class="form-group col-span-2">
+                <label class="form-label" for="f-acciones-correctivas">Acciones Correctivas Requeridas</label>
+                <textarea id="f-acciones-correctivas" rows="2" class="form-control" placeholder="Reparaciones pendientes, reposición de EPP o insumos químicos"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-sup-nombre">Nombre del Supervisor</label>
+                <input type="text" id="f-sup-nombre" class="form-control" placeholder="Nombre del Supervisor a Cargo" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required" for="f-hora-cierre">Hora de Cierre</label>
+                <input type="time" id="f-hora-cierre" class="form-control" required>
+              </div>
+
+            </div>
+
+            <div class="signatures-grid">
+              <div class="signature-card">
+                <span style="font-size: 11px; font-weight: 700; color: var(--slate-500);">CONDUCTOR (ENTREGA DE TURNO):</span>
+                <div class="signature-line">Firma del Conductor</div>
+              </div>
+              <div class="signature-card">
+                <span style="font-size: 11px; font-weight: 700; color: var(--slate-500);">SUPERVISOR DE FLOTA / SGI (CIERRE Y SELLO):</span>
+                <div class="signature-line">Firma y Sello de Validación</div>
+              </div>
+            </div>
+
+            <div class="legal-notice">
+              ⚖️ <strong>NOTA LEGAL OBLIGATORIA:</strong> Este formulario y sus anexos de recolección deben archivarse por un período mínimo de <strong>5 años</strong> conforme al <strong>Artículo 15 del Acuerdo Gubernativo 509-2001</strong> (Reglamento para el Manejo de Desechos Sólidos Hospitalarios).
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+          <button type="button" class="btn btn-outline" onclick="resetFormulario()">
+            🔄 Limpiar Formulario
+          </button>
+          <button type="button" class="btn btn-primary" onclick="window.print()">
+            🖨️ Imprimir / Guardar PDF (A4)
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 4: MATRIZ DE RUTAS COMPLETA
+         ======================================================================== -->
+    <section id="tab-matriz" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🗺️ Matriz Completa de Centros y Rutas de Transporte</h2>
+          <span style="font-size: 12.5px; color: var(--slate-600);">Operación semanal reglamentaria</span>
+        </div>
+        <p style="color: var(--slate-600); font-size: 13px; margin-bottom: 16px;">
+          Tabla consolidada de las frecuencias operativas por centro de distribución. Los días marcados con <strong>X</strong> representan cobertura activa programada.
+        </p>
+
+        <div class="table-responsive">
+          <table class="matrix-table" id="table-full-matrix">
+            <thead>
+              <tr>
+                <th style="text-align: left; min-width: 180px;">Ruta / Vehículo</th>
+                <th style="width: 50px;">Lun</th>
+                <th style="width: 50px;">Mar</th>
+                <th style="width: 50px;">Mié</th>
+                <th style="width: 50px;">Jue</th>
+                <th style="width: 50px;">Vie</th>
+                <th style="width: 50px;">Sáb</th>
+                <th style="width: 50px;">Dom</th>
+                <th style="width: 100px;">Total Días</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-tbody">
+              <!-- Renderizado dinámico vía JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 5: LISTADO DE PLACAS VEHICULARES
+         ======================================================================== -->
+    <section id="tab-placas" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🔢 Control de Placas Vehiculares de la Flota</h2>
+          <span style="font-size: 12.5px; color: var(--slate-600);">Haga clic en una placa para asignarla al formulario</span>
+        </div>
+
+        <div class="placas-filter-bar">
+          <button type="button" class="btn btn-outline" id="btn-filtro-todas" onclick="filterPlacas('todas')">
+            📋 Todas (<span id="count-todas">0</span>)
+          </button>
+          <button type="button" class="btn btn-success" id="btn-filtro-activas" onclick="filterPlacas('activas')">
+            🟢 Activas (<span id="count-activas">0</span>)
+          </button>
+          <button type="button" class="btn btn-danger" id="btn-filtro-espera" onclick="filterPlacas('espera')">
+            🟠 En Espera (<span id="count-espera">0</span>)
+          </button>
+        </div>
+
+        <!-- Grupo Activas -->
+        <div id="group-placas-activas">
+          <h3 style="font-size: 14.5px; font-weight: 800; color: var(--success); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            🟢 Placas Activas (Disponibles para asignación inmediata)
+          </h3>
+          <div class="placas-grid" id="grid-placas-activas">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+        <!-- Grupo En Espera -->
+        <div id="group-placas-espera" style="margin-top: 24px;">
+          <h3 style="font-size: 14.5px; font-weight: 800; color: var(--warning); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            🟠 Placas En Espera (Requieren autorización escrita del Jefe de Flota)
+          </h3>
+          <p style="font-size: 12.5px; color: #935116; margin-bottom: 12px; background: var(--warning-bg); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--warning);">
+            ⚠️ <strong>ATENCIÓN:</strong> Estas unidades se encuentran en mantenimiento preventivo, trámite de renovación de póliza o revisión técnica. No pueden salir a ruta sin visto bueno de Jefatura.
+          </p>
+          <div class="placas-grid" id="grid-placas-espera">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         PESTAÑA 6: NORMATIVA LEGAL 509-2001
+         ======================================================================== -->
+    <section id="tab-norma" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">⚖️ Referencia Normativa — Acuerdo Gubernativo 509-2001</h2>
+          <span style="font-size: 12.5px; color: var(--slate-600);">Reglamento de Manejo de Desechos Hospitalarios (MSPAS)</span>
+        </div>
+
+        <div class="norma-grid">
+          
+          <div class="norma-card">
+            <span class="norma-article">Artículo 12</span>
+            <h3 class="norma-title">Requisitos Técnicos del Vehículo</h3>
+            <p>Las unidades destinadas al transporte de desechos bioinfecciosos deben contar con:</p>
+            <ul>
+              <li>Compartimento de carga totalmente hermético, liso, lavable e impermeable.</li>
+              <li>Separación física absoluta y hermética entre la cabina del conductor y el área de carga.</li>
+              <li>Señalización externa visible con el símbolo universal de riesgo biológico (Biohazard).</li>
+              <li>Extintor vigente tipo ABC y botiquín de emergencias a bordo.</li>
+              <li>Kit para contingencias y control de derrames.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card">
+            <span class="norma-article">Artículo 13</span>
+            <h3 class="norma-title">Manifiesto de Transporte y Custodia</h3>
+            <p>Todo traslado de desechos hospitalarios debe ampararse en el <strong>Manifiesto de Cadena de Custodia</strong> emitido en triplicado:</p>
+            <ul>
+              <li><strong>Original (Copia 1):</strong> Generador (hospital/clínica) como constancia de entrega.</li>
+              <li><strong>Copia 2:</strong> Transportista autorizado como soporte de ruta.</li>
+              <li><strong>Copia 3:</strong> Planta de tratamiento final para emisión del certificado de incineración/autoclave.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card">
+            <span class="norma-article">Artículo 14</span>
+            <h3 class="norma-title">Limpieza y Desinfección Obligatoria</h3>
+            <p>Protocolo de sanitización que debe ejecutarse al término de cada jornada:</p>
+            <ul>
+              <li>Lavado a presión del compartimento de carga.</li>
+              <li>Aplicación de solución de hipoclorito de sodio al 1% (10,000 ppm) o amonios cuaternarios de última generación.</li>
+              <li>Tiempo mínimo de contacto de 10 minutos antes del secado o nuevo despacho.</li>
+              <li>Registro firmado en la bitácora técnica de control.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card">
+            <span class="norma-article">Artículo 15</span>
+            <h3 class="norma-title">Equipo de Protección Personal (EPP) y Archivo</h3>
+            <p>Requisitos de protección para la tripulación y resguardo de datos:</p>
+            <ul>
+              <li>Uso estricto de guantes de nitrilo/neopreno de alta resistencia y calzado industrial antiderrapante.</li>
+              <li>Mascarilla N95 para manipulación de residuos anatomopatológicos y fluidos corporales.</li>
+              <li>Lentes o careta protectora y overol de bioseguridad.</li>
+              <li><strong>Obligación de archivo:</strong> Todo registro y bitácora debe conservarse por un mínimo de <strong>5 años</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card">
+            <span class="norma-article">Artículo 16</span>
+            <h3 class="norma-title">Plan de Contingencias y Derrames</h3>
+            <p>Protocolo inmediato de respuesta ante siniestros en vía pública:</p>
+            <ul>
+              <li>Acordonamiento inmediato del área y delimitación de la zona de riesgo biológico.</li>
+              <li>Aplicación de material absorbente y neutralizante del kit de derrames.</li>
+              <li>Notificación formal e inmediata al MSPAS y al MARN dentro de un plazo máximo de <strong>24 horas</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card">
+            <span class="norma-article">Artículo 17</span>
+            <h3 class="norma-title">Capacitación y Acreditación de Personal</h3>
+            <p>Todo conductor y auxiliar de recolección debe recibir un mínimo de <strong>8 horas anuales</strong> de capacitación certificada en:</p>
+            <ul>
+              <li>Manejo seguro y clasificación de residuos hospitalarios.</li>
+              <li>Técnicas de contención de derrames y uso adecuado de EPP.</li>
+              <li>Conducción defensiva para transporte de carga peligrosa.</li>
+            </ul>
+          </div>
+
+          <div class="norma-card sanciones-card" style="grid-column: 1 / -1;">
+            <span class="norma-article">Artículos 20 al 22</span>
+            <h3 class="norma-title" style="color: var(--danger);">Régimen de Sanciones por Incumplimiento</h3>
+            <p style="color: #78281f;">
+              El incumplimiento de las especificaciones técnicas de transporte, la falta de registro en bitácoras o el traslado en unidades no autorizadas conlleva:
+            </p>
+            <ul style="color: #78281f;">
+              <li><strong>Multas administrativas:</strong> Sanciones económicas tasadas por el MSPAS y MARN.</li>
+              <li><strong>Suspensión de Licencia Sanitaria:</strong> Inhabilitación temporal o definitiva de la empresa transportista.</li>
+              <li><strong>Responsabilidad Penal:</strong> Tipificación de delitos contra la salud pública y el medio ambiente (Código Penal de Guatemala).</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       LÓGICA JAVASCRIPT VANILLA (AUTOCONTENIDO Y OFFLINE)
+       ========================================================================== -->
+  <script>
+    /**
+     * ========================================================================
+     * 1. ESTRUCTURA DE DATOS CONSTANTES (CENTROS, RUTAS Y PLACAS)
+     * ========================================================================
+     */
+    const DIAS_SEMANA = [
+      { id: 'lun', label: 'Lunes', short: 'Lun' },
+      { id: 'mar', label: 'Martes', short: 'Mar' },
+      { id: 'mie', label: 'Miércoles', short: 'Mié' },
+      { id: 'jue', label: 'Jueves', short: 'Jue' },
+      { id: 'vie', label: 'Viernes', short: 'Vie' },
+      { id: 'sab', label: 'Sábado', short: 'Sáb' },
+      { id: 'dom', label: 'Domingo', short: 'Dom' }
+    ];
+
+    const CENTROS_DATA = [
+      {
+        id: 'quetzaltenango',
+        nombre: 'QUETZALTENANGO',
+        rutas: [
+          { nombre: 'Occidente', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Apoyo1', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Atanacio1', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto5', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] }
+        ]
+      },
+      {
+        id: 'villa_nueva_1',
+        nombre: 'VILLA NUEVA 1',
+        rutas: [
+          { nombre: 'Blanca', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] },
+          { nombre: 'Naranja', dias: ['lun', 'mar', 'mie', 'vie'] },
+          { nombre: 'Azul', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Industria', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto03', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto09', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] }
+        ]
+      },
+      {
+        id: 'villa_nueva_2',
+        nombre: 'VILLA NUEVA 2',
+        rutas: [
+          { nombre: 'Tecun1', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Tecun2', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Tecun3', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Tecun4', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'TecunPM', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Moto01', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto02', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto04', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto07', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto09', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] },
+          { nombre: 'Moto10', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] }
+        ]
+      },
+      {
+        id: 'escuintla',
+        nombre: 'ESCUINTLA',
+        rutas: [
+          { nombre: 'Costa', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Costa2', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Gris', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] },
+          { nombre: 'Atanacio2', dias: ['lun', 'mar', 'mie', 'jue', 'vie'] }
+        ]
+      },
+      {
+        id: 'traslados',
+        nombre: 'TRASLADOS',
+        rutas: [
+          { nombre: 'Furgon', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] },
+          { nombre: 'Volteo1', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] },
+          { nombre: 'Volteo2', dias: ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'] }
+        ]
+      }
+    ];
+
+    const PLACAS_ACTIVAS = [
+      '564BVW', '528BSV', '693BRL', '190BQL', '641BVP', '385JLN', '036BTT',
+      '638BVP', '639BVP', '640BVP', '730GWG', '037BTT', '293JLN', '294JLN',
+      '295JLN', '760GSD', '565BVW', '793BWM', '239HPK', '754BSY', '448BYY'
+    ];
+
+    const PLACAS_EN_ESPERA = [
+      '446BYY', '447BYY', '362BVD', '725BXD', '726BXD', '987BFS', '963BSV',
+      '527BSV', '094BRS', '259BWK', '334BSM', 'C-066BZP', '514CBP', '518CBP',
+      '515CBP', '513CBP', '517CBP', '516CBP', '473CBN', '472CBN'
+    ];
+
+    /**
+     * Devuelve el icono respectivo según el tipo de ruta
+     */
+    function getRouteIcon(routeName) {
+      const lower = routeName.toLowerCase();
+      if (lower.startsWith('moto')) return '🏍️';
+      if (lower.includes('furgon')) return '🚐';
+      if (lower.includes('volteo')) return '🚛';
+      return '🚛';
+    }
+
+    /**
+     * ========================================================================
+     * 2. GESTIÓN DE PESTAÑAS (TABS)
+     * ========================================================================
+     */
+    function switchTab(tabId) {
+      // Ocultar todas las pestañas
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+      // Desactivar botones
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Activar la seleccionada
+      const targetPane = document.getElementById(tabId);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+
+      // Activar botón correspondiente
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Scroll suave arriba
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * ========================================================================
+     * 3. ÁRBOL DE DECISIÓN INTERACTIVO
+     * ========================================================================
+     */
+    let selectedCentroId = CENTROS_DATA[0].id;
+    let selectedDayId = 'lun';
+
+    function initArbolDecision() {
+      renderArbolCenters();
+      updateArbolDays();
+      evaluateArbolDecision();
+    }
+
+    // Renderizar botones de Centros
+    function renderArbolCenters() {
+      const container = document.getElementById('arbol-centers');
+      container.innerHTML = '';
+
+      CENTROS_DATA.forEach(centro => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `center-btn ${centro.id === selectedCentroId ? 'active' : ''}`;
+        btn.textContent = centro.nombre;
+        btn.onclick = () => {
+          selectedCentroId = centro.id;
+          renderArbolCenters();
+          updateArbolDays();
+          evaluateArbolDecision();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // Actualizar botones de días (deshabilitar si ningún ruta opera ese día en el centro)
+    function updateArbolDays() {
+      const container = document.getElementById('arbol-days');
+      container.innerHTML = '';
+
+      const centro = CENTROS_DATA.find(c => c.id === selectedCentroId);
+      if (!centro) return;
+
+      // Determinar qué días tienen al menos 1 ruta operativa
+      const activeDaysInCenter = new Set();
+      centro.rutas.forEach(r => {
+        r.dias.forEach(d => activeDaysInCenter.add(d));
+      });
+
+      // Si el día seleccionado actualmente quedó deshabilitado, cambiar al primer día activo disponible
+      if (!activeDaysInCenter.has(selectedDayId) && activeDaysInCenter.size > 0) {
+        selectedDayId = Array.from(activeDaysInCenter)[0];
+      }
+
+      DIAS_SEMANA.forEach(dia => {
+        const hasOperation = activeDaysInCenter.has(dia.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `day-btn ${dia.id === selectedDayId ? 'active' : ''}`;
+        btn.textContent = dia.label;
+        btn.disabled = !hasOperation;
+        if (!hasOperation) {
+          btn.title = `El centro ${centro.nombre} no tiene operaciones los días ${dia.label}`;
+        }
+        btn.onclick = () => {
+          selectedDayId = dia.id;
+          updateArbolDays();
+          evaluateArbolDecision();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // Evaluar y clasificar rutas en Operan / No Operan
+    function evaluateArbolDecision() {
+      const centro = CENTROS_DATA.find(c => c.id === selectedCentroId);
+      if (!centro) return;
+
+      const listOperan = document.getElementById('list-operan');
+      const listNoOperan = document.getElementById('list-no-operan');
+      listOperan.innerHTML = '';
+      listNoOperan.innerHTML = '';
+
+      let countOperan = 0;
+      let countNoOperan = 0;
+
+      centro.rutas.forEach(ruta => {
+        const doesOperate = ruta.dias.includes(selectedDayId);
+        const icon = getRouteIcon(ruta.nombre);
+
+        const routeDiv = document.createElement('div');
+        routeDiv.className = 'route-item';
+
+        if (doesOperate) {
+          countOperan++;
+          routeDiv.innerHTML = `
+            <span class="route-name">${icon} ${ruta.nombre}</span>
+            <button type="button" class="btn btn-outline" style="font-size: 11px; padding: 4px 8px;" onclick="assignRouteFromArbol('${centro.id}', '${ruta.nombre}')">
+              Asignar al Formulario ➔
+            </button>
+          `;
+          listOperan.appendChild(routeDiv);
+        } else {
+          countNoOperan++;
+          routeDiv.innerHTML = `
+            <span class="route-name" style="color: var(--slate-500);">${icon} ${ruta.nombre}</span>
+            <span style="font-size: 11px; color: var(--danger); font-weight: 700;">No programada hoy</span>
+          `;
+          listNoOperan.appendChild(routeDiv);
+        }
+      });
+
+      document.getElementById('count-operan').textContent = countOperan;
+      document.getElementById('count-no-operan').textContent = countNoOperan;
+    }
+
+    // Acción rápida para transferir datos al Formulario 360
+    function assignRouteFromArbol(centroId, rutaNombre) {
+      const centroSelect = document.getElementById('f-centro');
+      centroSelect.value = centroId;
+      onCentroChange(); // Actualiza dropdown de rutas
+
+      const rutaSelect = document.getElementById('f-ruta');
+      rutaSelect.value = rutaNombre;
+
+      switchTab('tab-formulario');
+    }
+
+    /**
+     * ========================================================================
+     * 4. LÓGICA DEL FORMULARIO 360°
+     * ========================================================================
+     */
+    function initFormulario() {
+      // 1. Pre-llenar fecha actual
+      const today = new Date().toISOString().split('T')[0];
+      const fechaInput = document.getElementById('f-fecha');
+      if (fechaInput) fechaInput.value = today;
+
+      // 2. Generar Folio sugerido: CTR-[AÑO]-[CORRELATIVO 4 dígitos]
+      const year = new Date().getFullYear();
+      const randomCorr = String(Math.floor(Math.random() * 9000) + 1000);
+      const folioInput = document.getElementById('f-folio');
+      if (folioInput) folioInput.value = `CTR-${year}-${randomCorr}`;
+
+      // 3. Poblar dropdown de Centros
+      const centroSelect = document.getElementById('f-centro');
+      centroSelect.innerHTML = '';
+      CENTROS_DATA.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.nombre;
+        centroSelect.appendChild(opt);
+      });
+      onCentroChange();
+
+      // 4. Poblar dropdown de Placas agrupadas
+      const placaSelect = document.getElementById('f-placa');
+      placaSelect.innerHTML = '';
+
+      const optGroupActivas = document.createElement('optgroup');
+      optGroupActivas.label = '🟢 PLACAS ACTIVAS (Disponibles)';
+      PLACAS_ACTIVAS.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = `${p} (Activa)`;
+        optGroupActivas.appendChild(opt);
+      });
+      placaSelect.appendChild(optGroupActivas);
+
+      const optGroupEspera = document.createElement('optgroup');
+      optGroupEspera.label = '🟠 PLACAS EN ESPERA (Requieren Autorización)';
+      PLACAS_EN_ESPERA.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = `${p} (En Espera - Jefatura)`;
+        optGroupEspera.appendChild(opt);
+      });
+      placaSelect.appendChild(optGroupEspera);
+
+      onPlacaChange();
+      updateCriticalChecklist();
+      calculateTotalesC();
+    }
+
+    // Al cambiar de centro en el Formulario, actualizar dropdown de rutas dinámicamente
+    function onCentroChange() {
+      const centroId = document.getElementById('f-centro').value;
+      const rutaSelect = document.getElementById('f-ruta');
+      rutaSelect.innerHTML = '';
+
+      const centro = CENTROS_DATA.find(c => c.id === centroId);
+      if (centro) {
+        centro.rutas.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.nombre;
+          opt.textContent = `${getRouteIcon(r.nombre)} ${r.nombre}`;
+          rutaSelect.appendChild(opt);
+        });
+      }
+    }
+
+    // Advertencia de Placa en Espera
+    function onPlacaChange() {
+      const placa = document.getElementById('f-placa').value;
+      const warningBox = document.getElementById('placa-warning');
+      if (PLACAS_EN_ESPERA.includes(placa)) {
+        warningBox.classList.add('visible');
+      } else {
+        warningBox.classList.remove('visible');
+      }
+    }
+
+    // Regla de Negocio: Verificar ítems críticos en tiempo real y mostrar alerta de bloqueo
+    function updateCriticalChecklist() {
+      const criticalCheckboxes = document.querySelectorAll('.chk-critico');
+      const totalCritical = criticalCheckboxes.length;
+      let checkedCritical = 0;
+
+      criticalCheckboxes.forEach(chk => {
+        if (chk.checked) checkedCritical++;
+      });
+
+      const missingCritical = totalCritical - checkedCritical;
+      const banner = document.getElementById('critical-alert-banner');
+      const title = document.getElementById('critical-alert-title');
+      const desc = document.getElementById('critical-alert-desc');
+      const badge = document.getElementById('critical-badge-count');
+
+      if (missingCritical > 0) {
+        banner.style.backgroundColor = 'var(--danger-bg)';
+        banner.style.borderColor = 'var(--danger)';
+        title.style.color = 'var(--danger)';
+        title.textContent = 'BLOQUEO PRE-OPERACIONAL DE SALIDA ACTIVO';
+        desc.textContent = `La unidad tiene ${missingCritical} verificación(es) crítica(s) pendiente(s). No puede salir a ruta.`;
+        badge.className = 'critical-badge-count';
+        badge.textContent = `${missingCritical} críticos sin verificar`;
+      } else {
+        banner.style.backgroundColor = 'var(--success-bg)';
+        banner.style.borderColor = 'var(--success)';
+        title.style.color = 'var(--success)';
+        title.textContent = 'INSPECCIÓN CRÍTICA APROBADA (SALIDA AUTORIZADA)';
+        desc.textContent = 'Todos los componentes mecánicos y de bioseguridad críticos han sido verificados satisfactoriamente.';
+        badge.className = 'critical-badge-count all-good';
+        badge.textContent = '✅ Salida autorizada';
+      }
+    }
+
+    // Cálculo automático de Totales en Sección C
+    function calculateTotalesC() {
+      let totalBolsas = 0;
+      let totalPeso = 0;
+
+      document.querySelectorAll('.calc-bolsas').forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) totalBolsas += val;
+      });
+
+      document.querySelectorAll('.calc-peso').forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) totalPeso += val;
+      });
+
+      document.getElementById('total-bolsas').textContent = totalBolsas;
+      document.getElementById('total-peso').textContent = `${totalPeso.toFixed(2)} kg`;
+
+      // Auto-sugerir peso en Sección D si no se ha ingresado
+      const plantaPesoInput = document.getElementById('f-planta-peso');
+      if (plantaPesoInput && (!plantaPesoInput.value || plantaPesoInput.dataset.autoFilled === 'true')) {
+        if (totalPeso > 0) {
+          plantaPesoInput.value = totalPeso.toFixed(2);
+          plantaPesoInput.dataset.autoFilled = 'true';
+        }
+      }
+    }
+
+    // Cálculo automático de Km Recorridos en Sección E
+    function calculateKmRecorridos() {
+      const salida = parseFloat(document.getElementById('f-km-salida').value);
+      const llegada = parseFloat(document.getElementById('f-km-llegada').value);
+      const resultadoInput = document.getElementById('f-km-recorridos');
+
+      if (!isNaN(salida) && !isNaN(llegada)) {
+        const diferencia = llegada - salida;
+        if (diferencia >= 0) {
+          resultadoInput.value = `${diferencia} km`;
+          resultadoInput.style.color = 'var(--primary)';
+        } else {
+          resultadoInput.value = 'Error: Llegada < Salida';
+          resultadoInput.style.color = 'var(--danger)';
+        }
+      } else {
+        resultadoInput.value = '0 km';
+      }
+    }
+
+    // Limpiar formulario
+    function resetFormulario() {
+      if (confirm('¿Está seguro de que desea reiniciar todos los campos del formulario?')) {
+        document.getElementById('form-control-360').reset();
+        initFormulario();
+      }
+    }
+
+    /**
+     * ========================================================================
+     * 5. MATRIZ DE RUTAS COMPLETA
+     * ========================================================================
+     */
+    function renderMatrizCompleta() {
+      const tbody = document.getElementById('matrix-tbody');
+      tbody.innerHTML = '';
+
+      CENTROS_DATA.forEach(centro => {
+        // Fila de encabezado por Centro
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+          <td colspan="9" class="matrix-center-header">
+            🏢 CENTRO: ${centro.nombre} (${centro.rutas.length} Rutas Registradas)
+          </td>
+        `;
+        tbody.appendChild(headerRow);
+
+        // Filas por cada ruta del centro
+        centro.rutas.forEach(ruta => {
+          const row = document.createElement('tr');
+          const totalDias = ruta.dias.length;
+          const icon = getRouteIcon(ruta.nombre);
+
+          let daysCellsHtml = '';
+          DIAS_SEMANA.forEach(dia => {
+            const active = ruta.dias.includes(dia.id);
+            if (active) {
+              daysCellsHtml += `<td class="day-active">X</td>`;
+            } else {
+              daysCellsHtml += `<td class="day-inactive">-</td>`;
+            }
+          });
+
+          row.innerHTML = `
+            <td style="text-align: left; font-weight: 700;">
+              ${icon} ${ruta.nombre}
+            </td>
+            ${daysCellsHtml}
+            <td style="font-weight: 800; color: var(--primary);">
+              ${totalDias} días / sem
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      });
+    }
+
+    /**
+     * ========================================================================
+     * 6. LISTADO Y FILTRO DE PLACAS
+     * ========================================================================
+     */
+    function initPlacasView() {
+      // Contadores
+      document.getElementById('count-todas').textContent = PLACAS_ACTIVAS.length + PLACAS_EN_ESPERA.length;
+      document.getElementById('count-activas').textContent = PLACAS_ACTIVAS.length;
+      document.getElementById('count-espera').textContent = PLACAS_EN_ESPERA.length;
+
+      // Renderizar Activas
+      const gridActivas = document.getElementById('grid-placas-activas');
+      gridActivas.innerHTML = '';
+      PLACAS_ACTIVAS.forEach(p => {
+        const chip = document.createElement('div');
+        chip.className = 'placa-chip activa';
+        chip.textContent = p;
+        chip.title = `Placa Activa: ${p} (Clic para asignar al formulario)`;
+        chip.onclick = () => selectPlacaAndGoToForm(p);
+        gridActivas.appendChild(chip);
+      });
+
+      // Renderizar En Espera
+      const gridEspera = document.getElementById('grid-placas-espera');
+      gridEspera.innerHTML = '';
+      PLACAS_EN_ESPERA.forEach(p => {
+        const chip = document.createElement('div');
+        chip.className = 'placa-chip espera';
+        chip.textContent = p;
+        chip.title = `Placa En Espera: ${p} (Requiere autorización de Jefatura)`;
+        chip.onclick = () => selectPlacaAndGoToForm(p);
+        gridEspera.appendChild(chip);
+      });
+    }
+
+    function selectPlacaAndGoToForm(placa) {
+      const select = document.getElementById('f-placa');
+      select.value = placa;
+      onPlacaChange();
+      switchTab('tab-formulario');
+    }
+
+    function filterPlacas(tipo) {
+      const groupActivas = document.getElementById('group-placas-activas');
+      const groupEspera = document.getElementById('group-placas-espera');
+
+      if (tipo === 'activas') {
+        groupActivas.style.display = 'block';
+        groupEspera.style.display = 'none';
+      } else if (tipo === 'espera') {
+        groupActivas.style.display = 'none';
+        groupEspera.style.display = 'block';
+      } else {
+        groupActivas.style.display = 'block';
+        groupEspera.style.display = 'block';
+      }
+    }
+
+    /**
+     * ========================================================================
+     * INICIALIZACIÓN GLOBAL DE LA APLICACIÓN
+     * ========================================================================
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      initArbolDecision();
+      initFormulario();
+      renderMatrizCompleta();
+      initPlacasView();
+    });
+  </script>
+</body>
+</html>

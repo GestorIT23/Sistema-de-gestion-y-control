@@ -55,6 +55,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
+    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE RPBI' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -1100,6 +1101,43 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
         ar.tendencia || 'Estable',
         ar.diferenciaGlobal !== undefined ? `${ar.diferenciaGlobal >= 0 ? '+' : ''}${ar.diferenciaGlobal.toFixed(1)}%` : '0%',
         item.observaciones || ''
+      ]);
+    });
+  } else if (tipo === 'control_360_vehiculos') {
+    wsRows.push(['--- LISTADO DE REGISTROS CONTROL 360° DE VEHÍCULOS (F-OPR-000-17) ---']);
+    wsRows.push([
+      'Folio', 'Fecha', 'Hora Captura', 'Turno', 'Centro', 'Ruta', 'Placa', 'Estado Placa', 'Tipo Vehículo', 'Conductor',
+      'Km Inicial', 'Contenedores Rojos Limpios/Vacíos',
+      'Km Salida', 'Km Llegada', 'Km Recorridos', 'Hora Salida', 'Hora Retorno',
+      'Críticos Mecánica/Bioseguridad', 'Peso Entregado Planta (lb)', 'Recibido en Planta',
+      'Novedades de Ruta', 'Acciones Correctivas', 'Firma Conductor', 'Firma Supervisor'
+    ]);
+    results.forEach(item => {
+      wsRows.push([
+        item.folio || '',
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.turno || 'AM',
+        item.centro || '',
+        item.ruta || '',
+        item.placa || '',
+        item.estadoPlaca || 'Activa',
+        item.tipoVehiculo || '',
+        item.conductor || item.piloto || '',
+        item.kmSalida || 0,
+        item.contenedoresRojosLimpiosVacios || 0,
+        item.kmSalida || 0,
+        item.kmLlegada || 0,
+        item.kmRecorridos || 0,
+        item.horaSalida || '',
+        item.horaLlegadaFinal || '',
+        item.todosCriticosAprobados ? 'APROBADO (100%)' : 'CON OBSERVACIONES',
+        item.pesoEntregadoLbs !== undefined ? Number(item.pesoEntregadoLbs).toFixed(2) : (item.pesoEntregadoKg !== undefined ? Number(item.pesoEntregadoKg).toFixed(2) : '0.00'),
+        item.recibidoPorPlanta || '',
+        item.novedadesRuta || '',
+        item.accionesCorrectivas || '',
+        item.firmaConductor || '',
+        item.firmaSupervisor || ''
       ]);
     });
   }

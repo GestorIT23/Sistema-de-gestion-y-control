@@ -455,6 +455,75 @@ export interface BitacoraChecklistDiarioPlanta extends BaseBitacora {
   };
 }
 
+// 17. Control 360° de Vehículos - Formato F-OPR-000-17 / TR-360
+export type EstadoCumplimiento360 = 'Cumple' | 'Parcial' | 'No Cumple' | 'N/A';
+
+export interface BitacoraControl360Vehiculos extends BaseBitacora {
+  turno: 'AM' | 'PM' | 'Nocturno';
+  folio: string;
+  centro: string;
+  ruta: string;
+  placa: string;
+  estadoPlaca: 'Activa' | 'En Espera';
+  tipoVehiculo: 'Camion' | 'Pickup' | 'Motocicleta' | string;
+  conductor: string;
+  noLicencia?: string;
+  tipoLicencia?: string;
+  telefono?: string;
+  noAutorizacionMspas?: string;
+
+  // Cantidad de contenedores rojos limpios y vacíos
+  contenedoresRojosLimpiosVacios: number;
+
+  checklistMecanico: {
+    frenos: EstadoCumplimiento360;
+    llantas: EstadoCumplimiento360;
+    luces: EstadoCumplimiento360;
+    extintor: EstadoCumplimiento360;
+    cinturones: EstadoCumplimiento360;
+    espejos: EstadoCumplimiento360;
+    combustible: EstadoCumplimiento360;
+    botiquin: EstadoCumplimiento360;
+  };
+  checklistBioseguridad: {
+    selloHermetico: EstadoCumplimiento360;
+    biohazardVisible: EstadoCumplimiento360;
+    desinfeccionPrevia: EstadoCumplimiento360;
+    contenedoresPunzocortantes?: EstadoCumplimiento360;
+    bolsasReglamentarias?: EstadoCumplimiento360;
+    kitDerrame: EstadoCumplimiento360;
+    eppCompleto: EstadoCumplimiento360;
+    documentosManifiestos?: EstadoCumplimiento360;
+  };
+  horaSalida: string;
+  kmSalida: number;
+  obsSalida?: string;
+  todosCriticosAprobados: boolean;
+
+  horaLlegadaPlanta: string;
+  pesoEntregadoLbs?: number;
+  pesoEntregadoKg?: number;
+  totalPesoLbs?: number;
+  totalPesoKg?: number;
+  noPrecintoSello?: string;
+  recibidoPorPlanta: string;
+
+  descargaCompleta: boolean;
+  limpiezaInterior: boolean;
+  desinfectanteUtilizado: string;
+  tiempoContactoMinutos: number;
+  horaFinDesinfeccion: string;
+  kmLlegada: number;
+  kmRecorridos: number;
+  horaLlegadaFinal: string;
+
+  novedadesRuta?: string;
+  accionesCorrectivas?: string;
+  firmaConductor: string;
+  firmaSupervisor: string;
+  firmaPlanta?: string;
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -472,4 +541,5 @@ export type BitacoraEntry =
   | { tipo: 'control_uniformes'; data: BitacoraControlUniformes }
   | { tipo: 'control_horas_cargador'; data: BitacoraControlHorasCargador }
   | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico }
-  | { tipo: 'checklist_diario_planta'; data: BitacoraChecklistDiarioPlanta };
+  | { tipo: 'checklist_diario_planta'; data: BitacoraChecklistDiarioPlanta }
+  | { tipo: 'control_360_vehiculos'; data: BitacoraControl360Vehiculos };
