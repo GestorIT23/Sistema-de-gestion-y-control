@@ -53,9 +53,9 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         return {
           filename: 'Formato_Disposicion_Vertedero.xlsx',
           sheetName: 'Vertedero',
-          columns: ['Fecha', 'Responsable', 'Observaciones', 'Total Viajes', 'Total Pacas', 'Total Pesaje', 'Camion', 'Placa', 'No Pase Salida', 'Cantidad Pacas', 'Pesaje', 'Hora Salida', 'Nombre Piloto', 'Correlativo Pacas'],
+          columns: ['Fecha', 'Responsable', 'Observaciones', 'No Boleta Pago AMSA', 'Total Viajes', 'Total Pacas', 'Total Pesaje', 'Camion', 'Placa', 'No Pase Salida', 'No Boleta AMSA Fila', 'Cantidad Pacas', 'Pesaje', 'Hora Salida', 'Nombre Piloto', 'Correlativo Pacas'],
           samples: [
-            { Fecha: today, Responsable: userEmail, Observaciones: 'Disposición final municipal', 'Total Viajes': 1, 'Total Pacas': 40, 'Total Pesaje': 4500, Camion: 'Camion 01', Placa: 'C-928BKN', 'No Pase Salida': 'PS-998', 'Cantidad Pacas': 40, Pesaje: 4500, 'Hora Salida': '11:00', 'Nombre Piloto': 'Juan Pérez', 'Correlativo Pacas': 'P-001 a P-040' }
+            { Fecha: today, Responsable: userEmail, Observaciones: 'Disposición final en vertedero autorizado AMSA', 'No Boleta Pago AMSA': 'AMSA-2026-08492', 'Total Viajes': 1, 'Total Pacas': 40, 'Total Pesaje': 4500, Camion: 'Camión 01', Placa: 'C-928BKN', 'No Pase Salida': 'PS-998', 'No Boleta AMSA Fila': 'AMSA-2026-08492', 'Cantidad Pacas': 40, Pesaje: 4500, 'Hora Salida': '11:00', 'Nombre Piloto': 'Juan Pérez', 'Correlativo Pacas': 'P-001 a P-040' }
           ]
         };
       case 'control_incineracion':
@@ -408,10 +408,14 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             const rowFecha = parseExcelDate(row.Fecha || row.fecha);
             const key = `${rowFecha}_${row.Responsable}`;
+            const boletaAmsaGeneral = String(row['No Boleta Pago AMSA'] || row['Boleta Pago AMSA'] || row['No Boleta AMSA'] || row['Boleta AMSA'] || '').trim();
+            const boletaAmsaFila = String(row['No Boleta AMSA Fila'] || row['No Boleta Pago AMSA'] || row['Boleta Pago AMSA'] || row['No Boleta AMSA'] || row['Boleta AMSA'] || '').trim();
+
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
                 responsable: row.Responsable || userEmail,
+                noBoletaAmsa: boletaAmsaGeneral,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalViajes: parseNum(row['Total Viajes']),
                 totalPacas: parseNum(row['Total Pacas']),
@@ -424,6 +428,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                 camion: row.Camion,
                 placa: String(row.Placa || ''),
                 noPaseSalida: String(row['No Pase Salida'] || ''),
+                noBoletaAmsa: boletaAmsaFila || groups[key].noBoletaAmsa || '',
                 cantidadPacas: parseNum(row['Cantidad Pacas']),
                 pesaje: parseNum(row.Pesaje),
                 horaSalida: row['Hora Salida'] || '12:00',

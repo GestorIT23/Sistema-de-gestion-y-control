@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit , deleteDoc, doc} from 'firebase/firestore';
-import { BitacoraDisposicionVertedero as IBitacoraDisposicionVertedero, FilaDisposicionVertedero } from '../../types';
+import { BitacoraDisposicionVertedero as IBitacoraDisposicionVertedero, FilaDisposicionVertedero, BoletaPagoAmsa } from '../../types';
 import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
-import { Calendar, User, ArrowLeft, Download, Database, Truck, Landmark, FileText, FileSpreadsheet, Plus, Trash , Trash2} from 'lucide-react';
+import { Calendar, User, ArrowLeft, Download, Database, Truck, Landmark, FileText, FileSpreadsheet, Plus, Trash , Trash2, Receipt, Hash, DollarSign, Scale} from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
@@ -36,27 +36,30 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [responsable, setResponsable] = useState(userEmail || 'Ing. de Planta');
+  
+  // Boletas de Pago AMSA (1 a N)
+  const [boletasAmsa, setBoletasAmsa] = useState<BoletaPagoAmsa[]>([
+    { id: '1', numeroBoleta: '', pesajeLbs: 0, montoQuetzales: 0, observaciones: '' }
+  ]);
+
   const [totalViajes, setTotalViajes] = useState(0);
   const [totalPacas, setTotalPacas] = useState(0);
   const [totalPesaje, setTotalPesaje] = useState(0);
   const [observaciones, setObservaciones] = useState('');
 
-  // 11 trucks pre-populated as seen in PDF
+  // Default 4 trips pre-selected as requested by user
+  const createInitialFilas = (): FilaDisposicionVertedero[] => [
+    { camion: 'Camión 01', placa: '', noPaseSalida: '', noBoletaAmsa: '', cantidadPacas: 0, pesaje: 0, horaSalida: getCurrentTimeStr(), nombrePiloto: '', correlativoPacas: '' },
+    { camion: 'Camión 02', placa: '', noPaseSalida: '', noBoletaAmsa: '', cantidadPacas: 0, pesaje: 0, horaSalida: getCurrentTimeStr(), nombrePiloto: '', correlativoPacas: '' },
+    { camion: 'Camión 03', placa: '', noPaseSalida: '', noBoletaAmsa: '', cantidadPacas: 0, pesaje: 0, horaSalida: getCurrentTimeStr(), nombrePiloto: '', correlativoPacas: '' },
+    { camion: 'Camión 04', placa: '', noPaseSalida: '', noBoletaAmsa: '', cantidadPacas: 0, pesaje: 0, horaSalida: getCurrentTimeStr(), nombrePiloto: '', correlativoPacas: '' },
+  ];
+
   const [filas, setFilas] = useState<FilaDisposicionVertedero[]>([]);
 
   useEffect(() => {
     if (filas.length === 0) {
-      const initial: FilaDisposicionVertedero[] = Array.from({ length: 11 }, (_, i) => ({
-        camion: `Camión ${String(i + 1).padStart(2, '0')}`,
-        placa: '',
-        noPaseSalida: '',
-        cantidadPacas: 0,
-        pesaje: 0,
-        horaSalida: getCurrentTimeStr(),
-        nombrePiloto: '',
-        correlativoPacas: ''
-      }));
-      setFilas(initial);
+      setFilas(createInitialFilas());
     }
     fetchRegistros();
   }, []);
@@ -107,7 +110,31 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
     }
   };
 
+  // Handlers for Boletas AMSA (1 a N)
+  const handleAddBoleta = () => {
+    setBoletasAmsa(prev => [
+      ...prev,
+      { id: String(Date.now() + Math.random()), numeroBoleta: '', pesajeLbs: 0, montoQuetzales: 0, observaciones: '' }
+    ]);
+  };
 
+  const handleRemoveBoleta = (index: number) => {
+    if (boletasAmsa.length <= 1) {
+      setBoletasAmsa([{ id: '1', numeroBoleta: '', pesajeLbs: 0, montoQuetzales: 0, observaciones: '' }]);
+      return;
+    }
+    setBoletasAmsa(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleBoletaChange = (index: number, field: keyof BoletaPagoAmsa, val: any) => {
+    setBoletasAmsa(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: val };
+      return copy;
+    });
+  };
+
+  // Handlers for Trips / Filas
   const handleRowChange = (index: number, field: keyof FilaDisposicionVertedero, val: any) => {
     const updated = [...filas];
     updated[index] = { ...updated[index], [field]: val };
@@ -121,6 +148,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         camion: `Camión ${String(filas.length + 1).padStart(2, '0')}`,
         placa: '',
         noPaseSalida: '',
+        noBoletaAmsa: boletasAmsa[0]?.numeroBoleta || '',
         cantidadPacas: 0,
         pesaje: 0,
         horaSalida: getCurrentTimeStr(),
@@ -146,10 +174,18 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
     setSaving(true);
     setMsg({ text: 'Enviando registro de vertedero a Firebase...', type: 'info' });
 
+    // Clean and prepare boletas list
+    const validBoletas = boletasAmsa.filter(b => b.numeroBoleta && b.numeroBoleta.trim() !== '');
+    const boletaSummary = validBoletas.length > 0 
+      ? validBoletas.map(b => b.numeroBoleta.trim()).join(', ')
+      : (boletasAmsa[0]?.numeroBoleta?.trim() || '');
+
     const nuevoRegistro: IBitacoraDisposicionVertedero = {
       fechaRegistro: new Date().toISOString(),
       fecha,
       responsable,
+      noBoletaAmsa: boletaSummary,
+      boletasAmsa: validBoletas.length > 0 ? validBoletas : boletasAmsa,
       totalViajes,
       totalPacas,
       totalPesaje,
@@ -168,19 +204,10 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
       generateAndDownloadPDF('disposicion_vertedero', nuevoRegistro);
       setMsg({ text: 'Los datos de despacho a vertedero se depositaron satisfactoriamente en Firestore y se ha generado el reporte PDF oficial SGI.', type: 'success' });
       setObservaciones('');
+      setBoletasAmsa([{ id: '1', numeroBoleta: '', pesajeLbs: 0, montoQuetzales: 0, observaciones: '' }]);
       
-      // Reset the rows
-      const resetFilas = Array.from({ length: 11 }, (_, i) => ({
-        camion: `Camión ${String(i + 1).padStart(2, '0')}`,
-        placa: '',
-        noPaseSalida: '',
-        cantidadPacas: 0,
-        pesaje: 0,
-        horaSalida: getCurrentTimeStr(),
-        nombrePiloto: '',
-        correlativoPacas: ''
-      }));
-      setFilas(resetFilas);
+      // Reset the rows to 4 default trips
+      setFilas(createInitialFilas());
       fetchRegistros();
     } catch (err) {
       console.error(err);
@@ -281,28 +308,142 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
               </div>
             </div>
 
-            {/* Sub-table with 11 Trucks */}
+            {/* SECCIÓN DINÁMICA: BOLETAS DE PAGO DE AMSA (1 A LA N) */}
+            <div id="seccion-boletas-amsa" className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/70 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-amber-600 text-white rounded-lg shadow-xs">
+                    <Receipt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+                      Boletas de Pago de AMSA (1 a la N)
+                      <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.2 rounded font-mono font-bold">
+                        {boletasAmsa.length} {boletasAmsa.length === 1 ? 'Boleta' : 'Boletas'}
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-amber-700">
+                      Registre una o múltiples boletas de pago emitidas por AMSA para el control y cruce de defogue.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  id="btn-add-boleta-amsa"
+                  type="button"
+                  onClick={handleAddBoleta}
+                  className="inline-flex items-center gap-1.5 text-xs text-amber-900 bg-amber-200 hover:bg-amber-300 border border-amber-400 font-bold px-3 py-1.5 rounded-lg transition shadow-2xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Agregar Boleta AMSA ({boletasAmsa.length + 1})
+                </button>
+              </div>
+
+              {/* Lista dinámica de Boletas de Pago AMSA (1 a N) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {boletasAmsa.map((bol, bIdx) => (
+                  <div key={bol.id || bIdx} className="bg-white border border-amber-200 rounded-lg p-3 shadow-2xs space-y-2 relative">
+                    <div className="flex items-center justify-between border-b border-amber-100 pb-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
+                        <Receipt className="w-3 h-3 text-amber-700" /> Boleta AMSA #{bIdx + 1}
+                      </span>
+                      {boletasAmsa.length > 1 && (
+                        <button
+                          id={`btn-remove-boleta-${bIdx}`}
+                          type="button"
+                          onClick={() => handleRemoveBoleta(bIdx)}
+                          className="text-red-500 hover:text-red-700 p-0.5 rounded transition text-xs font-bold flex items-center gap-0.5"
+                          title="Eliminar esta boleta de pago"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase flex items-center gap-1">
+                          <Hash className="w-3 h-3 text-amber-600" /> N° Boleta de Pago AMSA:
+                        </label>
+                        <input
+                          id={`boleta-amsa-num-${bIdx}`}
+                          type="text"
+                          value={bol.numeroBoleta}
+                          onChange={(e) => handleBoletaChange(bIdx, 'numeroBoleta', e.target.value)}
+                          placeholder="Ej. AMSA-2026-08492"
+                          className="w-full bg-amber-50/40 border border-amber-300 rounded px-2 py-1.5 text-xs font-bold text-amber-950 focus:bg-white focus:border-amber-600 outline-none transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          <Scale className="w-3 h-3 text-slate-400" /> Pesaje Boleta (LBS):
+                        </label>
+                        <input
+                          id={`boleta-amsa-pesaje-${bIdx}`}
+                          type="number"
+                          min={0}
+                          value={bol.pesajeLbs || ''}
+                          onChange={(e) => handleBoletaChange(bIdx, 'pesajeLbs', parseFloat(e.target.value) || 0)}
+                          placeholder="0 lbs"
+                          className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          <DollarSign className="w-3 h-3 text-slate-400" /> Monto Pago (Q):
+                        </label>
+                        <input
+                          id={`boleta-amsa-monto-${bIdx}`}
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={bol.montoQuetzales || ''}
+                          onChange={(e) => handleBoletaChange(bIdx, 'montoQuetzales', parseFloat(e.target.value) || 0)}
+                          placeholder="Q 0.00"
+                          className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Datalist to easily autocomplete boletas in table rows */}
+              <datalist id="boletas-amsa-autocomplete-list">
+                {boletasAmsa.filter(b => b.numeroBoleta && b.numeroBoleta.trim() !== '').map((b, idx) => (
+                  <option key={idx} value={b.numeroBoleta.trim()}>
+                    {`Boleta AMSA #${idx + 1} (${b.pesajeLbs || 0} LBS)`}
+                  </option>
+                ))}
+              </datalist>
+            </div>
+
+            {/* TABLA DE VIAJES / CAMIONES (4 PRESELECCIONADOS POR DEFECTO) */}
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b pb-2 border-slate-100">
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide flex items-center gap-1.5 text-amber-700">
-                  <Truck className="w-4 h-4" /> Registro del Proceso de Disposición Final
+                  <Truck className="w-4 h-4" /> Registro de Viajes y Camiones de Disposición ({filas.length} viajes)
                 </h3>
-                <span className="text-[10px] text-slate-400 font-mono font-bold">{filas.length} REGISTROS ACTIVOS</span>
+                <span className="text-[10px] text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                  {filas.length} VIAJES CONFIGURADOS
+                </span>
               </div>
 
-              <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                <table id="vertedero-form-table" className="w-full text-xs text-left text-slate-600">
+              <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-sm">
+                <table id="vertedero-form-table" className="w-full text-xs text-left text-slate-600 min-w-[920px]">
                   <thead className="bg-[#fef3c7] text-amber-800 uppercase p-2 font-semibold text-[10px] border-b border-amber-200">
                     <tr>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-1/5">CAMIÓN / TRANSPORTE</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-36">CAMIÓN / TRANSPORTE</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">PLACA</th>
                       <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">N° PASE SALIDA</th>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">HORA SALIDA</th>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-1/5 text-center">PILOTO</th>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-28 text-center">N° CORRELATIVO PACA</th>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">CANTIDAD PACAS</th>
-                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">PESAJE (LBS)</th>
-                      <th className="px-2 py-2.5 text-center w-10">ACCION</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-32 text-center text-amber-900 bg-amber-100/60">N° BOLETA AMSA</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">HORA SALIDA</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-36 text-center">PILOTO</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-24 text-center">N° CORRELATIVO</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">PACAS</th>
+                      <th className="px-2 py-2.5 border-r border-slate-300 w-20 text-center">PESO (LBS)</th>
+                      <th className="px-2 py-2.5 text-center w-10">ACCIÓN</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white font-mono text-center">
@@ -336,6 +477,17 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             onChange={(e) => handleRowChange(index, 'noPaseSalida', e.target.value)}
                             placeholder="PS-XXX"
                             className="bg-slate-50 border border-slate-200 text-center rounded text-xs font-semibold text-slate-800 w-full py-1 focus:bg-white outline-none"
+                          />
+                        </td>
+                        <td className="px-1 py-1 border-r border-slate-200 bg-amber-50/30">
+                          <input
+                            id={`boleta-amsa-input-${index}`}
+                            type="text"
+                            list="boletas-amsa-autocomplete-list"
+                            value={f.noBoletaAmsa !== undefined ? f.noBoletaAmsa : (boletasAmsa[0]?.numeroBoleta || '')}
+                            onChange={(e) => handleRowChange(index, 'noBoletaAmsa', e.target.value)}
+                            placeholder={boletasAmsa[0]?.numeroBoleta || "AMSA-XXXX"}
+                            className="bg-amber-50/50 border border-amber-200 text-center rounded text-xs font-bold text-amber-900 w-full py-1 focus:bg-white focus:border-amber-500 outline-none"
                           />
                         </td>
                         <td className="px-1 py-1 border-r border-slate-200">
@@ -393,7 +545,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                             id={`btn-remove-row-${index}`}
                             type="button"
                             onClick={() => handleRemoveRow(index)}
-                            title="Eliminar esta fila"
+                            title="Eliminar este viaje"
                             className="text-red-500 hover:text-red-700 transition cursor-pointer p-1"
                           >
                             <Trash className="w-3.5 h-3.5" />
@@ -406,15 +558,18 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
               </div>
 
               {/* Add row button */}
-              <div className="flex justify-start">
+              <div className="flex items-center justify-between pt-1">
                 <button
                   id="btn-add-row-vertedero"
                   type="button"
                   onClick={handleAddRow}
-                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 border border-amber-200 hover:bg-amber-100/50 px-3 py-1.5 rounded-lg font-bold transition focus:outline-none"
+                  className="flex items-center gap-1.5 text-xs text-amber-800 hover:text-amber-950 bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded-lg font-bold transition focus:outline-none cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Agregar Viaje / Camión
+                  <Plus className="w-3.5 h-3.5" /> Agregar Viaje / Camión ({filas.length + 1})
                 </button>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  Configurado por defecto: 4 viajes iniciales (1 a N dinámico)
+                </span>
               </div>
             </div>
 
@@ -444,7 +599,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                 id="btn-submit-vertedero"
                 type="submit"
                 disabled={saving}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs md:text-sm px-6 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs md:text-sm px-6 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer"
               >
                 <Database className="w-4 h-4" />
                 {saving ? 'Guardando...' : 'Sincronizar Despacho'}
@@ -460,7 +615,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
 
           <div className="bg-gradient-to-br from-amber-950 to-orange-950 text-white border border-amber-800/50 rounded-xl p-5 space-y-4 shadow-md">
             <h3 className="font-extrabold text-xs uppercase text-slate-200 tracking-wider flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-amber-400" /> Vertedero Sanitarios Autorizado
+              <Landmark className="w-5 h-5 text-amber-400" /> Vertedero Sanitario Autorizado
             </h3>
             <p className="text-xs text-amber-200/80 leading-normal">
               Asegurar la desinfección total de los residuos tratados antes del despacho definitivo al vertedero autorizado es ley sanitaria nacional (Acuerdo Gub. 509R).
@@ -486,7 +641,12 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
                       <span>{reg.fecha}</span>
                       <span className="text-amber-700 font-bold">{reg.totalViajes} Viajes</span>
                     </div>
-                    <div className="text-slate-500 mt-1 font-mono text-[11px]">Resp: {reg.responsable}</div>
+                    {reg.noBoletaAmsa && (
+                      <div className="text-amber-800 font-bold mt-0.5 font-mono text-[11px] flex items-center gap-1">
+                        <Receipt className="w-3 h-3 text-amber-600 inline" /> Boleta(s) AMSA: {reg.noBoletaAmsa}
+                      </div>
+                    )}
+                    <div className="text-slate-500 mt-0.5 font-mono text-[11px]">Resp: {reg.responsable}</div>
                     <div className="text-slate-600 font-bold mt-1">
                       {reg.totalPacas} Pacas | {reg.totalPesaje !== undefined ? reg.totalPesaje.toLocaleString() : 0} LBS
                     </div>
@@ -536,6 +696,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
         details={[
           { label: 'Fecha', value: recordToDelete?.fecha || '' },
           { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Boleta(s) Pago AMSA', value: recordToDelete?.noBoletaAmsa || '—' },
           { label: 'Total Pacas', value: String(recordToDelete?.totalPacas || '0') },
           { label: 'Total Pesaje', value: `${recordToDelete?.totalPesaje?.toLocaleString() || 0} LBS` },
           { label: 'Observaciones', value: recordToDelete?.observaciones || '—' },

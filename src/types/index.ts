@@ -74,10 +74,19 @@ export interface BitacoraDisposicionPirolisis extends BaseBitacora {
 }
 
 // 4. Bitacora Disposición Final de DSH a Vertedero
+export interface BoletaPagoAmsa {
+  id?: string;
+  numeroBoleta: string;
+  pesajeLbs?: number;
+  montoQuetzales?: number;
+  observaciones?: string;
+}
+
 export interface FilaDisposicionVertedero {
-  camion: string; // Camion 01 to Camion 11
+  camion: string; // Camion 01 to Camion N
   placa: string;
   noPaseSalida: string;
+  noBoletaAmsa?: string; // Número de Boleta de Pago AMSA asignada al viaje
   cantidadPacas: number;
   pesaje?: number;
   horaSalida?: string;
@@ -89,6 +98,8 @@ export interface BitacoraDisposicionVertedero extends BaseBitacora {
   totalViajes: number;
   totalPacas: number;
   totalPesaje?: number;
+  noBoletaAmsa?: string; // Resumen o compatibilidad de Boletas AMSA
+  boletasAmsa?: BoletaPagoAmsa[]; // Lista dinámica de Boletas de Pago AMSA (1 a N)
   filas: FilaDisposicionVertedero[];
 }
 

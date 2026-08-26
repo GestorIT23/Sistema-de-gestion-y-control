@@ -767,26 +767,42 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Fecha', value: data.fecha },
       { key: 'Hora Captura', value: horaCaptura },
       { key: 'Responsable', value: data.responsable },
+      { key: 'No. Boleta(s) AMSA', value: data.noBoletaAmsa || 'N/R' },
       { key: 'Total Viajes', value: String(data.totalViajes || 0) },
       { key: 'Total Pacas', value: String(data.totalPacas || 0) },
       { key: 'Total Pesaje', value: String(data.totalPesaje || 0) + ' lbs' }
     ]);
 
+    if (data.boletasAmsa && Array.isArray(data.boletasAmsa) && data.boletasAmsa.length > 0) {
+      drawSectionHeader('II. CONTROL DE BOLETAS DE PAGO AMSA (1 A LA N)');
+      const boletaHeaders = ['ITEM', 'NO. BOLETA AMSA', 'PESAJE (LBS)', 'MONTO (Q)', 'NOTAS'];
+      const boletaWidths = [22, 55, 40, 35, 38];
+      const boletaRows = data.boletasAmsa.map((b: any, idx: number) => [
+        `Boleta #${idx + 1}`,
+        typeof b === 'string' ? b : (b.numeroBoleta || 'N/R'),
+        typeof b === 'object' && b.pesajeLbs ? `${b.pesajeLbs} lbs` : '—',
+        typeof b === 'object' && b.montoQuetzales ? `Q ${Number(b.montoQuetzales).toFixed(2)}` : '—',
+        typeof b === 'object' && b.observaciones ? b.observaciones : '—'
+      ]);
+      drawDataTable(boletaHeaders, boletaWidths, boletaRows);
+    }
+
     if (data.observaciones) {
-      drawSectionHeader('II. OBSERVACIONES');
+      drawSectionHeader(data.boletasAmsa && data.boletasAmsa.length > 0 ? 'III. OBSERVACIONES' : 'II. OBSERVACIONES');
       doc.setFont('Helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.text(data.observaciones, marginX + 4, y);
       y += 8;
     }
 
-    drawSectionHeader('III. DESGLOSE DE CAMIONES Y VIAJES');
-    const tableHeaders = ['CÓDIGO', 'PLACA', 'NO. PASE', 'H. SALIDA', 'PILOTO / CHOFER', 'CORRELATIVO PACA', 'PACAS', 'PESO (LBS)'];
-    const tableWidths = [20, 20, 20, 20, 32, 28, 20, 30];
+    drawSectionHeader(data.boletasAmsa && data.boletasAmsa.length > 0 ? 'IV. DESGLOSE DE CAMIONES Y VIAJES (CRUCE AMSA)' : 'III. DESGLOSE DE CAMIONES Y VIAJES (CRUCE AMSA)');
+    const tableHeaders = ['CÓDIGO', 'PLACA', 'NO. PASE', 'BOLETA AMSA', 'H. SALIDA', 'PILOTO / CHOFER', 'CORRELATIVO', 'PACAS', 'PESO (LBS)'];
+    const tableWidths = [18, 18, 18, 22, 16, 30, 24, 16, 28];
     const tableRows = (data.filas || []).map((f: any) => [
       f.camion || '',
       f.placa || '',
       f.noPaseSalida || '',
+      f.noBoletaAmsa || data.noBoletaAmsa || 'N/R',
       f.horaSalida || 'N/R',
       f.nombrePiloto || 'N/R',
       f.correlativoPacas || 'N/R',

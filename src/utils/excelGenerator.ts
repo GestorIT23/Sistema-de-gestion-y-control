@@ -228,20 +228,37 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Fecha Proceso:', data.fecha]);
     wsRows.push(['Hora Captura:', formatHoraRegistro(data.fechaRegistro)]);
     wsRows.push(['Responsable SGI:', data.responsable]);
+    wsRows.push(['No. Boleta(s) Pago AMSA:', data.noBoletaAmsa || 'N/R']);
     wsRows.push(['Total Viajes:', data.totalViajes]);
     wsRows.push(['Total Pacas:', data.totalPacas]);
     wsRows.push(['Total Pesaje:', (data.totalPesaje || 0) + ' lbs']);
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
-    wsRows.push(['II. DESGLOSE DE CAMIONES Y VIAJES']);
-    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'Hora Salida', 'Piloto / Chofer', 'Nro. Correlativo de Paca', 'Cantidad Pacas', 'Pesaje (LBS)']);
+    if (data.boletasAmsa && Array.isArray(data.boletasAmsa) && data.boletasAmsa.length > 0) {
+      wsRows.push(['II. CONTROL DE BOLETAS DE PAGO AMSA (1 A LA N)']);
+      wsRows.push(['Item', 'No. Boleta AMSA', 'Pesaje Liquidado (LBS)', 'Monto Pagado (Q)', 'Observaciones']);
+      data.boletasAmsa.forEach((b: any, idx: number) => {
+        wsRows.push([
+          `Boleta #${idx + 1}`,
+          typeof b === 'string' ? b : (b.numeroBoleta || 'N/R'),
+          typeof b === 'object' && b.pesajeLbs ? b.pesajeLbs : '—',
+          typeof b === 'object' && b.montoQuetzales ? b.montoQuetzales : '—',
+          typeof b === 'object' && b.observaciones ? b.observaciones : '—'
+        ]);
+      });
+      wsRows.push([]); // separator
+    }
+
+    wsRows.push([data.boletasAmsa && data.boletasAmsa.length > 0 ? 'III. DESGLOSE DE CAMIONES Y VIAJES (CRUCE AMSA)' : 'II. DESGLOSE DE CAMIONES Y VIAJES (CRUCE AMSA)']);
+    wsRows.push(['Código Camión', 'Placa Registrada', 'Nro. Pase de Salida', 'No. Boleta Pago AMSA', 'Hora Salida', 'Piloto / Chofer', 'Nro. Correlativo de Paca', 'Cantidad Pacas', 'Pesaje (LBS)']);
     
     (data.filas || []).forEach((f: any) => {
       wsRows.push([
         f.camion,
         f.placa,
         f.noPaseSalida,
+        f.noBoletaAmsa || data.noBoletaAmsa || 'N/R',
         f.horaSalida || 'N/R',
         f.nombrePiloto || 'N/R',
         f.correlativoPacas || '',
