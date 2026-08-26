@@ -46,7 +46,7 @@
     },
     "BitacoraControlIncineracion": {
       "title": "Bitácora de Control de Incineración",
-      "description": "Control de incineración de RPBI",
+      "description": "Control de incineración de DSH",
       "type": "object",
       "properties": {
         "fecha": { "type": "string" },
@@ -87,7 +87,7 @@
     },
     "BitacoraGeneracionAlmacenamiento": {
       "title": "Bitácora de Ingreso y Almacenamiento",
-      "description": "Ingreso y almacenamiento temporal de RPBI",
+      "description": "Ingreso y almacenamiento temporal de DSH",
       "type": "object",
       "properties": {
         "fecha": { "type": "string" },
@@ -176,7 +176,7 @@
     },
     "bitacora_generacion_almacenamiento": {
       "schema": "BitacoraGeneracionAlmacenamiento",
-      "description": "Collección de ingreso y almacenamiento RPBI"
+      "description": "Collección de ingreso y almacenamiento DSH"
     }
   }
 }

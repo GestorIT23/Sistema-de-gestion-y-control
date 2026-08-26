@@ -9,6 +9,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -20,6 +23,8 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraLavadoBanos | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -60,7 +65,7 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as BitacoraLavadoBanos);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       const fallback = localStorage.getItem('biotrash_banos_bk');
@@ -73,14 +78,19 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_lavado_banos', docId));
+      await deleteDoc(doc(db, 'bitacora_lavado_banos', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -157,8 +167,20 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Volver al Tablero
         </button>
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" /> ISO 14001:2015 Certificado
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_lavado_banos"
+            moduleTitle="Bitácora de Lavado de Baños"
+            formCode="F-OPR-10"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_banos_bk"
+            variant="header-button"
+          />
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" /> ISO 14001:2015 Certificado
+          </div>
         </div>
       </div>
 
@@ -415,7 +437,7 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -444,6 +466,23 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
             solicitante: 'Comité de Calidad'
           }
         ]}
+      />
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Lavado de Baños"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Turno', value: recordToDelete?.turno || '' },
+          { label: 'Ubicación', value: recordToDelete?.ubicacionBanos || '' },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Desinfectante', value: recordToDelete?.desinfectanteUsado || '' },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
       />
     </div>
   );

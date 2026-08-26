@@ -28,6 +28,9 @@ import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -39,6 +42,8 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraDesinfeccionAgenteQuimico | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -104,7 +109,7 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
         const docData = sanitizeBiotrashObject(doc.data());
         docs.push({ id: doc.id, ...docData } as BitacoraDesinfeccionAgenteQuimico);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       const fallback = localStorage.getItem('biotrash_desinfeccion_quimico_bk');
@@ -117,14 +122,19 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_desinfeccion_agente_quimico', docId));
+      await deleteDoc(doc(db, 'bitacora_desinfeccion_agente_quimico', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -269,6 +279,17 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
         version="1"
         fechaElaboracion="23/10/2018"
         fechaVersion="23/10/2018"
+      />
+
+      {/* IT Manager Global Delete Tool */}
+      <GestorItDeleteModuleRecords
+        userEmail={userEmail}
+        moduleKey="bitacora_desinfeccion_agente_quimico"
+        moduleName="Desinfección por Agente Químico"
+        onDeleted={() => {
+          setRegistros([]);
+          fetchRegistros();
+        }}
       />
 
       {/* Notification Banner */}
@@ -678,7 +699,7 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -697,6 +718,23 @@ export default function BitacoraDesinfeccionAgenteQuimicoModule({ onBack, userEm
       </div>
 
       <FormFooter />
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Desinfección por Agente Químico"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Químico Utilizado', value: recordToDelete?.quimico || '' },
+          { label: 'Dosis / Cantidad', value: `${recordToDelete?.dosis || ''} (${recordToDelete?.cantidadGl || 0} Gl)` },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Horario', value: `${recordToDelete?.horaInicio || ''} - ${recordToDelete?.horaFin || ''}` },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

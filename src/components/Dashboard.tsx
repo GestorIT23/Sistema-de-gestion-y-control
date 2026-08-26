@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, getCountFromServer, query, limit } from 'firebase/firestore';
 import { 
   ClipboardList, 
   Container, 
@@ -115,29 +115,46 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       let reliableAutoclavesCount = 0;
       let activeCuartoFrioSavesCount = 0;
 
+      // Efficiently fetch counts using getCountFromServer (lightweight metadata)
       for (const item of collections) {
-        const qSnap = await getDocs(collection(db, item.col));
-        newCounts[item.key] = qSnap.size;
-        
-        // Sum weights dynamically if possible
-        if (item.key === 'control_incineracion' || item.key === 'disposicion_pirolisis') {
-          qSnap.forEach(doc => {
-            const data = doc.data();
-            accumWeight += (Number(data.totalLibras) || 0);
-          });
-        }
-        if (item.key === 'cuarto_frio') {
-          activeCuartoFrioSavesCount += qSnap.size;
-        }
-        if (item.key === 'control_autoclaves') {
-          qSnap.forEach(doc => {
-            const data = doc.data();
-            totalAutoclaveTests++;
-            if (data.resultadoIndicador?.includes('NEGATIVO') || data.resultadoIndicador === 'Aprobado') {
-              reliableAutoclavesCount++;
+        try {
+          const countSnap = await getCountFromServer(collection(db, item.col));
+          const cnt = countSnap.data().count;
+          newCounts[item.key] = cnt;
+          if (item.key === 'cuarto_frio') {
+            activeCuartoFrioSavesCount = cnt;
+          }
+        } catch (cErr) {
+          try {
+            const qSnap = await getDocs(query(collection(db, item.col), limit(100)));
+            newCounts[item.key] = qSnap.size;
+            if (item.key === 'cuarto_frio') {
+              activeCuartoFrioSavesCount = qSnap.size;
             }
-          });
+          } catch (e2) {
+            newCounts[item.key] = 0;
+          }
         }
+      }
+
+      // Calculate recent treated weights and autoclave reliability safely
+      try {
+        const [snapInci, snapPiro, snapAuto] = await Promise.all([
+          getDocs(query(collection(db, 'bitacora_control_incineracion'), limit(100))),
+          getDocs(query(collection(db, 'bitacora_disposicion_pirolisis'), limit(100))),
+          getDocs(query(collection(db, 'bitacora_control_autoclaves'), limit(60)))
+        ]);
+        snapInci.forEach(d => { accumWeight += (Number(d.data().totalLibras) || 0); });
+        snapPiro.forEach(d => { accumWeight += (Number(d.data().totalLibras) || 0); });
+        snapAuto.forEach(d => {
+          const data = d.data();
+          totalAutoclaveTests++;
+          if (data.resultadoIndicador?.includes('NEGATIVO') || data.resultadoIndicador === 'Aprobado') {
+            reliableAutoclavesCount++;
+          }
+        });
+      } catch (eW) {
+        console.warn("Cálculo de métricas secundarias en Dashboard:", eW);
       }
 
       setCounts(newCounts);
@@ -195,7 +212,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     },
     {
       id: 'control_incineracion',
-      title: 'Control de Incineración RPBI',
+      title: 'Control de Incineración DSH',
       subtitle: 'Monitoreo térmico e ingresos de libras',
       code: 'BIOTRASH 4.0. F-OPR-000-5',
       icon: <Flame className="w-5 h-5 text-orange-500" />,
@@ -206,7 +223,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     {
       id: 'cuarto_frio',
       title: 'Control de Cuarto Frío',
-      subtitle: 'Temperaturas de conservación de RPBI',
+      subtitle: 'Temperaturas de conservación de DSH',
       code: 'BIOTRASH 4.0. F-OPR-000-6',
       icon: <Snowflake className="w-5 h-5 text-blue-500" />,
       color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
@@ -316,11 +333,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     {
       id: 'control_360_vehiculos',
       title: 'Control 360° de Vehículos',
-      subtitle: 'Transporte RPBI, bioseguridad, árbol de decisión y placas',
+      subtitle: 'Transporte DSH, bioseguridad, árbol de decisión y placas',
       code: 'BIOTRASH 4.2. F-OPR-000-17',
       icon: <Truck className="w-5 h-5 text-[#1A7A4A]" />,
       color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
-      tag: 'Transporte RPBI',
+      tag: 'Transporte DSH',
       stats: `${counts.control_360_vehiculos || 0} boletas`
     },
     {

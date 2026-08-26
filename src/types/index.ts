@@ -59,7 +59,7 @@ export interface BitacoraEntregaContenedores extends BaseBitacora {
   };
 }
 
-// 3. Bitacora Disposición Final de RPBI a Pirólisis
+// 3. Bitacora Disposición Final de DSH a Pirólisis
 export interface FilaDisposicionPirolisis {
   proceso: string; // Proceso 01 to Proceso 11
   pacas: number;
@@ -73,7 +73,7 @@ export interface BitacoraDisposicionPirolisis extends BaseBitacora {
   filas: FilaDisposicionPirolisis[];
 }
 
-// 4. Bitacora Disposición Final de RPBI a Vertedero
+// 4. Bitacora Disposición Final de DSH a Vertedero
 export interface FilaDisposicionVertedero {
   camion: string; // Camion 01 to Camion 11
   placa: string;
@@ -200,7 +200,7 @@ export interface BitacoraControlAutoclaves extends BaseBitacora {
   capturaPanelAutoclave?: string;
 }
 
-// 9. Bitacora Generación y Almacenamiento Temporal de RPBI
+// 9. Bitacora Generación y Almacenamiento Temporal de DSH
 export interface FilaGeneracionTicket {
   noTicketInterno: string;
   tipoResiduo?: string;
@@ -489,11 +489,8 @@ export interface BitacoraControl360Vehiculos extends BaseBitacora {
     selloHermetico: EstadoCumplimiento360;
     biohazardVisible: EstadoCumplimiento360;
     desinfeccionPrevia: EstadoCumplimiento360;
-    contenedoresPunzocortantes?: EstadoCumplimiento360;
-    bolsasReglamentarias?: EstadoCumplimiento360;
     kitDerrame: EstadoCumplimiento360;
     eppCompleto: EstadoCumplimiento360;
-    documentosManifiestos?: EstadoCumplimiento360;
   };
   horaSalida: string;
   kmSalida: number;
@@ -505,7 +502,6 @@ export interface BitacoraControl360Vehiculos extends BaseBitacora {
   pesoEntregadoKg?: number;
   totalPesoLbs?: number;
   totalPesoKg?: number;
-  noPrecintoSello?: string;
   recibidoPorPlanta: string;
 
   descargaCompleta: boolean;

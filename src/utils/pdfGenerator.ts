@@ -242,13 +242,13 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   const titles: Record<string, { code: string; name: string }> = {
     inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
     entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
-    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
-    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
+    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A PIRÓLISIS' },
+    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A VERTEDERO' },
     control_incineracion: { code: 'F-OPR-05', name: 'BITÁCORA DE CONTROL DE INCINERACIÓN' },
     cuarto_frio: { code: 'F-OPR-06', name: 'BITÁCORA DE CONTROL DE CUARTO FRÍO Y CONGELADORES' },
     reduccion_volumen: { code: 'F-OPR-07', name: 'BITÁCORA DE REDUCCIÓN DE VOLUMEN Y CONTROL DE PACAS' },
     control_autoclaves: { code: 'F-OPR-08', name: 'BITÁCORA DE CONTROL QUÍMICO / BIOLÓGICO DE AUTOCLAVES' },
-    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' },
+    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE DSH' },
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
@@ -256,7 +256,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
-    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE RPBI' }
+    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE DSH' },
+    reporte_recoleccion: { code: 'BIOTRASH 4.2. F-OPR-000-18', name: 'INFORME CONSOLIDADO DE RECOLECCIÓN DE RESIDUOS' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -735,7 +736,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawDataTable(tableHeaders, tableWidths, tableRows);
 
   } else if (tipo === 'disposicion_pirolisis') {
-    // 3. Disposicion Final RPBI a Pirolisis
+    // 3. Disposicion Final DSH a Pirolisis
     drawSectionHeader('I. METADATOS DISPOSICIÓN FINAL (PIRÓLISIS)');
     drawGridInfo([
       { key: 'Fecha Proceso', value: data.fecha },
@@ -760,7 +761,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawDataTable(tableHeaders, tableWidths, tableRows);
 
   } else if (tipo === 'disposicion_vertedero') {
-    // 4. Disposicion Final RPBI a Vertedero
+    // 4. Disposicion Final DSH a Vertedero
     drawSectionHeader('I. INFORMACIÓN REGISTRO VERTEDERO');
     drawGridInfo([
       { key: 'Fecha', value: data.fecha },
@@ -1004,7 +1005,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Peso Ticket Báscula', value: String(data.pesoTicketBascula || 0) + ' lbs' }
     ]);
 
-    drawSectionHeader('II. CLASIFICACIÓN DEL RESIDUO RPBI');
+    drawSectionHeader('II. CLASIFICACIÓN DEL RESIDUO DSH');
     const res = data.tipoResiduo || {};
     const emb = data.tipoEmbalaje || {};
     drawGridInfo([
@@ -1468,6 +1469,34 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Firma Supervisor SGI', value: data.firmaSupervisor || 'Supervisor de Flota' },
       { key: 'Firma Planta Recepción', value: data.firmaPlanta || data.recibidoPorPlanta || '' }
     ]);
+  } else if (tipo === 'reporte_recoleccion') {
+    // 18. Informe Consolidado de Recolección de Residuos
+    const results = data.results || (Array.isArray(data) ? data : []);
+    drawSectionHeader('I. RESUMEN DE PARÁMETROS Y CONSULTA DE RECOLECCIÓN');
+    drawGridInfo([
+      { key: 'Total de Registros / Visitas', value: `${results.length} visitas procesadas` },
+      { key: 'Total de Peso Recolectado', value: `${results.reduce((acc: number, r: any) => acc + (Number(r.unidades) || 0), 0).toLocaleString()} Lbs` },
+      { key: 'Filtro / Criterio de Consulta', value: data.filterDescription || 'Informe de recolección de residuos DSH' },
+      { key: 'Fecha de Emisión', value: new Date().toLocaleDateString('es-GT') }
+    ]);
+
+    drawSectionHeader(`II. DETALLE DE RECOLECCIONES REGISTRADAS (${results.length} REGISTROS)`);
+    const rHeaders = ['FECHA/HORA', 'RECIBO', 'CLIENTE', 'UBICACIÓN / SEDE', 'RUTA', 'DESECHO', 'LBS'];
+    const rWidths = [24, 20, 42, 38, 26, 20, 10];
+    const rRows: any[] = [];
+
+    results.slice(0, 150).forEach((item: any) => {
+      rRows.push([
+        `${item.fechaVisita || ''} ${item.horaVisita || ''}`,
+        item.numeroRecibo || '',
+        item.nombreCliente || item.codigoCliente || '',
+        item.nombreUbicacion || item.codigoUbicacion || '',
+        item.ruta || item.codigoRuta || '',
+        item.categoria || '',
+        String(item.unidades || 0)
+      ]);
+    });
+    drawDataTable(rHeaders, rWidths, rRows);
   }
 
   // Draw Control de Cambios table at page limit if fit, otherwise fallback

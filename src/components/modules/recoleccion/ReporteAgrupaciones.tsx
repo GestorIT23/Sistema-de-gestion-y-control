@@ -166,7 +166,9 @@ export default function ReporteAgrupaciones({ registros, totalUnidadesGeneral }:
   const rutaList = Object.values(rutaMap).sort((a, b) => b.unidades - a.unidades);
   const ubicacionList = Object.values(ubicacionMap).sort((a, b) => b.unidades - a.unidades);
   const categoriaList = Object.values(categoriaMap).sort((a, b) => b.unidades - a.unidades);
-  const periodoList = Object.values(periodoMap).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const periodoList = Object.values(periodoMap).sort((a, b) => {
+    return String(b.fecha || '').localeCompare(String(a.fecha || ''));
+  });
 
   // Export current summary table to Excel
   const handleExportSummaryExcel = () => {

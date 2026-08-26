@@ -9,6 +9,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -20,6 +23,8 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraControlAutoclaves | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [noAutoclave, setNoAutoclave] = useState('1');
@@ -148,7 +153,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as BitacoraControlAutoclaves);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error(e);
       const fallback = localStorage.getItem('biotrash_auto_bk');
@@ -160,14 +165,19 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
 
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_control_autoclaves', docId));
+      await deleteDoc(doc(db, 'bitacora_control_autoclaves', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -266,9 +276,21 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero Principal
         </button>
-        <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-          Módulo E F-OPR-000 / Format N° 8
-        </span>
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_control_autoclaves"
+            moduleTitle="Bitácora de Control de Autoclaves"
+            formCode="F-OPR-08"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_auto_bk"
+            variant="header-button"
+          />
+          <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            Módulo F-OPR-08
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -794,7 +816,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
               <Info className="w-4 h-4 text-emerald-450" /> Laboratorio BIOTRASH SGI
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
-              La comprobación científica de la efectividad del proceso de esterilización demuestra el aseguramiento total de la eliminación de la carga patógena clínica de los RPBI.
+              La comprobación científica de la efectividad del proceso de esterilización demuestra el aseguramiento total de la eliminación de la carga patógena clínica de los DSH.
             </p>
           </div>
 
@@ -848,7 +870,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
                              <span className="text-slate-300 font-mono text-[10px]">|</span>
                              <button
                                type="button"
-                               onClick={() => handleDelete(reg.id!)}
+                               onClick={() => setRecordToDelete(reg)}
                                className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                                title="Eliminar Registro"
                              >
@@ -866,6 +888,23 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
         </div>
 
       </div>
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Control de Autoclave"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Autoclave', value: `Autoclave #${recordToDelete?.noAutoclave || ''}` },
+          { label: 'Proceso', value: recordToDelete?.noProceso || '' },
+          { label: 'Peso Neto Total', value: `${recordToDelete?.totalPesoNetoLbs || 0} lbs` },
+          { label: 'Resultado Indicador', value: recordToDelete?.resultadoIndicador || '' },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

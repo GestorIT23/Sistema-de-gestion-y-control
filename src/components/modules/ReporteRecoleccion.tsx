@@ -17,6 +17,8 @@ import FormHeader from '../FormHeader';
 import FormFooter from '../FormFooter';
 import ReporteConsultaFiltros, { FiltrosConsultaRecoleccion } from './recoleccion/ReporteConsultaFiltros';
 import ReporteAgrupaciones from './recoleccion/ReporteAgrupaciones';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 import { 
   Upload, 
   FileSpreadsheet, 
@@ -47,7 +49,9 @@ import {
   FileCheck2,
   ListFilter,
   TrendingUp,
-  Table as TableIcon
+  Table as TableIcon,
+  Tag,
+  ShieldAlert
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { downloadRecoleccionTemplate, generateAndDownloadExcel } from '../../utils/excelGenerator';
@@ -105,7 +109,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
     numeroRecibo: '',
     codigoRuta: '',
     ruta: '',
-    categoria: 'RPBI BIOINFECCIOSO',
+    categoria: 'DSH BIOINFECCIOSO',
     producto: 'DESECHO BIOINFECCIOSO EN BOLSA ROJA',
     medida: 'Lb',
     unidades: 0,
@@ -169,13 +173,24 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
   const fetchRegistros = async () => {
     try {
       setLoadingRegistros(true);
-      const q = query(collection(db, 'reportes_recoleccion'), orderBy('fechaVisita', 'desc'), limit(2500));
-      const snap = await getDocs(q);
+      let snap;
+      try {
+        const q = query(collection(db, 'reportes_recoleccion'), limit(1500));
+        snap = await getDocs(q);
+      } catch (err: any) {
+        console.warn('Aviso al consultar reportes_recoleccion, intentando consulta ligera:', err);
+        const fallbackQ = query(collection(db, 'reportes_recoleccion'), limit(600));
+        snap = await getDocs(fallbackQ);
+      }
+
       const list: RegistroRecoleccion[] = [];
       snap.forEach((d) => {
         list.push({ id: d.id, ...d.data() } as RegistroRecoleccion);
       });
-      setRegistros(list);
+
+      // Sort strictly by date descending (newest first)
+      const sorted = sortRecordsByDateDesc(list, 'fechaVisita');
+      setRegistros(sorted);
     } catch (e) {
       console.error('Error cargando reportes de recolección:', e);
     } finally {
@@ -279,7 +294,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
       ).trim();
 
       const categoria = String(
-        mapped['categoria'] || mapped['tipodesecho'] || mapped['tiporesiduo'] || mapped['clasificacion'] || 'RPBI BIOINFECCIOSO'
+        mapped['categoria'] || mapped['tipodesecho'] || mapped['tiporesiduo'] || mapped['clasificacion'] || 'DSH BIOINFECCIOSO'
       ).trim();
 
       const producto = String(
@@ -329,8 +344,41 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
       });
     });
 
+    // Check temporal range limit (maximum 6 months / 185 days)
+    const validDateObjects = rows
+      .map(r => r.fechaVisita ? new Date(r.fechaVisita) : null)
+      .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+
+    let temporalWarning = '';
+    let isTemporalSpanExceeded = false;
+
+    if (validDateObjects.length > 0) {
+      const minTime = Math.min(...validDateObjects.map(d => d.getTime()));
+      const maxTime = Math.max(...validDateObjects.map(d => d.getTime()));
+      const diffDays = (maxTime - minTime) / (1000 * 60 * 60 * 24);
+
+      if (diffDays > 185) {
+        isTemporalSpanExceeded = true;
+        const minDateStr = new Date(minTime).toISOString().split('T')[0];
+        const maxDateStr = new Date(maxTime).toISOString().split('T')[0];
+        const monthsApprox = (diffDays / 30.4).toFixed(1);
+        temporalWarning = `LÍMITE EXCEDIDO: El archivo contiene un rango temporal de ${Math.round(diffDays)} días (~${monthsApprox} meses, desde ${minDateStr} hasta ${maxDateStr}). Por política de rendimiento e integridad del SGI, no se permite subir más de 6 meses (180 días) en un solo archivo. Por favor segmente el lote en archivos de máximo 6 meses.`;
+        
+        // Invalidate rows to block committing over-sized batches
+        rows.forEach(r => {
+          r._isValid = false;
+          r._errors.push('Excede el rango temporal máximo de 6 meses por archivo.');
+        });
+      }
+    }
+
     setParsedRows(rows);
-    if (rows.length > 0) {
+    if (isTemporalSpanExceeded) {
+      setUploadFeedback({
+        type: 'error',
+        message: temporalWarning
+      });
+    } else if (rows.length > 0) {
       setUploadFeedback({
         type: 'success',
         message: `Se detectaron e interpretaron ${rows.length} registros del archivo ${sourceName}. ${rows.filter(r => !r._isValid).length} registros requieren revisión.`
@@ -512,7 +560,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
         numeroRecibo: '',
         codigoRuta: '',
         ruta: '',
-        categoria: 'RPBI BIOINFECCIOSO',
+        categoria: 'DSH BIOINFECCIOSO',
         producto: 'DESECHO BIOINFECCIOSO EN BOLSA ROJA',
         medida: 'Lb',
         unidades: 0,
@@ -674,7 +722,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
   // JOINT FILTERED RECORDS EVALUATION
   // -------------------------------------------------------------
   const filteredRegistros = useMemo(() => {
-    return registros.filter(r => {
+    const filtered = registros.filter(r => {
       // 1. Ruta
       if (filtros.ruta !== 'todas') {
         if (r.ruta !== filtros.ruta && r.codigoRuta !== filtros.ruta) return false;
@@ -751,6 +799,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
 
       return true;
     });
+    return sortRecordsByDateDesc(filtered, 'fechaVisita');
   }, [registros, filtros]);
 
   // Pagination
@@ -822,7 +871,10 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
       alert('No hay registros bajo los filtros actuales para exportar.');
       return;
     }
-    generateAndDownloadExcel('reporte_recoleccion', filteredRegistros, `Reporte_Recoleccion_Consultado_${new Date().toISOString().split('T')[0]}`);
+    generateAndDownloadExcel('reporte_recoleccion', {
+      results: filteredRegistros,
+      filterDescription: `Consulta: Ruta: ${filtros.ruta} | Cliente: ${filtros.nombreCliente} | Desecho: ${filtros.categoria} | Criterio Temporal: ${filtros.modoTemporal.toUpperCase()}`
+    });
   };
 
   // Export Filtered Report to PDF
@@ -831,9 +883,8 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
       alert('No hay registros bajo los filtros actuales para exportar.');
       return;
     }
-    generateAndDownloadPDF('reporte_recoleccion', filteredRegistros, {
-      title: 'INFORME CONSOLIDADO DE RECOLECCIÓN DE RESIDUOS',
-      code: 'BIOTRASH 4.2. F-OPR-000-18',
+    generateAndDownloadPDF('reporte_recoleccion', {
+      results: filteredRegistros,
       filterDescription: `Consulta: Ruta: ${filtros.ruta} | Cliente: ${filtros.nombreCliente} | Desecho: ${filtros.categoria} | Criterio Temporal: ${filtros.modoTemporal.toUpperCase()}`
     });
   };
@@ -867,6 +918,17 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Gestor IT specific form wipe button */}
+          <GestorItDeleteModuleRecords
+            collectionName="reportes_recoleccion"
+            moduleTitle="Reporte de Recolección de Residuos"
+            formCode="BIOTRASH 4.2. F-OPR-000-18"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            variant="header-button"
+          />
+
           <button
             type="button"
             onClick={downloadRecoleccionTemplate}
@@ -1320,6 +1382,22 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
                 </div>
               ))}
             </div>
+
+            {/* 6-Month Data Size Limit Policy Banner */}
+            <div className="mt-3 p-3 bg-amber-50/80 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-amber-900">Política de Límite Temporal de Carga SGI:</span>
+                  <span className="bg-amber-200/70 text-amber-900 font-mono font-bold text-[10px] px-2 py-0.5 rounded">
+                    Máximo 6 meses (180 días) por archivo
+                  </span>
+                </div>
+                <p className="text-[11.5px] text-amber-900/90 leading-relaxed">
+                  Para garantizar la estabilidad del sistema, consistencia de auditoría y velocidad de procesamiento, <strong>no se puede subir más de 6 meses de datos en un solo archivo</strong>. Si dispone de datos históricos extensos, organícelos en bloques semestrales (por ejemplo: Enero a Junio / Julio a Diciembre).
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Feedback message banner */}
@@ -1705,7 +1783,7 @@ export default function ReporteRecoleccionModule({ onBack, userEmail }: Props) {
                   onChange={(e) => setIndividualForm({ ...individualForm, categoria: e.target.value })}
                   className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium"
                 >
-                  <option value="RPBI BIOINFECCIOSO">RPBI BIOINFECCIOSO</option>
+                  <option value="DSH BIOINFECCIOSO">DSH BIOINFECCIOSO</option>
                   <option value="PUNZOCORTANTES">PUNZOCORTANTES</option>
                   <option value="ANATOMOPATOLÓGICOS">ANATOMOPATOLÓGICOS</option>
                   <option value="QUÍMICOS / FARMACÉUTICOS">QUÍMICOS / FARMACÉUTICOS</option>

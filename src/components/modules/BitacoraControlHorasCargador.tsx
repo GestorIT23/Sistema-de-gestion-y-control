@@ -27,6 +27,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -38,6 +41,8 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraControlHorasCargador | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields - 1. Datos Generales
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -85,7 +90,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
 
   // 5. Actividades Realizadas
   const [tipoActividadPrincipal, setTipoActividadPrincipal] = useState('Alimentación de Tolva de Trituradora');
-  const [tipoMaterialTrabajado, setTipoMaterialTrabajado] = useState('Residuos Clínicos y Hospitalarios Sólidos (RPBI)');
+  const [tipoMaterialTrabajado, setTipoMaterialTrabajado] = useState('Residuos Clínicos y Desechos Sólidos Hospitalarios (DSH)');
   const [descripcionActividades, setDescripcionActividades] = useState('');
 
   // 6. Combustible
@@ -141,7 +146,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as BitacoraControlHorasCargador);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       const fallback = localStorage.getItem('biotrash_horas_cargador_bk');
@@ -154,14 +159,19 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_control_horas_cargador', docId));
+      await deleteDoc(doc(db, 'bitacora_control_horas_cargador', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -296,6 +306,17 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
         version="1.0"
         fechaElaboracion="02/07/2026"
         fechaVersion="02/07/2026"
+      />
+
+      {/* IT Manager Global Delete Tool */}
+      <GestorItDeleteModuleRecords
+        userEmail={userEmail}
+        moduleKey="bitacora_control_horas_cargador"
+        moduleName="Control de Horas de Cargador"
+        onDeleted={() => {
+          setRegistros([]);
+          fetchRegistros();
+        }}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -862,7 +883,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -891,6 +912,23 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
             solicitante: 'Coordinación SGI'
           }
         ]}
+      />
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Horas de Cargador Frontal"
+        itemIdentifier={recordToDelete?.noReporte || recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Unidad', value: `${recordToDelete?.codigoUnidad || ''} - ${recordToDelete?.marcaModelo || ''}` },
+          { label: 'Operador', value: recordToDelete?.operador || recordToDelete?.responsable || '' },
+          { label: 'Horómetro Inicio / Fin', value: `${recordToDelete?.horometroInicial || 0} / ${recordToDelete?.horometroFinal || 0} hrs` },
+          { label: 'Horas Efectivas', value: `${recordToDelete?.horasEfectivasTrabajo || 0} hrs` },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
       />
     </div>
   );

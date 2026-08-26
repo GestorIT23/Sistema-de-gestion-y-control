@@ -10,6 +10,9 @@ import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -21,6 +24,8 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraInventariosSGI | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -53,7 +58,7 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
         const docData = sanitizeBiotrashObject(doc.data());
         docs.push({ id: doc.id, ...docData } as BitacoraInventariosSGI);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       const fallback = localStorage.getItem('biotrash_inventarios_sgc_bk');
@@ -66,14 +71,19 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_inventarios_sgc', docId));
+      await deleteDoc(doc(db, 'bitacora_inventarios_sgc', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -180,6 +190,17 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
       <FormHeader 
         titulo="BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGI"
         codigo="BIOTRASH 4.0. F-OPR-000-12"
+      />
+
+      {/* IT Manager Global Delete Tool */}
+      <GestorItDeleteModuleRecords
+        userEmail={userEmail}
+        moduleKey="bitacora_inventarios_sgc"
+        moduleName="Control de Inventarios e Insumos SGI"
+        onDeleted={() => {
+          setRegistros([]);
+          fetchRegistros();
+        }}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -478,7 +499,7 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -507,6 +528,22 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
             solicitante: 'Comité de Calidad'
           }
         ]}
+      />
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Inventarios SGI"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Área Física', value: recordToDelete?.areaFisica || '' },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Insumos Auditados', value: `${recordToDelete?.filas?.length || 0} ítems` },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
       />
     </div>
   );

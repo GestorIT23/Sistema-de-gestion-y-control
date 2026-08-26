@@ -25,7 +25,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           sheetName: 'Inventarios',
           columns: ['Fecha', 'Turno', 'Area', 'Responsable', 'Observaciones', 'Hora', 'Producto', 'Cantidad', 'Firma'],
           samples: [
-            { Fecha: today, Turno: 'Matutino', Area: 'Almacén Central', Responsable: userEmail, Observaciones: 'Carga masiva inicial', Hora: '08:00', Producto: 'Bolsas Rojas RPBI', Cantidad: 150, Firma: 'Aprobado' },
+            { Fecha: today, Turno: 'Matutino', Area: 'Almacén Central', Responsable: userEmail, Observaciones: 'Carga masiva inicial', Hora: '08:00', Producto: 'Bolsas Rojas DSH', Cantidad: 150, Firma: 'Aprobado' },
             { Fecha: today, Turno: 'Matutino', Area: 'Almacén Central', Responsable: userEmail, Observaciones: 'Carga masiva inicial', Hora: '08:30', Producto: 'Insumo Cloro SGI', Cantidad: 45, Firma: 'Aprobado' }
           ]
         };
@@ -98,7 +98,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
       case 'generacion_almacenamiento':
         return {
           filename: 'Formato_Generacion_Almacenamiento.xlsx',
-          sheetName: 'RPBI',
+          sheetName: 'DSH',
           columns: ['Fecha', 'Responsable', 'Observaciones', 'Ente Generador', 'Peso Ticket Bascula', 'Ubicacion', 'No Ticket Bascula', 'Inorganico (Si/No)', 'Punzo Cortante (Si/No)', 'Patologico (Si/No)', 'Contenedor (Si/No)', 'Tonel Metalico (Si/No)', 'Congelador (Si/No)', 'No Ticket Interno', 'Tipo Residuo', 'Tipo Embalaje', 'Cantidad', 'Peso Ticket Interno', 'Ubicacion Fila (Izquierda/Derecha)'],
           samples: [
             { Fecha: today, Responsable: userEmail, Observaciones: 'Registro masivo', 'Ente Generador': 'Hospital General San Juan', 'Peso Ticket Bascula': 120, 'Ubicacion': 'Bodega Norte', 'No Ticket Bascula': 'TB-8849', 'Inorganico (Si/No)': 'Si', 'Punzo Cortante (Si/No)': 'No', 'Patologico (Si/No)': 'No', 'Contenedor (Si/No)': 'Si', 'Tonel Metalico (Si/No)': 'No', 'Congelador (Si/No)': 'No', 'No Ticket Interno': 'TI-101', 'Tipo Residuo': 'Inorgánico', 'Tipo Embalaje': 'Contenedor', 'Cantidad': 1, 'Peso Ticket Interno': 120, 'Ubicacion Fila (Izquierda/Derecha)': 'Izquierda' }
@@ -189,6 +189,17 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // File size limit: 15MB
+    const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setFeedback({
+        text: `El archivo seleccionado excede el tamaño máximo permitido de 15 MB (${(file.size / (1024 * 1024)).toFixed(1)} MB). Por favor comprima o divida el archivo.`,
+        type: 'error'
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setLoading(true);
     setFeedback({ text: 'Procesando archivo excel...', type: 'info' });
 
@@ -269,6 +280,39 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
 
           return new Date().toISOString().split('T')[0];
         };
+
+        // Validate 6-month temporal span limit across rows
+        const dateFields = ['Fecha', 'fecha', 'FECHA', 'Fecha Visita', 'fechaVisita', 'Fecha Operacion', 'fechaOperacion'];
+        const extractedDates: Date[] = [];
+
+        jsonData.forEach((row: any) => {
+          for (const df of dateFields) {
+            if (row[df]) {
+              const dStr = parseExcelDate(row[df]);
+              const d = new Date(dStr);
+              if (!isNaN(d.getTime())) {
+                extractedDates.push(d);
+              }
+              break;
+            }
+          }
+        });
+
+        if (extractedDates.length > 0) {
+          const minTime = Math.min(...extractedDates.map(d => d.getTime()));
+          const maxTime = Math.max(...extractedDates.map(d => d.getTime()));
+          const diffDays = (maxTime - minTime) / (1000 * 60 * 60 * 24);
+
+          // 185 days is approx 6 months
+          if (diffDays > 185) {
+            const minDateStr = new Date(minTime).toISOString().split('T')[0];
+            const maxDateStr = new Date(maxTime).toISOString().split('T')[0];
+            const monthsApprox = (diffDays / 30.4).toFixed(1);
+            throw new Error(
+              `Límite de rango temporal excedido: El archivo abarca ${Math.round(diffDays)} días (~${monthsApprox} meses, desde ${minDateStr} hasta ${maxDateStr}). Por política de rendimiento e integridad del SGI BIOTRASH, no se permite subir más de 6 meses (180 días) en un solo archivo. Por favor segmente la información en archivos semestrales.`
+            );
+          }
+        }
 
         const recordsToSave: any[] = [];
 
@@ -866,11 +910,23 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
 
   return (
     <div id={`bulk-upload-${tipo}`} className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
-      <div className="flex items-center gap-2 border-b pb-2">
-        <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+      <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+          <div>
+            <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wide">Carga Masiva desde Excel</h4>
+            <p className="text-[10px] text-slate-500 leading-none">Importar múltiples registros de forma automatizada</p>
+          </div>
+        </div>
+        <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200" title="Rango máximo de fechas permitido por archivo">
+          Límite: Máx. 6 meses por archivo
+        </span>
+      </div>
+
+      <div className="p-2.5 bg-amber-50/60 border border-amber-200/80 rounded-lg text-[11px] text-amber-900 flex items-start gap-2">
+        <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wide">Carga Masiva desde Excel</h4>
-          <p className="text-[10px] text-slate-500 leading-none">Importar múltiples registros de forma automatizada</p>
+          <span className="font-bold">Política de carga de datos SGI:</span> No se permite subir más de <strong>6 meses (180 días)</strong> de información en un solo archivo. Si cuenta con históricos más amplios, debe segmentar la carga en periodos semestrales.
         </div>
       </div>
 

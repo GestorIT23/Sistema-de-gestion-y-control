@@ -41,13 +41,13 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
   const titles: Record<string, { code: string; name: string }> = {
     inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
     entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
-    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
-    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
+    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A PIRÓLISIS' },
+    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A VERTEDERO' },
     control_incineracion: { code: 'F-OPR-05', name: 'BITÁCORA DE CONTROL DE INCINERACIÓN' },
     cuarto_frio: { code: 'F-OPR-06', name: 'BITÁCORA DE CONTROL DE CUARTO FRÍO Y CONGELADORES' },
     reduccion_volumen: { code: 'F-OPR-07', name: 'BITÁCORA DE REDUCCIÓN DE VOLUMEN Y CONTROL DE PACAS' },
     control_autoclaves: { code: 'F-OPR-08', name: 'BITÁCORA DE CONTROL QUÍMICO / BIOLÓGICO DE AUTOCLAVES' },
-    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE RPBI' },
+    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GENERACIÓN Y ALMACENAMIENTO TEMPORAL DE DSH' },
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
@@ -55,7 +55,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     control_horas_cargador: { code: 'F-OPR-000-14', name: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL' },
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
-    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE RPBI' },
+    control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE DSH' },
     reporte_recoleccion: { code: 'F-OPR-000-18', name: 'REPORTE DE RECOLECCIÓN DE RESIDUOS (CARGA EN LOTE)' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
@@ -382,7 +382,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Observaciones:', data.observaciones || 'Ninguna']);
     wsRows.push([]); // separator
 
-    wsRows.push(['II. CLASIFICACIÓN DE RESIDUO RPBI Y EMBALAJE']);
+    wsRows.push(['II. CLASIFICACIÓN DE RESIDUO DSH Y EMBALAJE']);
     wsRows.push(['Inorgánico:', data.tipoResiduo?.inorganico ? 'SÍ' : 'NO']);
     wsRows.push(['Punzocortante:', data.tipoResiduo?.punzoCortante ? 'SÍ' : 'NO']);
     wsRows.push(['Patológico:', data.tipoResiduo?.patologico ? 'SÍ' : 'NO']);
@@ -629,13 +629,13 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
   const titles: Record<string, { code: string; name: string }> = {
     inventarios: { code: 'F-OPR-01', name: 'BITÁCORA DE INGRESO DE DESECHOS A PLANTA' },
     entrega_contenedores: { code: 'F-OPR-02', name: 'BITÁCORA DE ENTREGA DE CONTENEDORES ROJOS' },
-    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A PIRÓLISIS' },
-    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE RPBI A VERTEDERO' },
+    disposicion_pirolisis: { code: 'F-OPR-03', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A PIRÓLISIS' },
+    disposicion_vertedero: { code: 'F-OPR-04', name: 'BITÁCORA DE DISPOSICIÓN FINAL DE DSH A VERTEDERO' },
     control_incineracion: { code: 'F-OPR-05', name: 'BITÁCORA DE CONTROL DE INCINERACIÓN' },
     cuarto_frio: { code: 'F-OPR-06', name: 'BITÁCORA DE CONTROL DE CUARTO FRÍO Y CONGELADORES' },
     reduccion_volumen: { code: 'F-OPR-07', name: 'BITÁCORA DE REDUCCIÓN DE VOLUMEN Y CONTROL DE PACAS' },
     control_autoclaves: { code: 'F-OPR-08', name: 'BITÁCORA DE CONTROL QUÍMICO / BIOLÓGICO DE AUTOCLAVES' },
-    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GESTIÓN DE GENERACIÓN Y ALMACENAMIENTO DE RPBI' },
+    generacion_almacenamiento: { code: 'F-OPR-09', name: 'BITÁCORA DE GESTIÓN DE GENERACIÓN Y ALMACENAMIENTO DE DSH' },
     lavado_banos: { code: 'F-OPR-10', name: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA' },
     insumos_quimicos: { code: 'F-OPR-11', name: 'BITÁCORA DE INSUMOS QUÍMICOS Y PLÁSTICOS' },
     inventarios_sgc: { code: 'F-OPR-12', name: 'BITÁCORA DE CONTROL DE INVENTARIO SGI' },
@@ -1242,7 +1242,7 @@ export function downloadRecoleccionTemplate(): void {
       'REC-88401',
       'R-01',
       'RUTA CAPITAL NORTE',
-      'RPBI BIOINFECCIOSO',
+      'DSH BIOINFECCIOSO',
       'DESECHOS BIOLÓGICO-INFECCIOSOS',
       'Lb',
       45.5,
@@ -1272,7 +1272,7 @@ export function downloadRecoleccionTemplate(): void {
       'REC-88403',
       'R-02',
       'RUTA MIXCO - ZONA 11',
-      'RPBI BIOINFECCIOSO',
+      'DSH BIOINFECCIOSO',
       'BOLSAS ROJAS REGLAMENTARIAS',
       'Lb',
       28.75,

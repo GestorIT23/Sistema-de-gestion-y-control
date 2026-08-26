@@ -10,6 +10,9 @@ import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -28,6 +31,8 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraInventarios | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -67,7 +72,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
         const docData = sanitizeBiotrashObject(doc.data());
         docs.push({ id: doc.id, ...docData } as BitacoraInventarios);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       // Fallback local storage for resilience
@@ -81,14 +86,19 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_inventarios', docId));
+      await deleteDoc(doc(db, 'bitacora_inventarios', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -173,9 +183,21 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero Principal
         </button>
-        <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-          Módulo de Control F-OPR-000 / Format N° 1
-        </span>
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_inventarios"
+            moduleTitle="Bitácora de Ingreso de Desechos a Planta"
+            formCode="F-OPR-01"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_inv_bk"
+            variant="header-button"
+          />
+          <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            Módulo de Control F-OPR-01
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -436,7 +458,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
               <CheckCircle className="w-4 h-4 text-emerald-400" /> Control del Proceso
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              De acuerdo con las regulaciones de la norma <strong>BIOTRASH ISO 14001</strong> de gestión de residuos peligrosos biológico-infecciosos (RPBI), este formato monitorea el ingreso de desechos clínicos e industriales a la planta de tratamiento.
+              De acuerdo con las regulaciones de la norma <strong>BIOTRASH ISO 14001</strong> de gestión de Desechos Sólidos Hospitalarios (DSH), este formato monitorea el ingreso de desechos clínicos e industriales a la planta de tratamiento.
             </p>
             <div className="border-t border-slate-800 pt-4 space-y-3 font-mono text-[11px] text-slate-300">
               <div className="flex justify-between">
@@ -514,7 +536,7 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -533,6 +555,22 @@ export default function BitacoraInventariosModule({ onBack, userEmail }: Props) 
         </div>
 
       </div>
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Inventario"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Turno', value: recordToDelete?.turno || '' },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Observaciones', value: recordToDelete?.observaciones || '—' },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

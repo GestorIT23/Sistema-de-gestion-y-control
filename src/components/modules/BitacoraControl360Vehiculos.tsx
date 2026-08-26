@@ -33,6 +33,8 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -224,7 +226,7 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
       snap.forEach(d => {
         list.push({ id: d.id, ...d.data() } as BitacoraControl360Vehiculos);
       });
-      setRegistros(list);
+      setRegistros(sortRecordsByDateDesc(list, 'fecha'));
     } catch (e) {
       console.warn("Could not fetch 360 vehicle logs:", e);
     } finally {
@@ -429,7 +431,7 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
               <Truck className="w-6 h-6 text-[#1A7A4A]" /> Sistema de Control 360° de Vehículos
             </h1>
             <p className="text-xs text-slate-500">
-              Transporte, bioseguridad, trazabilidad de recolección y cumplimiento legal de RPBI
+              Transporte, bioseguridad, trazabilidad de recolección y cumplimiento legal de DSH
             </p>
           </div>
         </div>
@@ -455,6 +457,17 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
           </button>
         </div>
       </div>
+
+      {/* IT Manager Global Delete Tool */}
+      <GestorItDeleteModuleRecords
+        userEmail={userEmail}
+        moduleKey="bitacora_control_360_vehiculos"
+        moduleName="Control 360° de Vehículos"
+        onDeleted={() => {
+          setRegistros([]);
+          fetchRegistros();
+        }}
+      />
 
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap border-b border-slate-200 gap-1 bg-white p-1 rounded-lg shadow-sm">
@@ -1113,7 +1126,7 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
               <Clock className="w-5 h-5 text-blue-600" /> Matriz Consolidada de Rutas y Frecuencias Semanales
             </h2>
             <p className="text-xs text-slate-500">
-              Programación oficial de frecuencias por centro de distribución para transporte de RPBI.
+              Programación oficial de frecuencias por centro de distribución para transporte de DSH.
             </p>
           </div>
 

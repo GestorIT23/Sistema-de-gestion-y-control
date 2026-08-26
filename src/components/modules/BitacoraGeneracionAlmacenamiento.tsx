@@ -9,6 +9,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -20,6 +23,8 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraGeneracionAlmacenamiento | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [enteGenerador, setEnteGenerador] = useState('');
@@ -99,7 +104,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as BitacoraGeneracionAlmacenamiento);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error(e);
       const fallback = localStorage.getItem('biotrash_gen_bk');
@@ -110,14 +115,19 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_generacion_almacenamiento', docId));
+      await deleteDoc(doc(db, 'bitacora_generacion_almacenamiento', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -215,9 +225,21 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero Principal
         </button>
-        <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
-          Módulo C F-OPR-000 / Format N° 9
-        </span>
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_generacion_almacenamiento"
+            moduleTitle="Bitácora de Generación y Almacenamiento Temporal de DSH"
+            formCode="F-OPR-09"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_gen_bk"
+            variant="header-button"
+          />
+          <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
+            Módulo F-OPR-09
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -226,7 +248,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
         <div className="lg:col-span-3 space-y-6">
           <form id="bitacora-generacion-form" onSubmit={handleFormSubmit} className="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-6">
             
-            <FormHeader titulo="Bitácora de Generación y Almacenamiento Temporal de RPBI (Ingreso)" />
+            <FormHeader titulo="Bitácora de Generación y Almacenamiento Temporal de DSH (Ingreso)" />
 
             {/* Subheader info fields matching original tables */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
@@ -609,7 +631,7 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -626,6 +648,23 @@ export default function BitacoraGeneracionAlmacenamientoModule({ onBack, userEma
         </div>
 
       </div>
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Generación y Almacenamiento DSH"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Ente Generador', value: recordToDelete?.enteGenerador || '' },
+          { label: 'Total Peso (lbs)', value: `${(recordToDelete?.totalPesoTickets || 0).toFixed(1)} lbs` },
+          { label: 'Ubicación', value: recordToDelete?.ubicacion || '' },
+          { label: 'Tickets Registrados', value: `${recordToDelete?.filasLeft?.length || 0}` },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

@@ -33,13 +33,13 @@ import { Usuario, UserRole } from '../../types';
 export const AVAILABLE_MODULES = [
   { id: 'inventarios', title: 'Bitácora de Ingreso de Desechos a Planta', code: 'F-OPR-000-1' },
   { id: 'entrega_contenedores', title: 'Bitácora de Entrega de Contenedores Rojos al Departamento de Logística', code: 'F-OPR-000-2' },
-  { id: 'disposicion_pirolisis', title: 'Bitácora de Disposición Final de RPBI a Pirólisis', code: 'F-OPR-000-3' },
-  { id: 'disposicion_vertedero', title: 'Bitácora de Disposición Final de RPBI (Vertedero Autorizado)', code: 'F-OPR-000-4' },
-  { id: 'control_incineracion', title: 'Bitácora de Control de Incineración de RPBI', code: 'F-OPR-000-5' },
+  { id: 'disposicion_pirolisis', title: 'Bitácora de Disposición Final de DSH a Pirólisis', code: 'F-OPR-000-3' },
+  { id: 'disposicion_vertedero', title: 'Bitácora de Disposición Final de DSH (Vertedero Autorizado)', code: 'F-OPR-000-4' },
+  { id: 'control_incineracion', title: 'Bitácora de Control de Incineración de DSH', code: 'F-OPR-000-5' },
   { id: 'cuarto_frio', title: 'Bitácora de Control de Cuarto Frío y Congeladores', code: 'F-OPR-000-6' },
   { id: 'reduccion_volumen', title: 'Bitácora de Proceso de Reducción de Volúmen y Control de Pacas', code: 'F-OPR-000-7' },
   { id: 'control_autoclaves', title: 'Bitácora de Control Químico / Biológico de Auto Claves', code: 'F-OPR-000-8' },
-  { id: 'generacion_almacenamiento', title: 'Bitácora de Generación y Almacenamiento Temporal de RPBI (Ingreso)', code: 'F-OPR-000-9' },
+  { id: 'generacion_almacenamiento', title: 'Bitácora de Generación y Almacenamiento Temporal de DSH (Ingreso)', code: 'F-OPR-000-9' },
   { id: 'lavado_banos', title: 'BITÁCORA DE LAVADO DE BAÑOS Y ÁREA ADMINISTRATIVA', code: 'F-OPR-000-10' },
   { id: 'insumos_quimicos', title: 'BITÁCORA DE CONTROL DE INSUMOS QUÍMICOS Y PLÁSTICOS', code: 'F-OPR-000-11' },
   { id: 'inventarios_sgc', title: 'BITÁCORA DE CONTROL DE INVENTARIOS E INSUMOS SGI', code: 'F-OPR-000-12' },
@@ -47,7 +47,7 @@ export const AVAILABLE_MODULES = [
   { id: 'control_horas_cargador', title: 'CONTROL DE HORAS DE TRABAJO - CARGADOR FRONTAL', code: 'F-OPR-000-14' },
   { id: 'desinfeccion_agente_quimico', title: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / DESINFECCIÓN', code: 'F-OPR-000-15' },
   { id: 'checklist_diario_planta', title: 'CHECKLIST DIARIO DE PLANTA E INFORME EJECUTIVO', code: 'F-OPR-000-16' },
-  { id: 'control_360_vehiculos', title: 'SISTEMA DE CONTROL 360° DE VEHÍCULOS (TRANSPORTE RPBI)', code: 'F-OPR-000-17' },
+  { id: 'control_360_vehiculos', title: 'SISTEMA DE CONTROL 360° DE VEHÍCULOS (TRANSPORTE DSH)', code: 'F-OPR-000-17' },
 ];
 
 interface Props {

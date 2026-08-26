@@ -9,6 +9,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -20,6 +23,8 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<IBitacoraDisposicionPirolisis | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -46,7 +51,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
   useEffect(() => {
     const sumPacas = filas.reduce((a, b) => a + (Number(b.pacas) || 0), 0);
     setTotalPacas(sumPacas);
-    // Standard weight factor for RPBI bale (approx 75 lbs per bale)
+    // Standard weight factor for DSH bale (approx 75 lbs per bale)
     setTotalLibras(sumPacas * 75);
   }, [filas]);
 
@@ -59,7 +64,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as IBitacoraDisposicionPirolisis);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error(e);
       const fallback = localStorage.getItem('biotrash_piro_bk');
@@ -70,14 +75,19 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_disposicion_pirolisis', docId));
+      await deleteDoc(doc(db, 'bitacora_disposicion_pirolisis', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -149,9 +159,21 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero Principal
         </button>
-        <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-          Módulo F F-OPR-000 / Format N° 3
-        </span>
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_disposicion_pirolisis"
+            moduleTitle="Bitácora de Disposición Final de DSH a Pirólisis"
+            formCode="F-OPR-03"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_piro_bk"
+            variant="header-button"
+          />
+          <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+            Módulo F-OPR-03
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -160,7 +182,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
         <div className="lg:col-span-2 space-y-6">
           <form id="bitacora-pirolisis-form" onSubmit={handleGuardar} className="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-6">
             
-            <FormHeader titulo="Bitácora de Disposición Final de RPBI a Pirólisis" />
+            <FormHeader titulo="Bitácora de Disposición Final de DSH a Pirólisis" />
 
             {/* General Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
@@ -267,7 +289,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
 
             {/* Obs generales */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase">Observaciones Generales al Proceso de Traslado de RPBI a Pirólisis:</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase">Observaciones Generales al Proceso de Traslado de DSH a Pirólisis:</label>
               <textarea
                 id="observaciones-piro"
                 rows={3}
@@ -355,7 +377,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -372,6 +394,23 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
         </div>
 
       </div>
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Disposición por Pirólisis"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Total Pacas', value: String(recordToDelete?.totalPacas || '0') },
+          { label: 'Total Libras', value: `${recordToDelete?.totalLibras?.toLocaleString() || 0} LBS` },
+          { label: 'Observaciones', value: recordToDelete?.observaciones || '—' },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

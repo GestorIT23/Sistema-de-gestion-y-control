@@ -100,50 +100,53 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
     try {
       setLoading(true);
 
-      // Fetch all collections
-      const [
-        snapInv,
-        snapEntr,
-        snapPiro,
-        snapVert,
-        snapInci,
-        snapFrio,
-        snapRed,
-        snapAuto,
-        snapGen,
-        snapLav,
-        snapInsu,
-        snapUni,
-        snapCarg
-      ] = await Promise.all([
-        getDocs(collection(db, 'bitacora_inventarios')),
-        getDocs(collection(db, 'bitacora_entrega_contenedores')),
-        getDocs(collection(db, 'bitacora_disposicion_pirolisis')),
-        getDocs(collection(db, 'bitacora_disposicion_vertedero')),
-        getDocs(collection(db, 'bitacora_control_incineracion')),
-        getDocs(collection(db, 'bitacora_cuarto_frio')),
-        getDocs(collection(db, 'bitacora_reduccion_volumen')),
-        getDocs(collection(db, 'bitacora_control_autoclaves')),
-        getDocs(collection(db, 'bitacora_generacion_almacenamiento')),
-        getDocs(collection(db, 'bitacora_lavado_banos')),
-        getDocs(collection(db, 'bitacora_insumos_quimicos')),
-        getDocs(collection(db, 'bitacora_control_uniformes')),
-        getDocs(collection(db, 'bitacora_control_horas_cargador'))
-      ]);
+      const safeFetch = async (colName: string, limitCount = 350) => {
+        try {
+          const q = query(collection(db, colName), limit(limitCount));
+          const snap = await getDocs(q);
+          return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+        } catch (err) {
+          console.warn(`Aviso al cargar analítica de ${colName}:`, err);
+          try {
+            const fallbackQ = query(collection(db, colName), limit(100));
+            const fallbackSnap = await getDocs(fallbackQ);
+            return fallbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+          } catch (e2) {
+            return [];
+          }
+        }
+      };
 
-      const listInv = snapInv.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listEntr = snapEntr.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listPiro = snapPiro.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listVert = snapVert.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listInci = snapInci.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listFrio = snapFrio.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listRed = snapRed.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listAuto = snapAuto.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listGen = snapGen.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listLav = snapLav.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listInsu = snapInsu.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listUni = snapUni.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const listCarg = snapCarg.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      // Fetch all collections safely with limits
+      const [
+        listInv,
+        listEntr,
+        listPiro,
+        listVert,
+        listInci,
+        listFrio,
+        listRed,
+        listAuto,
+        listGen,
+        listLav,
+        listInsu,
+        listUni,
+        listCarg
+      ] = await Promise.all([
+        safeFetch('bitacora_inventarios'),
+        safeFetch('bitacora_entrega_contenedores'),
+        safeFetch('bitacora_disposicion_pirolisis'),
+        safeFetch('bitacora_disposicion_vertedero'),
+        safeFetch('bitacora_control_incineracion'),
+        safeFetch('bitacora_cuarto_frio'),
+        safeFetch('bitacora_reduccion_volumen'),
+        safeFetch('bitacora_control_autoclaves'),
+        safeFetch('bitacora_generacion_almacenamiento'),
+        safeFetch('bitacora_lavado_banos'),
+        safeFetch('bitacora_insumos_quimicos'),
+        safeFetch('bitacora_control_uniformes'),
+        safeFetch('bitacora_control_horas_cargador')
+      ]);
 
       setInventarios(listInv);
       setEntregaContenedores(listEntr);
@@ -515,7 +518,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
         { name: 'Bolsas Negras', Stock: 210, Consumo: 120 },
         { name: 'Reactivo BioSGI', Stock: 45, Consumo: 15 },
         { name: 'Hipoclorito Sol.', Stock: 80, Consumo: 55 },
-        { name: 'Contenedores RPBI', Stock: 95, Consumo: 30 }
+        { name: 'Contenedores DSH', Stock: 95, Consumo: 30 }
       ];
     }
 
@@ -695,7 +698,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Flame className="w-4 h-4" /> Trazabilidad de Masas (RPBI)
+          <Flame className="w-4 h-4" /> Trazabilidad de Masas (DSH)
         </button>
         <button
           onClick={() => setActiveTab('quality')}
@@ -826,7 +829,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
                 </div>
                 <div>
                   <span className="block text-[10px] text-slate-400 font-mono">Normativa Aplicable:</span>
-                  <span className="text-xs font-bold text-slate-700 block">Norma de Residuos RPBI y Estándar de Gestión Ambiental ISO 14001</span>
+                  <span className="text-xs font-bold text-slate-700 block">Norma de Desechos Sólidos Hospitalarios (DSH) y Estándar ISO 14001</span>
                 </div>
               </div>
             </div>
@@ -933,7 +936,7 @@ export default function DashboardAnalytics({ onBack, currentUser }: DashboardAna
             <div className="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b pb-2">
                 <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                  <Thermometer className="w-4 h-4 text-sky-500" /> Monitoreo de Temperatura de Conservación de RPBI (°C)
+                  <Thermometer className="w-4 h-4 text-sky-500" /> Monitoreo de Temperatura de Conservación de DSH (°C)
                 </h3>
                 <span className="text-[10px] text-red-500 font-bold uppercase font-mono">Regla SGI: Max 3.0°C</span>
               </div>

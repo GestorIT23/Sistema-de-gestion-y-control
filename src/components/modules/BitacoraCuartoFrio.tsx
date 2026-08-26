@@ -9,6 +9,9 @@ import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -20,6 +23,8 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraCuartoFrio | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [cuartoFrio, setCuartoFrio] = useState('Sección Fría Norte / Cámara A');
@@ -68,7 +73,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
       querySnapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as BitacoraCuartoFrio);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error(e);
       const fallback = localStorage.getItem('biotrash_fr_bk');
@@ -79,14 +84,19 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
   };
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_cuarto_frio', docId));
+      await deleteDoc(doc(db, 'bitacora_cuarto_frio', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -167,9 +177,21 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero Principal
         </button>
-        <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
-          Módulo I F-OPR-000 / Format N° 6
-        </span>
+        <div className="flex items-center gap-2">
+          <GestorItDeleteModuleRecords
+            collectionName="bitacora_cuarto_frio"
+            moduleTitle="Bitácora de Control de Cuarto Frío y Congeladores"
+            formCode="F-OPR-06"
+            userEmail={userEmail}
+            onDeleted={fetchRegistros}
+            recordCount={registros.length}
+            localStorageBackupKey="biotrash_fr_bk"
+            variant="header-button"
+          />
+          <span className="text-[11px] font-semibold uppercase font-mono tracking-wider text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+            Módulo F-OPR-06
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -250,7 +272,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
                   <h4 className="font-bold">Advertencia de Temperatura Fuera de Límite (ISO 14001)</h4>
                   <p>
                     {isColdRoomAlert && "• La temperatura de la cámara del cuarto frío supera el límite de <= 3.00 °C. "}
-                    {isFreezerAlert && "• Uno o más congeladores de RPBI exceden la temperatura de preservación segura de <= 0.00 °C."}
+                    {isFreezerAlert && "• Uno o más congeladores de DSH exceden la temperatura de preservación segura de <= 0.00 °C."}
                   </p>
                   <p className="mt-1 font-semibold">Active el protocolo de revisión de los compresores condensadores.</p>
                 </div>
@@ -401,7 +423,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
               <Snowflake className="w-4 h-4 text-sky-450 animate-spin-slow" /> Control Térmico
             </h3>
             <p className="text-xs text-slate-400 leading-normal">
-              Preservar el RPBI a 3°C o menos inhibe la proliferación bacteriana y la emanación de gases nocivos. Se requiere controles diarios obligatorios del Sistema de Gestión Integral.
+              Preservar el DSH a 3°C o menos inhibe la proliferación bacteriana y la emanación de gases nocivos. Se requiere controles diarios obligatorios del Sistema de Gestión Integral.
             </p>
           </div>
 
@@ -446,7 +468,7 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
                             <span className="text-slate-300 font-mono text-[10px]">|</span>
                             <button
                               type="button"
-                              onClick={() => handleDelete(reg.id!)}
+                              onClick={() => setRecordToDelete(reg)}
                               className="text-rose-700 hover:text-rose-900 font-bold flex items-center gap-0.5 text-[10px] cursor-pointer"
                               title="Eliminar Registro"
                             >
@@ -463,6 +485,24 @@ export default function BitacoraCuartoFrioModule({ onBack, userEmail }: Props) {
         </div>
 
       </div>
+
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Control de Cuarto Frío"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Cámara', value: recordToDelete?.cuartoFrio || '' },
+          { label: 'Responsable', value: recordToDelete?.responsable || '' },
+          { label: 'Temp Entrada', value: `${recordToDelete?.tempEntrada || 0}°C` },
+          { label: 'Temp Salida', value: `${recordToDelete?.tempSalida || 0}°C` },
+          { label: 'Observaciones', value: recordToDelete?.observaciones || '—' },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

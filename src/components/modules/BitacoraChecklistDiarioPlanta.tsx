@@ -44,6 +44,9 @@ import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
+import DeleteSingleRecordModal from '../DeleteSingleRecordModal';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -56,8 +59,8 @@ const DEFAULT_HSE: ItemChecklist[] = [
   { codigo: 'HSE-02', punto: 'Señalización de riesgo biológico, químico y de seguridad visible, legible y en buen estado en todas las zonas', referencia: 'NOM-026-STPS-2008', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'HSE-03', punto: 'Extintores vigentes (fecha de recarga), accesibles y con señalización correcta', referencia: 'NOM-002-STPS-2010', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'HSE-04', punto: 'Rutas de evacuación y salidas de emergencia libres de obstrucciones', referencia: 'NOM-003-SEGOB-2011', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'HSE-05', punto: 'Contenedores de RPBI correctamente etiquetados, cerrados, sin rebose y en área designada', referencia: 'NOM-087-ECOL-SSA1-2002', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'HSE-06', punto: 'No hay exposición innecesaria o no controlada a material bioinfeccioso o peligroso', referencia: 'NOM-087 · RPBI', estatus: 'CUMPLE', comentario: '' },
+  { codigo: 'HSE-05', punto: 'Contenedores de DSH correctamente etiquetados, cerrados, sin rebose y en área designada', referencia: 'NOM-087-ECOL-SSA1-2002', estatus: 'CUMPLE', comentario: '' },
+  { codigo: 'HSE-06', punto: 'No hay exposición innecesaria o no controlada a material bioinfeccioso o peligroso', referencia: 'NOM-087 · DSH', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'HSE-07', punto: 'Duchas de emergencia y lavaojos operativos y libres de obstrucción', referencia: 'NOM-010-STPS-1999', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'HSE-08', punto: 'Registro de incidentes/accidentes del día completado (aunque sea \'sin novedad\')', referencia: 'STPS · ISO 45001:2018 §10.2', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'HSE-09', punto: 'Zona de lavado y descontaminación de personal operativa y con insumos (jabón, gel, desinfectante)', referencia: 'NOM-087 · Bioseguridad', estatus: 'CUMPLE', comentario: '' },
@@ -68,7 +71,7 @@ const DEFAULT_CALIDAD: ItemChecklist[] = [
   { codigo: 'CAL-02', punto: 'Indicadores biológicos/químicos de esterilización revisados y con resultado aceptable', referencia: 'NOM-087 · EN ISO 11135', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'CAL-03', punto: 'Registros de tratamiento (bitácoras de ciclos) completos, firmados y sin enmendaduras', referencia: 'ISO 9001:2015 §7.5', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'CAL-04', punto: 'Manifiestos de traslado de residuos peligrosos actualizados y firmados por generador/transportista', referencia: 'NOM-055-SEMARNAT · LGEEPA Art. 151', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'CAL-05', punto: 'Segregación correcta de residuos por tipo y categoría (RPBI, RP, RNP) en contenedores identificados', referencia: 'NOM-087 · NOM-052-SEMARNAT-2005', estatus: 'CUMPLE', comentario: '' },
+  { codigo: 'CAL-05', punto: 'Segregación correcta de residuos por tipo y categoría (DSH, RP, RNP) en contenedores identificados', referencia: 'NOM-087 · NOM-052-SEMARNAT-2005', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'CAL-06', punto: 'Plan de Manejo de Residuos Peligrosos vigente y accesible para inspección', referencia: 'SEMARNAT · LGEEPA', estatus: 'CUMPLE', comentario: '' },
 ];
 
@@ -86,7 +89,7 @@ const DEFAULT_MANTENIMIENTO: ItemChecklist[] = [
 const DEFAULT_5S: ItemChecklist[] = [
   { codigo: 'INS-01', punto: 'Área de recepción de residuos limpia, sin acumulación fuera de horario y con flujo unidireccional \'sucio→limpio\'', referencia: 'Bioseguridad · 5S', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'INS-02', punto: 'Área de tratamiento/proceso sin residuos acumulados fuera de los contenedores asignados', referencia: 'NOM-087 · 5S', estatus: 'CUMPLE', comentario: '' },
-  { codigo: 'INS-03', punto: 'Almacenamiento temporal cumple condiciones de temperatura, ventilación, seguridad y tiempo máximo (72 h RPBI)', referencia: 'NOM-087-ECOL-SSA1-2002 §6.5', estatus: 'CUMPLE', comentario: '' },
+  { codigo: 'INS-03', punto: 'Almacenamiento temporal cumple condiciones de temperatura, ventilación, seguridad y tiempo máximo (72 h DSH)', referencia: 'NOM-087-ECOL-SSA1-2002 §6.5', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'INS-04', punto: 'Pasillos internos despejados (ancho mínimo libre 90 cm), sin materiales o equipos obstruyendo', referencia: 'NOM-003-SEGOB · 5S', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'INS-05', punto: 'Sanitarios/regaderas de personal limpios, con agua, jabón y papel disponible', referencia: '5S · Higiene laboral', estatus: 'CUMPLE', comentario: '' },
   { codigo: 'INS-06', punto: 'Área de oficinas y control operativo ordenada; documentos en control y archivados correctamente', referencia: 'ISO 9001:2015 §7.5 · 5S', estatus: 'CUMPLE', comentario: '' },
@@ -101,6 +104,8 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [activeTab, setActiveTab] = useState<'hse' | 'calidad' | 'mantenimiento' | '5s'>('hse');
+  const [recordToDelete, setRecordToDelete] = useState<BitacoraChecklistDiarioPlanta | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -133,7 +138,7 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
         const docData = sanitizeBiotrashObject(doc.data());
         docs.push({ id: doc.id, ...docData } as BitacoraChecklistDiarioPlanta);
       });
-      setRegistros(docs);
+      setRegistros(sortRecordsByDateDesc(docs, 'fecha'));
     } catch (e) {
       console.error('Error fetching registers:', e);
       const fallback = localStorage.getItem('biotrash_checklist_planta_bk');
@@ -147,14 +152,19 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
 
   const canDelete = isAuthorizedToDelete(userEmail);
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este registro?')) return;
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete?.id) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'bitacora_checklist_diario_planta', docId));
+      await deleteDoc(doc(db, 'bitacora_checklist_diario_planta', recordToDelete.id));
+      setRegistros(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
       fetchRegistros();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro de la base de datos.');
+      setMsg({ text: 'Error al eliminar el registro de la base de datos.', type: 'error' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -435,6 +445,17 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
       <FormHeader
         titulo="CHECKLIST DIARIO DE PLANTA - INSPECCIÓN Y AUDITORÍA SGI"
         codigo="F-OPR-000-16"
+      />
+
+      {/* IT Manager Global Delete Tool */}
+      <GestorItDeleteModuleRecords
+        userEmail={userEmail}
+        moduleKey="bitacora_checklist_diario_planta"
+        moduleName="Checklist Diario de Planta"
+        onDeleted={() => {
+          setRegistros([]);
+          fetchRegistros();
+        }}
       />
 
       {/* Alert Messages */}
@@ -892,7 +913,7 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
                         </button>
                         {canDelete && item.id && (
                           <button
-                            onClick={() => handleDelete(item.id!)}
+                            onClick={() => setRecordToDelete(item)}
                             className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-2 py-1 rounded text-[10px] border border-rose-200 transition cursor-pointer flex items-center gap-1"
                             title="Eliminar Registro"
                           >
@@ -909,6 +930,22 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
         )}
       </div>
 
+      {/* Modal for single record deletion */}
+      <DeleteSingleRecordModal
+        isOpen={!!recordToDelete}
+        title="Eliminar Registro de Checklist Diario de Planta"
+        itemIdentifier={recordToDelete?.id}
+        details={[
+          { label: 'Fecha', value: recordToDelete?.fecha || '' },
+          { label: 'Turno', value: recordToDelete?.turno || '' },
+          { label: 'Área / Zona', value: recordToDelete?.areaZona || '' },
+          { label: 'Inspector', value: recordToDelete?.inspector || recordToDelete?.responsable || '' },
+          { label: 'Puntaje Global', value: `${Math.round(recordToDelete?.puntajeGlobal || 0)}%` },
+        ]}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

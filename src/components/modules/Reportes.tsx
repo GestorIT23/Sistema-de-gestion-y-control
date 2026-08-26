@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
 import { 
   FileText, 
   Calendar, 
@@ -23,6 +23,7 @@ import { generateAndDownloadExcel } from '../../utils/excelGenerator';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
 import { sanitizeBiotrashObject } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
+import { sortRecordsByDateDesc } from '../../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -35,11 +36,11 @@ const BITACORAS_INFO = [
   { id: 'entrega_contenedores', title: 'Entrega Contenedores Rojos', col: 'bitacora_entrega_contenedores', code: 'F-OPR-000-2' },
   { id: 'disposicion_pirolisis', title: 'Disposición Final a Pirólisis', col: 'bitacora_disposicion_pirolisis', code: 'F-OPR-000-3' },
   { id: 'disposicion_vertedero', title: 'Disposición Final a Vertedero', col: 'bitacora_disposicion_vertedero', code: 'F-OPR-000-4' },
-  { id: 'control_incineracion', title: 'Control de Incineración RPBI', col: 'bitacora_control_incineracion', code: 'F-OPR-000-5' },
+  { id: 'control_incineracion', title: 'Control de Incineración DSH', col: 'bitacora_control_incineracion', code: 'F-OPR-000-5' },
   { id: 'cuarto_frio', title: 'Control de Cuarto Frío', col: 'bitacora_cuarto_frio', code: 'F-OPR-000-6' },
   { id: 'reduccion_volumen', title: 'Reducción de Volumen Shredder', col: 'bitacora_reduccion_volumen', code: 'F-OPR-000-7' },
   { id: 'control_autoclaves', title: 'Control Químico/Biológico Autoclaves', col: 'bitacora_control_autoclaves', code: 'F-OPR-000-8' },
-  { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento RPBI', col: 'bitacora_generacion_almacenamiento', code: 'F-OPR-000-9' },
+  { id: 'generacion_almacenamiento', title: 'Ingreso y Almacenamiento DSH', col: 'bitacora_generacion_almacenamiento', code: 'F-OPR-000-9' },
   { id: 'lavado_banos', title: 'Sanitización de Baños y Oficinas', col: 'bitacora_lavado_banos', code: 'F-OPR-000-10' },
   { id: 'insumos_quimicos', title: 'Insumos Químicos y Plásticos', col: 'bitacora_insumos_quimicos', code: 'F-OPR-000-11' },
   { id: 'inventarios_sgc', title: 'Inventario General SGI', col: 'bitacora_inventarios_sgc', code: 'F-OPR-000-12' },
@@ -47,7 +48,7 @@ const BITACORAS_INFO = [
   { id: 'control_horas_cargador', title: 'Control de Horas de Trabajo', col: 'bitacora_control_horas_cargador', code: 'F-OPR-000-14' },
   { id: 'desinfeccion_agente_quimico', title: 'Control de Aplicación de Agente Químico', col: 'bitacora_desinfeccion_agente_quimico', code: 'F-OPR-000-15' },
   { id: 'checklist_diario_planta', title: 'Checklist Diario de Planta e Informe Ejecutivo', col: 'bitacora_checklist_diario_planta', code: 'F-OPR-000-16' },
-  { id: 'control_360_vehiculos', title: 'Control 360° de Vehículos (Transporte RPBI)', col: 'bitacora_control_360_vehiculos', code: 'F-OPR-000-17' },
+  { id: 'control_360_vehiculos', title: 'Control 360° de Vehículos (Transporte DSH)', col: 'bitacora_control_360_vehiculos', code: 'F-OPR-000-17' },
   { id: 'reporte_recoleccion', title: 'Reporte de Recolección de Residuos (Batch/Lote)', col: 'reportes_recoleccion', code: 'F-OPR-000-18' },
 ];
 
@@ -171,29 +172,48 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
         ? BITACORAS_INFO.filter(b => b.id !== 'all') 
         : BITACORAS_INFO.filter(b => b.id === selectedBitacora);
 
+      const limitPerCollection = selectedBitacora === 'all' ? 300 : 1500;
+
       for (const info of collectionsToQuery) {
-        const querySnapshot = await getDocs(collection(db, info.col));
-        querySnapshot.forEach(docSnap => {
-          const data = sanitizeBiotrashObject(docSnap.data());
-          tempResults.push({
-            id: docSnap.id,
-            tipo: info.id,
-            tipoTitulo: info.title,
-            codigoFormato: info.code,
-            ...data
+        try {
+          const q = query(collection(db, info.col), limit(limitPerCollection));
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach(docSnap => {
+            const data = sanitizeBiotrashObject(docSnap.data());
+            tempResults.push({
+              id: docSnap.id,
+              tipo: info.id,
+              tipoTitulo: info.title,
+              codigoFormato: info.code,
+              ...data
+            });
           });
-        });
+        } catch (colErr: any) {
+          console.warn(`Aviso al consultar colección ${info.col}, intentando consulta reducida:`, colErr);
+          try {
+            const fallbackQ = query(collection(db, info.col), limit(80));
+            const fallbackSnap = await getDocs(fallbackQ);
+            fallbackSnap.forEach(docSnap => {
+              const data = sanitizeBiotrashObject(docSnap.data());
+              tempResults.push({
+                id: docSnap.id,
+                tipo: info.id,
+                tipoTitulo: info.title,
+                codigoFormato: info.code,
+                ...data
+              });
+            });
+          } catch (innerErr) {
+            console.error(`Error no recuperable en colección ${info.col}:`, innerErr);
+          }
+        }
       }
 
-      // Sort by fecha or fechaRegistro descending
-      tempResults.sort((a, b) => {
-        const dateA = String(a.fecha || a.fechaRegistro || '');
-        const dateB = String(b.fecha || b.fechaRegistro || '');
-        return dateB.localeCompare(dateA);
-      });
+      // Sort by fecha or fechaRegistro strictly descending (newest first)
+      const sortedResults = sortRecordsByDateDesc(tempResults);
 
       // Apply dynamic period filtering
-      const filtered = tempResults.filter(item => {
+      const filtered = sortedResults.filter(item => {
         const itemDateRaw = item.fecha || (item.fechaRegistro ? String(item.fechaRegistro).split('T')[0] : '');
         const itemDateStr = String(itemDateRaw || '');
         if (!itemDateStr) return false;
@@ -215,7 +235,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
         }
       });
 
-      setResults(filtered);
+      setResults(sortRecordsByDateDesc(filtered));
     } catch (e: any) {
       console.error(e);
       setMsg({ 
@@ -976,7 +996,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                     )}
                                     {log.tipoResiduo && (
                                       <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Clasificación Residuo RPBI:</span>
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Clasificación Residuo DSH:</span>
                                         <div className="grid grid-cols-3 gap-2 text-[10px]">
                                           {Object.entries(log.tipoResiduo).map(([k, v]) => (
                                             <div key={k} className="flex items-center gap-1.5">
@@ -989,7 +1009,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                     )}
                                     {log.tipoEmbalaje && (
                                       <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Tipo Embalaje RPBI:</span>
+                                        <span className="font-bold text-[8.5px] text-slate-400 block uppercase mb-1.5">Tipo Embalaje DSH:</span>
                                         <div className="grid grid-cols-3 gap-2 text-[10px]">
                                           {Object.entries(log.tipoEmbalaje).map(([k, v]) => (
                                             <div key={k} className="flex items-center gap-1.5">
