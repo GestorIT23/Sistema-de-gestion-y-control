@@ -54,7 +54,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     desinfeccion_agente_quimico: 0,
     checklist_diario_planta: 0,
     control_360_vehiculos: 0,
-    reporte_recoleccion: 0
+    reporte_recoleccion: 0,
+    evaluacion_360_incinerador: 0,
+    evaluacion_360_tunel_lavado: 0,
+    evaluacion_360_compactadora: 0,
+    evaluacion_360_trituradora: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -87,7 +91,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'desinfeccion_agente_quimico', col: 'bitacora_desinfeccion_agente_quimico' },
         { key: 'checklist_diario_planta', col: 'bitacora_checklist_diario_planta' },
         { key: 'control_360_vehiculos', col: 'bitacora_control_360_vehiculos' },
-        { key: 'reporte_recoleccion', col: 'reportes_recoleccion' }
+        { key: 'reporte_recoleccion', col: 'reportes_recoleccion' },
+        { key: 'evaluacion_360_incinerador', col: 'bitacora_evaluacion_360_incinerador' },
+        { key: 'evaluacion_360_tunel_lavado', col: 'bitacora_evaluacion_360_tunel_lavado' },
+        { key: 'evaluacion_360_compactadora', col: 'bitacora_evaluacion_360_compactadora' },
+        { key: 'evaluacion_360_trituradora', col: 'bitacora_evaluacion_360_trituradora' }
       ];
 
       const newCounts = {
@@ -108,7 +116,11 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         desinfeccion_agente_quimico: 0,
         checklist_diario_planta: 0,
         control_360_vehiculos: 0,
-        reporte_recoleccion: 0
+        reporte_recoleccion: 0,
+        evaluacion_360_incinerador: 0,
+        evaluacion_360_tunel_lavado: 0,
+        evaluacion_360_compactadora: 0,
+        evaluacion_360_trituradora: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -339,6 +351,46 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
       tag: 'Transporte DSH',
       stats: `${counts.control_360_vehiculos || 0} boletas`
+    },
+    {
+      id: 'evaluacion_360_incinerador',
+      title: 'Evaluación 360° Incinerador',
+      subtitle: 'Auditoría integral 360°, refractarios, pirómetros y postcombustión',
+      code: 'BIOTRASH 4.2. F-OPR-000-19',
+      icon: <Flame className="w-5 h-5 text-orange-600" />,
+      color: 'border-orange-200 hover:border-orange-400 focus:ring-orange-500',
+      tag: 'Auditoría 360°',
+      stats: `${counts.evaluacion_360_incinerador || 0} auditorías`
+    },
+    {
+      id: 'evaluacion_360_tunel_lavado',
+      title: 'Evaluación 360° Túnel de Lavado',
+      subtitle: 'Auditoría integral 360°, boquillas, dosificación química y drenaje',
+      code: 'BIOTRASH 4.2. F-OPR-000-20',
+      icon: <Droplets className="w-5 h-5 text-cyan-600" />,
+      color: 'border-cyan-200 hover:border-cyan-400 focus:ring-cyan-500',
+      tag: 'Auditoría 360°',
+      stats: `${counts.evaluacion_360_tunel_lavado || 0} auditorías`
+    },
+    {
+      id: 'evaluacion_360_compactadora',
+      title: 'Evaluación 360° Compactadora',
+      subtitle: 'Auditoría integral 360°, prensa hidráulica, amarre y pacas DSH',
+      code: 'BIOTRASH 4.2. F-OPR-000-21',
+      icon: <Layers className="w-5 h-5 text-amber-600" />,
+      color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
+      tag: 'Auditoría 360°',
+      stats: `${counts.evaluacion_360_compactadora || 0} auditorías`
+    },
+    {
+      id: 'evaluacion_360_trituradora',
+      title: 'Evaluación 360° Trituradora',
+      subtitle: 'Auditoría integral 360°, cuchillas, reductor, torque y auto-reverse',
+      code: 'BIOTRASH 4.2. F-OPR-000-22',
+      icon: <Activity className="w-5 h-5 text-emerald-600" />,
+      color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
+      tag: 'Auditoría 360°',
+      stats: `${counts.evaluacion_360_trituradora || 0} auditorías`
     },
     {
       id: 'reporte_recoleccion',

@@ -57,6 +57,10 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
     control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE DSH' },
     reporte_recoleccion: { code: 'F-OPR-000-18', name: 'REPORTE DE RECOLECCIÓN DE RESIDUOS (CARGA EN LOTE)' },
+    evaluacion_360_incinerador: { code: 'BIOTRASH 4.2. F-OPR-000-19', name: 'EVALUACIÓN 360° DE INCINERADOR DSH' },
+    evaluacion_360_tunel_lavado: { code: 'BIOTRASH 4.2. F-OPR-000-20', name: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO' },
+    evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
+    evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -597,6 +601,58 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Observaciones Generales:', data.observaciones || '']);
     wsRows.push(['Firma Operador:', data.firmaOperador || '']);
     wsRows.push(['Firma Supervisor SGI:', data.firmaSupervisor || '']);
+  } else if (tipo.startsWith('evaluacion_360_')) {
+    wsRows.push(['I. IDENTIFICACIÓN DEL EQUIPO Y AUDITORÍA']);
+    wsRows.push(['Folio Auditoría:', data.folio || '']);
+    wsRows.push(['Equipo Auditado:', `${data.nombreEquipo || ''} (${data.equipoId || ''})`]);
+    wsRows.push(['Modelo / Serie:', data.modeloSerie || 'N/A']);
+    wsRows.push(['Ubicación:', data.ubicacionPlanta || '']);
+    wsRows.push(['Fecha:', data.fecha || '', 'Turno:', data.turno || 'Matutino']);
+    wsRows.push(['Horómetro Actual:', data.horometroActual || 0]);
+    wsRows.push(['Operador Asignado:', data.operadorAsignado || '']);
+    wsRows.push(['Inspector SGI:', data.inspectorSgi || data.responsable || '']);
+    wsRows.push([]);
+
+    wsRows.push(['II. DICTAMEN DE CONFORMIDAD 360°']);
+    wsRows.push(['Calificación Global:', `${data.puntajeGlobal || 0}%`]);
+    wsRows.push(['Veredicto Operacional:', data.veredictoOperacional || '']);
+    wsRows.push(['Nivel de Riesgo:', data.nivelRiesgo || '']);
+    wsRows.push(['Seguridad y EPP (25%):', `${data.puntajeSeguridad || 0}%`]);
+    wsRows.push(['Mecánico y Estructural (20%):', `${data.puntajeMecanico || 0}%`]);
+    wsRows.push(['Hidráulico / Combustión (20%):', `${data.puntajeHidraulicoCombustion || 0}%`]);
+    wsRows.push(['Eléctrico y Mandos (15%):', `${data.puntajeElectricoControl || 0}%`]);
+    wsRows.push(['Bioseguridad y Limpieza (10%):', `${data.puntajeBioseguridadLimpieza || 0}%`]);
+    wsRows.push(['Desempeño Operativo (10%):', `${data.puntajeOperatividad || 0}%`]);
+    wsRows.push([]);
+
+    wsRows.push(['III. MATRIZ DE CRITERIOS AUDITADOS']);
+    wsRows.push(['Código', 'Sistema / Categoría', 'Criterio Auditado', 'Ponderación', 'Calificación (1-5)', 'Estado', 'Hallazgo / Desviación']);
+    const allItems = [
+      ...(data.itemsSeguridad || []),
+      ...(data.itemsMecanico || []),
+      ...(data.itemsHidraulicoCombustion || []),
+      ...(data.itemsElectricoControl || []),
+      ...(data.itemsBioseguridadLimpieza || []),
+      ...(data.itemsOperatividad || [])
+    ];
+    allItems.forEach((i: any) => {
+      wsRows.push([i.codigo || '', i.categoria || '', i.criterio || '', i.ponderacion || 5, i.calificacion || 5, i.estado || 'Conforme', i.hallazgo || '']);
+    });
+    wsRows.push([]);
+
+    if (data.accionesCorrectivas && data.accionesCorrectivas.length > 0) {
+      wsRows.push(['IV. PLAN DE ACCIONES CORRECTIVAS']);
+      wsRows.push(['Ítem', 'Desviación Detectada', 'Acción Propuesta', 'Responsable', 'Plazo Días', 'Prioridad']);
+      data.accionesCorrectivas.forEach((ac: any) => {
+        wsRows.push([ac.itemAfectado || '', ac.descripcionDesviacion || '', ac.accionPropuesta || '', ac.responsableEjecucion || '', ac.plazoDias || 1, ac.prioridad || 'Alta']);
+      });
+      wsRows.push([]);
+    }
+
+    wsRows.push(['V. FIRMAS Y RESPONSABILIDAD SGI']);
+    wsRows.push(['Inspector SGI:', (data.firmas && data.firmas.inspector) || data.inspectorSgi || '']);
+    wsRows.push(['Operador del Equipo:', (data.firmas && data.firmas.operador) || data.operadorAsignado || '']);
+    wsRows.push(['Supervisor de Planta:', (data.firmas && data.firmas.supervisor) || 'Supervisor de Planta']);
   }
 
   // Draw Control de Cambios standard at the end of the sheet
@@ -1156,6 +1212,41 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
         item.accionesCorrectivas || '',
         item.firmaConductor || '',
         item.firmaSupervisor || ''
+      ]);
+    });
+  } else if (tipo.startsWith('evaluacion_360_')) {
+    wsRows.push(['--- LISTADO DE AUDITORÍAS Y EVALUACIONES 360° DE EQUIPOS ---']);
+    wsRows.push([
+      'Folio', 'Fecha', 'Hora Captura', 'Turno', 'ID Equipo', 'Nombre Equipo', 'Modelo / Serie', 'Ubicación Planta',
+      'Horómetro (Hrs)', 'Puntaje Global (%)', 'Veredicto Operacional', 'Nivel de Riesgo',
+      'Seguridad (25%)', 'Mecánico (20%)', 'Hidráulico (20%)', 'Eléctrico (15%)', 'Bioseguridad (10%)', 'Operatividad (10%)',
+      'Inspector SGI', 'Operador Asignado', 'Cant. Acciones Correctivas', 'Observaciones'
+    ]);
+    results.forEach(item => {
+      const acCount = Array.isArray(item.accionesCorrectivas) ? item.accionesCorrectivas.length : 0;
+      wsRows.push([
+        item.folio || '',
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.turno || 'Matutino',
+        item.equipoId || '',
+        item.nombreEquipo || '',
+        item.modeloSerie || 'N/A',
+        item.ubicacionPlanta || '',
+        item.horometroActual || 0,
+        item.puntajeGlobal !== undefined ? `${item.puntajeGlobal}%` : '0%',
+        item.veredictoOperacional || 'Aprobado para Operar',
+        item.nivelRiesgo || 'Bajo',
+        item.puntajeSeguridad !== undefined ? `${item.puntajeSeguridad}%` : '0%',
+        item.puntajeMecanico !== undefined ? `${item.puntajeMecanico}%` : '0%',
+        item.puntajeHidraulicoCombustion !== undefined ? `${item.puntajeHidraulicoCombustion}%` : '0%',
+        item.puntajeElectricoControl !== undefined ? `${item.puntajeElectricoControl}%` : '0%',
+        item.puntajeBioseguridadLimpieza !== undefined ? `${item.puntajeBioseguridadLimpieza}%` : '0%',
+        item.puntajeOperatividad !== undefined ? `${item.puntajeOperatividad}%` : '0%',
+        item.inspectorSgi || item.responsable || '',
+        item.operadorAsignado || '',
+        acCount,
+        item.observacionesGenerales || item.observaciones || ''
       ]);
     });
   }

@@ -571,6 +571,98 @@ export interface LoteCargaRecoleccion {
   rutasInvolucradas: string[];
 }
 
+// 19. Evaluaciones 360° de Equipos Críticos de Planta
+export interface ItemEvaluacion360 {
+  codigo: string;
+  categoria: string;
+  criterio: string;
+  ponderacion: number;
+  calificacion: number; // 1 a 5
+  estado: 'Conforme' | 'Observación' | 'Crítico' | 'N/A';
+  hallazgo?: string;
+}
+
+export interface AccionCorrectiva360 {
+  id?: string;
+  itemAfectado: string;
+  descripcionDesviacion: string;
+  accionPropuesta: string;
+  responsableEjecucion: string;
+  plazoDias: number;
+  prioridad: 'Alta' | 'Media' | 'Baja';
+  estado?: 'Pendiente' | 'En Proceso' | 'Completada';
+}
+
+export interface BaseEvaluacion360Equipo extends BaseBitacora {
+  folio: string;
+  equipoId: string;
+  nombreEquipo: string;
+  modeloSerie?: string;
+  ubicacionPlanta: string;
+  turno: 'Matutino' | 'Vespertino' | 'Nocturno';
+  horometroActual: number;
+  operadorAsignado: string;
+  inspectorSgi: string;
+  
+  itemsSeguridad: ItemEvaluacion360[];
+  itemsMecanico: ItemEvaluacion360[];
+  itemsHidraulicoCombustion: ItemEvaluacion360[];
+  itemsElectricoControl: ItemEvaluacion360[];
+  itemsBioseguridadLimpieza: ItemEvaluacion360[];
+  itemsOperatividad: ItemEvaluacion360[];
+
+  puntajeSeguridad: number;
+  puntajeMecanico: number;
+  puntajeHidraulicoCombustion: number;
+  puntajeElectricoControl: number;
+  puntajeBioseguridadLimpieza: number;
+  puntajeOperatividad: number;
+  puntajeGlobal: number; // 0 - 100%
+
+  veredictoOperacional: 'Aprobado para Operar' | 'Condicionado con Acciones' | 'Fuera de Servicio (Paro Inmediato)';
+  nivelRiesgo: 'Bajo' | 'Medio' | 'Alto' | 'Crítico';
+  observacionesGenerales: string;
+  accionesCorrectivas: AccionCorrectiva360[];
+
+  firmas: {
+    inspector: string;
+    operador: string;
+    supervisor: string;
+  };
+}
+
+export interface Evaluacion360Incinerador extends BaseEvaluacion360Equipo {
+  tempCamaraPrimariaC?: number;
+  tempCamaraSecundariaC?: number;
+  presionCombustibleBar?: number;
+  opacidadHumoPorc?: number;
+  tipoCombustible?: string;
+}
+
+export interface Evaluacion360TunelLavado extends BaseEvaluacion360Equipo {
+  presionBombaLavadoPsi?: number;
+  ppmDesinfectante?: number;
+  temperaturaAguaC?: number;
+  velocidadCadenaMetrosMin?: number;
+  quimicoDosificado?: string;
+}
+
+export interface Evaluacion360Compactadora extends BaseEvaluacion360Equipo {
+  presionPrensadoPsi?: number;
+  temperaturaAceiteC?: number;
+  pesoPromedioPacaLbs?: number;
+  tiempoCicloPrensadoSeg?: number;
+  tipoFleje?: string;
+}
+
+export interface Evaluacion360Trituradora extends BaseEvaluacion360Equipo {
+  amperajeMotorA?: number;
+  velocidadRotacionRpm?: number;
+  tiempoRespuestaAutoReverseSeg?: number;
+  desgasteCuchillasMm?: number;
+  capacidadProcesamientoLbsHr?: number;
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -590,4 +682,8 @@ export type BitacoraEntry =
   | { tipo: 'desinfeccion_agente_quimico'; data: BitacoraDesinfeccionAgenteQuimico }
   | { tipo: 'checklist_diario_planta'; data: BitacoraChecklistDiarioPlanta }
   | { tipo: 'control_360_vehiculos'; data: BitacoraControl360Vehiculos }
+  | { tipo: 'evaluacion_360_incinerador'; data: Evaluacion360Incinerador }
+  | { tipo: 'evaluacion_360_tunel_lavado'; data: Evaluacion360TunelLavado }
+  | { tipo: 'evaluacion_360_compactadora'; data: Evaluacion360Compactadora }
+  | { tipo: 'evaluacion_360_trituradora'; data: Evaluacion360Trituradora }
   | { tipo: 'reporte_recoleccion'; data: RegistroRecoleccion };

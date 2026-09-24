@@ -131,6 +131,25 @@
         "creadoPor": { "type": "string" }
       },
       "required": ["codigoCliente", "nombreCliente", "fechaVisita", "numeroRecibo", "ruta", "unidades"]
+    },
+    "Evaluacion360Equipo": {
+      "title": "Evaluación 360° de Equipo Industrial",
+      "description": "Auditoría integral 360° para maquinaria crítica de planta (Incinerador, Túnel de Lavado, Compactadora, Trituradora)",
+      "type": "object",
+      "properties": {
+        "folio": { "type": "string" },
+        "equipoId": { "type": "string" },
+        "nombreEquipo": { "type": "string" },
+        "fecha": { "type": "string" },
+        "turno": { "type": "string" },
+        "horometroActual": { "type": "number" },
+        "puntajeGlobal": { "type": "number" },
+        "veredictoOperacional": { "type": "string" },
+        "nivelRiesgo": { "type": "string" },
+        "operadorAsignado": { "type": "string" },
+        "inspectorSgi": { "type": "string" }
+      },
+      "required": ["folio", "equipoId", "nombreEquipo", "fecha", "puntajeGlobal"]
     }
   },
   "firestore": {
@@ -177,6 +196,22 @@
     "bitacora_generacion_almacenamiento": {
       "schema": "BitacoraGeneracionAlmacenamiento",
       "description": "Collección de ingreso y almacenamiento DSH"
+    },
+    "bitacora_evaluacion_360_incinerador": {
+      "schema": "Evaluacion360Equipo",
+      "description": "Auditorías 360 de Incinerador DSH"
+    },
+    "bitacora_evaluacion_360_tunel_lavado": {
+      "schema": "Evaluacion360Equipo",
+      "description": "Auditorías 360 de Túnel de Lavado"
+    },
+    "bitacora_evaluacion_360_compactadora": {
+      "schema": "Evaluacion360Equipo",
+      "description": "Auditorías 360 de Compactadora de Pacas"
+    },
+    "bitacora_evaluacion_360_trituradora": {
+      "schema": "Evaluacion360Equipo",
+      "description": "Auditorías 360 de Trituradora Shredder"
     }
   }
 }

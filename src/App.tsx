@@ -21,6 +21,10 @@ import BitacoraControlHorasCargadorModule from './components/modules/BitacoraCon
 import BitacoraDesinfeccionAgenteQuimicoModule from './components/modules/BitacoraDesinfeccionAgenteQuimico';
 import BitacoraChecklistDiarioPlantaModule from './components/modules/BitacoraChecklistDiarioPlanta';
 import BitacoraControl360VehiculosModule from './components/modules/BitacoraControl360Vehiculos';
+import BitacoraEvaluacion360Incinerador from './components/modules/BitacoraEvaluacion360Incinerador';
+import BitacoraEvaluacion360TunelLavado from './components/modules/BitacoraEvaluacion360TunelLavado';
+import BitacoraEvaluacion360Compactadora from './components/modules/BitacoraEvaluacion360Compactadora';
+import BitacoraEvaluacion360Trituradora from './components/modules/BitacoraEvaluacion360Trituradora';
 import ReporteRecoleccionModule from './components/modules/ReporteRecoleccion';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
@@ -88,7 +92,9 @@ export default function App() {
             'reduccion_volumen', 'control_autoclaves', 'generacion_almacenamiento', 
             'lavado_banos', 'insumos_quimicos', 'inventarios_sgc', 
             'control_uniformes', 'control_horas_cargador', 'desinfeccion_agente_quimico',
-            'checklist_diario_planta', 'control_360_vehiculos'
+            'checklist_diario_planta', 'control_360_vehiculos',
+            'evaluacion_360_incinerador', 'evaluacion_360_tunel_lavado',
+            'evaluacion_360_compactadora', 'evaluacion_360_trituradora'
           ]
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
@@ -273,6 +279,38 @@ export default function App() {
           <BitacoraControl360VehiculosModule
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
+          />
+        );
+      case 'evaluacion_360_incinerador':
+        return (
+          <BitacoraEvaluacion360Incinerador
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+            onNavigateToEquipment={(target) => setModuloActivo(target)}
+          />
+        );
+      case 'evaluacion_360_tunel_lavado':
+        return (
+          <BitacoraEvaluacion360TunelLavado
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+            onNavigateToEquipment={(target) => setModuloActivo(target)}
+          />
+        );
+      case 'evaluacion_360_compactadora':
+        return (
+          <BitacoraEvaluacion360Compactadora
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+            onNavigateToEquipment={(target) => setModuloActivo(target)}
+          />
+        );
+      case 'evaluacion_360_trituradora':
+        return (
+          <BitacoraEvaluacion360Trituradora
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+            onNavigateToEquipment={(target) => setModuloActivo(target)}
           />
         );
       case 'reporte_recoleccion':

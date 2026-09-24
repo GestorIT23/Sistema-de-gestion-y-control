@@ -257,7 +257,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     desinfeccion_agente_quimico: { code: 'F-OPR-000-15', name: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / BITÁCORA DE DESINFECCIÓN' },
     checklist_diario_planta: { code: 'F-OPR-000-16', name: 'CHECKLIST DIARIO DE PLANTA - INFORME EJECUTIVO' },
     control_360_vehiculos: { code: 'F-OPR-000-17', name: 'CONTROL 360° DE VEHÍCULOS - TRANSPORTE DSH' },
-    reporte_recoleccion: { code: 'BIOTRASH 4.2. F-OPR-000-18', name: 'INFORME CONSOLIDADO DE RECOLECCIÓN DE RESIDUOS' }
+    reporte_recoleccion: { code: 'BIOTRASH 4.2. F-OPR-000-18', name: 'INFORME CONSOLIDADO DE RECOLECCIÓN DE RESIDUOS' },
+    evaluacion_360_incinerador: { code: 'BIOTRASH 4.2. F-OPR-000-19', name: 'EVALUACIÓN 360° DE INCINERADOR DSH' },
+    evaluacion_360_tunel_lavado: { code: 'BIOTRASH 4.2. F-OPR-000-20', name: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO' },
+    evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
+    evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -1513,6 +1517,99 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       ]);
     });
     drawDataTable(rHeaders, rWidths, rRows);
+  } else if (tipo.startsWith('evaluacion_360_')) {
+    // 19-22. Evaluaciones 360 de Equipos Críticos de Planta
+    drawSectionHeader('I. IDENTIFICACIÓN DEL EQUIPO Y CONDICIONES DE AUDITORÍA');
+    drawGridInfo([
+      { key: 'Folio Auditoría', value: data.folio || 'EV360-001' },
+      { key: 'Equipo Auditado', value: `${data.nombreEquipo || ''} (ID: ${data.equipoId || ''})` },
+      { key: 'Modelo / Serie', value: data.modeloSerie || 'N/A' },
+      { key: 'Ubicación en Planta', value: data.ubicacionPlanta || '' },
+      { key: 'Fecha y Turno', value: `${data.fecha || ''} | Turno ${data.turno || 'Matutino'}` },
+      { key: 'Horómetro Actual', value: `${Number(data.horometroActual || 0).toLocaleString()} Horas` },
+      { key: 'Operador Responsable', value: data.operadorAsignado || '' },
+      { key: 'Inspector SGI / Auditor', value: data.inspectorSgi || data.responsable || '' }
+    ]);
+
+    drawSectionHeader('II. DICTAMEN DE CONFORMIDAD Y BALANCE 360°');
+    drawGridInfo([
+      { key: 'Calificación Global 360°', value: `${data.puntajeGlobal || 0}% (${data.puntajeGlobal >= 85 ? 'CONFORME' : data.puntajeGlobal >= 70 ? 'CONDICIONADO' : 'NO CONFORME'})` },
+      { key: 'Veredicto Operacional', value: String(data.veredictoOperacional || 'Aprobado para Operar').toUpperCase() },
+      { key: 'Nivel de Riesgo SGI', value: String(data.nivelRiesgo || 'Bajo').toUpperCase() },
+      { key: 'Seguridad y EPP (25%)', value: `${data.puntajeSeguridad || 0}%` },
+      { key: 'Integridad Mecánica (20%)', value: `${data.puntajeMecanico || 0}%` },
+      { key: 'Hidráulica / Combustión (20%)', value: `${data.puntajeHidraulicoCombustion || 0}%` },
+      { key: 'Eléctrico y Control (15%)', value: `${data.puntajeElectricoControl || 0}%` },
+      { key: 'Bioseguridad y Limpieza (10%)', value: `${data.puntajeBioseguridadLimpieza || 0}%` },
+      { key: 'Desempeño Operativo (10%)', value: `${data.puntajeOperatividad || 0}%` }
+    ]);
+
+    // Check if new page needed
+    if (y > pageHeight - 75) {
+      doc.addPage();
+      drawHeader();
+    }
+
+    drawSectionHeader('III. MATRIZ DE CRITERIOS AUDITADOS');
+    const allItems = [
+      ...(data.itemsSeguridad || []),
+      ...(data.itemsMecanico || []),
+      ...(data.itemsHidraulicoCombustion || []),
+      ...(data.itemsElectricoControl || []),
+      ...(data.itemsBioseguridadLimpieza || []),
+      ...(data.itemsOperatividad || [])
+    ];
+
+    const cHeaders = ['CÓDIGO', 'SISTEMA / RUBRO', 'CRITERIO AUDITADO', 'CALIF.', 'ESTADO'];
+    const cWidths = [22, 36, 82, 16, 24];
+    const cRows: any[] = [];
+
+    allItems.forEach((item: any) => {
+      cRows.push([
+        item.codigo || '',
+        item.categoria || '',
+        item.criterio || '',
+        `${item.calificacion || 5}/5`,
+        item.estado || 'Conforme'
+      ]);
+    });
+    drawDataTable(cHeaders, cWidths, cRows);
+
+    // Acciones correctivas if any
+    const acciones = data.accionesCorrectivas || [];
+    if (acciones.length > 0) {
+      if (y > pageHeight - 50) {
+        doc.addPage();
+        drawHeader();
+      }
+      drawSectionHeader('IV. PLAN DE ACCIONES CORRECTIVAS INMEDIATAS');
+      const aHeaders = ['ÍTEM', 'DESVIACIÓN / HALLAZGO', 'ACCIÓN PROPUESTA', 'RESPONSABLE', 'PLAZO'];
+      const aWidths = [22, 50, 58, 32, 18];
+      const aRows: any[] = [];
+      acciones.forEach((ac: any) => {
+        aRows.push([
+          ac.itemAfectado || '',
+          ac.descripcionDesviacion || '',
+          ac.accionPropuesta || '',
+          ac.responsableEjecucion || '',
+          `${ac.plazoDias || 1} días`
+        ]);
+      });
+      drawDataTable(aHeaders, aWidths, aRows);
+    }
+
+    // Signatures
+    if (y > pageHeight - 40) {
+      doc.addPage();
+      drawHeader();
+    }
+    drawSectionHeader('V. FIRMAS DE RESPONSABILIDAD SGI');
+    const f = data.firmas || {};
+    drawGridInfo([
+      { key: 'Auditor / Inspector SGI', value: f.inspector || data.inspectorSgi || data.responsable || '' },
+      { key: 'Operador Responsable de Equipo', value: f.operador || data.operadorAsignado || '' },
+      { key: 'Supervisor / Gerente de Planta', value: f.supervisor || 'Gerente de Planta SGI' }
+    ]);
   }
 
   // Draw Control de Cambios table at page limit if fit, otherwise fallback
