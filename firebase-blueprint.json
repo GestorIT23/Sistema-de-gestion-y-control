@@ -150,6 +150,22 @@
         "inspectorSgi": { "type": "string" }
       },
       "required": ["folio", "equipoId", "nombreEquipo", "fecha", "puntajeGlobal"]
+    },
+    "BitacoraControlCaldera": {
+      "title": "Bitácora Diaria de Operación y Control de Caldera",
+      "description": "Control de presiones, temperaturas, purgas, dosificación química, checklist de mantenimiento y registro de eventos de caldera",
+      "type": "object",
+      "properties": {
+        "identificacionCaldera": { "type": "string" },
+        "operadorResponsable": { "type": "string" },
+        "fecha": { "type": "string" },
+        "turnoSeleccionado": { "type": "string" },
+        "turno1": { "type": "object" },
+        "turno2": { "type": "object" },
+        "checklist": { "type": "object" },
+        "eventos": { "type": "array" }
+      },
+      "required": ["identificacionCaldera", "operadorResponsable", "fecha"]
     }
   },
   "firestore": {
@@ -212,6 +228,10 @@
     "bitacora_evaluacion_360_trituradora": {
       "schema": "Evaluacion360Equipo",
       "description": "Auditorías 360 de Trituradora Shredder"
+    },
+    "bitacora_control_caldera": {
+      "schema": "BitacoraControlCaldera",
+      "description": "Bitácora diaria de operación, control y mantenimiento de caldera"
     }
   }
 }

@@ -25,6 +25,7 @@ import BitacoraEvaluacion360Incinerador from './components/modules/BitacoraEvalu
 import BitacoraEvaluacion360TunelLavado from './components/modules/BitacoraEvaluacion360TunelLavado';
 import BitacoraEvaluacion360Compactadora from './components/modules/BitacoraEvaluacion360Compactadora';
 import BitacoraEvaluacion360Trituradora from './components/modules/BitacoraEvaluacion360Trituradora';
+import BitacoraControlCaldera from './components/modules/BitacoraControlCaldera';
 import ReporteRecoleccionModule from './components/modules/ReporteRecoleccion';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
@@ -94,7 +95,8 @@ export default function App() {
             'control_uniformes', 'control_horas_cargador', 'desinfeccion_agente_quimico',
             'checklist_diario_planta', 'control_360_vehiculos',
             'evaluacion_360_incinerador', 'evaluacion_360_tunel_lavado',
-            'evaluacion_360_compactadora', 'evaluacion_360_trituradora'
+            'evaluacion_360_compactadora', 'evaluacion_360_trituradora',
+            'control_caldera', 'reporte_recoleccion'
           ]
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
@@ -311,6 +313,13 @@ export default function App() {
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
             onNavigateToEquipment={(target) => setModuloActivo(target)}
+          />
+        );
+      case 'control_caldera':
+        return (
+          <BitacoraControlCaldera
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
           />
         );
       case 'reporte_recoleccion':

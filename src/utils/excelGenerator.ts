@@ -61,6 +61,7 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     evaluacion_360_tunel_lavado: { code: 'BIOTRASH 4.2. F-OPR-000-20', name: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO' },
     evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
     evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' },
+    control_caldera: { code: 'BIOTRASH 4.2. F-OPR-000-23', name: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA' },
     reporte_general: { code: 'SGI-REP-GENERAL', name: 'REPORTE GENERAL INTEGRADO SGI - ISO 14001 / ISO 9001' }
   };
 
@@ -653,6 +654,65 @@ export function generateAndDownloadExcel(tipo: string, data: any): void {
     wsRows.push(['Inspector SGI:', (data.firmas && data.firmas.inspector) || data.inspectorSgi || '']);
     wsRows.push(['Operador del Equipo:', (data.firmas && data.firmas.operador) || data.operadorAsignado || '']);
     wsRows.push(['Supervisor de Planta:', (data.firmas && data.firmas.supervisor) || 'Supervisor de Planta']);
+  } else if (tipo === 'control_caldera') {
+    wsRows.push(['I. DATOS GENERALES DE LA CALDERA']);
+    wsRows.push(['Fecha Registro:', data.fecha || '']);
+    wsRows.push(['Turno Seleccionado:', data.turnoSeleccionado || 'Turno 1 & 2']);
+    wsRows.push(['Identificación Caldera:', data.identificacionCaldera || 'CALD-01']);
+    wsRows.push(['Operador Responsable:', data.operadorResponsable || data.responsable || '']);
+    wsRows.push(['Estado Operacional:', data.estadoOperacional || 'Operativo / Conforme']);
+    wsRows.push([]);
+
+    wsRows.push(['II. PARÁMETROS OPERATIVOS POR TURNO']);
+    wsRows.push(['Parámetro / Componente', 'Unidad', 'Referencia', 'Turno 1', 'Turno 2']);
+    const t1 = data.turno1 || {};
+    const t2 = data.turno2 || {};
+    wsRows.push(['Presión de Vapor', 'PSI', '80 - 120', t1.presionVaporPsi !== undefined ? t1.presionVaporPsi : '', t2.presionVaporPsi !== undefined ? t2.presionVaporPsi : '']);
+    wsRows.push(['Temperatura Agua Alimentación', '°C', '80 - 90', t1.tempAguaAlimentacionC !== undefined ? t1.tempAguaAlimentacionC : '', t2.tempAguaAlimentacionC !== undefined ? t2.tempAguaAlimentacionC : '']);
+    wsRows.push(['Temperatura Gases Chimenea', '°C', '180 - 230', t1.tempGasesChimeneaC !== undefined ? t1.tempGasesChimeneaC : '', t2.tempGasesChimeneaC !== undefined ? t2.tempGasesChimeneaC : '']);
+    wsRows.push(['Nivel de Agua en Visor', 'Visual', 'Normal', t1.nivelAguaVisorOk ? 'OK' : 'Falla', t2.nivelAguaVisorOk ? 'OK' : 'Falla']);
+    wsRows.push(['Presión Combustible / Gas', 'PSI', 'Según manual', t1.presionCombustibleGasPsi !== undefined ? t1.presionCombustibleGasPsi : '', t2.presionCombustibleGasPsi !== undefined ? t2.presionCombustibleGasPsi : '']);
+    wsRows.push(['Purga de Columna / Nivel', 'Operativo', 'Requerido', t1.purgaColumnaNivel ? 'SÍ' : 'NO', t2.purgaColumnaNivel ? 'SÍ' : 'NO']);
+    wsRows.push(['Purga de Fondo (Lodos)', 'Operativo', 'Requerido', t1.purgaFondoLodos ? 'SÍ' : 'NO', t2.purgaFondoLodos ? 'SÍ' : 'NO']);
+    wsRows.push(['Dosificación de Químicos (Tratamiento)', 'PPM / L', '1.5 L/día', t1.dosificacionQuimicosPpm !== undefined ? t1.dosificacionQuimicosPpm : 1.5, t2.dosificacionQuimicosPpm !== undefined ? t2.dosificacionQuimicosPpm : 1.5]);
+    wsRows.push(['TDS / Conductividad de Agua', 'µS/cm', '< 3,000', t1.tdsConductividadAgua !== undefined ? t1.tdsConductividadAgua : '', t2.tdsConductividadAgua !== undefined ? t2.tdsConductividadAgua : '']);
+    wsRows.push(['Inspección de Fugas (Vapor/Agua/Gas)', 'Visual', 'Sin fugas', t1.inspeccionFugasOk ? 'OK' : 'Fuga', t2.inspeccionFugasOk ? 'OK' : 'Fuga']);
+    wsRows.push([]);
+
+    wsRows.push(['III. PROGRAMA DE MANTENIMIENTO PREVENTIVO']);
+    wsRows.push(['Actividad Preventiva', 'Frecuencia', 'Cumplimiento']);
+    const chk = data.checklist || {};
+    wsRows.push(['Limpieza y drenaje de filtros de combustible / trampas de agua', 'Semanal', chk.limpiezaFiltrosCombustibleTrampasAgua ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Limpieza de fotocelda y electrodo de ignición', 'Semanal', chk.limpiezaFotoceldaElectrodoIgnicion ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Prueba de simulación de falla corte por bajo nivel (Cut-Off)', 'Semanal', chk.pruebaParadaBajoNivelAguaCutOff ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Inspección trampas de vapor retorno condensados', 'Semanal', chk.inspeccionTrampasVaporRetornoCondensados ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Limpieza malla ventilación quemador', 'Semanal', chk.limpiezaMallaVentilacionQuemador ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Inspección quemador y boquillas (patrón de llama)', 'Mensual', chk.inspeccionQuemadorBoquillas ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Verificación presostato operativo y límite alto', 'Mensual', chk.verificacionPresostatosLimiteAlto ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Inspección tubos de gases / apertura registro hollín', 'Mensual', chk.inspeccionTubosGasesRegistroHollin ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Inspección bombas de alimentación y sellos mecánicos', 'Mensual', chk.inspeccionBombasAlimentacionSellos ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Accionamiento manual de válvulas de seguridad', 'Mensual', chk.accionamientoManualValvulasSeguridad ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Inspección lado agua / apertura tapas de hombre', 'Semestral/Anual', chk.inspeccionLadoAguaDesincrustacion ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Deshollinado completo y refractarios cámara combustión', 'Semestral/Anual', chk.limpiezaMecanicaTubosRefractario ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Calibración válvulas de seguridad laboratorio acreditado', 'Semestral/Anual', chk.calibracionValvulasSeguridadAcreditado ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Análisis de gases de combustión con analizador', 'Semestral/Anual', chk.analisisGasesCombustionEficiencia ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push(['Prueba hidrostática / Ultrasonido de espesores', 'Semestral/Anual', chk.pruebaHidrostaticaEspesoresNorma ? 'REALIZADO' : 'PENDIENTE']);
+    wsRows.push([]);
+
+    if (data.eventos && data.eventos.length > 0) {
+      wsRows.push(['IV. REGISTRO DE EVENTOS']);
+      wsRows.push(['Fecha', 'Componente', 'Falla', 'Acción', 'Repuesto', 'Proveedor']);
+      data.eventos.forEach((ev: any) => {
+        wsRows.push([ev.fecha || '', ev.componente || '', ev.falla || '', ev.accion || '', ev.repuesto || '—', ev.proveedor || '—']);
+      });
+      wsRows.push([]);
+    }
+
+    wsRows.push(['V. DICTAMEN TÉCNICO Y FIRMAS']);
+    wsRows.push(['Comentarios:', data.comentarios || '']);
+    wsRows.push(['Dictamen Técnico:', data.dictamenTecnico || '']);
+    wsRows.push(['Operador Responsable:', data.firmaResponsable || data.operadorResponsable || '']);
+    wsRows.push(['Vo.Bo. Supervisor SGI:', data.firmaSupervisor || 'Supervisor de Planta']);
   }
 
   // Draw Control de Cambios standard at the end of the sheet
@@ -1247,6 +1307,45 @@ function generateConsolidatedFormExcel(tipo: string, results: any[]): void {
         item.operadorAsignado || '',
         acCount,
         item.observacionesGenerales || item.observaciones || ''
+      ]);
+    });
+  } else if (tipo === 'control_caldera') {
+    wsRows.push(['--- LISTADO DE REGISTROS DE OPERACIÓN Y CONTROL DE CALDERA (F-OPR-000-23) ---']);
+    wsRows.push([
+      'Fecha', 'Hora Captura', 'Caldera ID', 'Operador Responsable', 'Turno',
+      'T1 Presión Vapor (PSI)', 'T1 Temp Agua (°C)', 'T1 Temp Chimenea (°C)', 'T1 Nivel Agua Visor', 'T1 Purga Columna', 'T1 Purga Fondo', 'T1 TDS (µS/cm)', 'T1 Fugas',
+      'T2 Presión Vapor (PSI)', 'T2 Temp Agua (°C)', 'T2 Temp Chimenea (°C)', 'T2 Nivel Agua Visor', 'T2 Purga Columna', 'T2 Purga Fondo', 'T2 TDS (µS/cm)', 'T2 Fugas',
+      'Estado Operacional', 'Cant Eventos/Fallas', 'Dictamen Técnico'
+    ]);
+    results.forEach(item => {
+      const t1 = item.turno1 || {};
+      const t2 = item.turno2 || {};
+      const evCount = Array.isArray(item.eventos) ? item.eventos.length : 0;
+      wsRows.push([
+        item.fecha || '',
+        formatHoraRegistro(item.fechaRegistro),
+        item.identificacionCaldera || '',
+        item.operadorResponsable || item.responsable || '',
+        item.turnoSeleccionado || 'Turno 1 & 2',
+        t1.presionVaporPsi !== undefined ? t1.presionVaporPsi : '',
+        t1.tempAguaAlimentacionC !== undefined ? t1.tempAguaAlimentacionC : '',
+        t1.tempGasesChimeneaC !== undefined ? t1.tempGasesChimeneaC : '',
+        t1.nivelAguaVisorOk ? 'OK' : 'Falla',
+        t1.purgaColumnaNivel ? 'SÍ' : 'NO',
+        t1.purgaFondoLodos ? 'SÍ' : 'NO',
+        t1.tdsConductividadAgua !== undefined ? t1.tdsConductividadAgua : '',
+        t1.inspeccionFugasOk ? 'OK' : 'Fuga',
+        t2.presionVaporPsi !== undefined ? t2.presionVaporPsi : '',
+        t2.tempAguaAlimentacionC !== undefined ? t2.tempAguaAlimentacionC : '',
+        t2.tempGasesChimeneaC !== undefined ? t2.tempGasesChimeneaC : '',
+        t2.nivelAguaVisorOk ? 'OK' : 'Falla',
+        t2.purgaColumnaNivel ? 'SÍ' : 'NO',
+        t2.purgaFondoLodos ? 'SÍ' : 'NO',
+        t2.tdsConductividadAgua !== undefined ? t2.tdsConductividadAgua : '',
+        t2.inspeccionFugasOk ? 'OK' : 'Fuga',
+        item.estadoOperacional || 'Operativo / Conforme',
+        evCount,
+        item.dictamenTecnico || ''
       ]);
     });
   }

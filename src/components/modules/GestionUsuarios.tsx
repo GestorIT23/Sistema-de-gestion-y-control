@@ -48,6 +48,12 @@ export const AVAILABLE_MODULES = [
   { id: 'desinfeccion_agente_quimico', title: 'CONTROL DE APLICACIÓN DE AGENTE QUÍMICO / DESINFECCIÓN', code: 'F-OPR-000-15' },
   { id: 'checklist_diario_planta', title: 'CHECKLIST DIARIO DE PLANTA E INFORME EJECUTIVO', code: 'F-OPR-000-16' },
   { id: 'control_360_vehiculos', title: 'SISTEMA DE CONTROL 360° DE VEHÍCULOS (TRANSPORTE DSH)', code: 'F-OPR-000-17' },
+  { id: 'reporte_recoleccion', title: 'REPORTE DE RECOLECCIÓN DE RESIDUOS (BATCH/LOTE)', code: 'F-OPR-000-18' },
+  { id: 'evaluacion_360_incinerador', title: 'EVALUACIÓN 360° DE INCINERADOR DSH', code: 'F-OPR-000-19' },
+  { id: 'evaluacion_360_tunel_lavado', title: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO', code: 'F-OPR-000-20' },
+  { id: 'evaluacion_360_compactadora', title: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS', code: 'F-OPR-000-21' },
+  { id: 'evaluacion_360_trituradora', title: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER', code: 'F-OPR-000-22' },
+  { id: 'control_caldera', title: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA', code: 'F-OPR-000-23' },
 ];
 
 interface Props {

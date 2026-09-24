@@ -58,7 +58,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     evaluacion_360_incinerador: 0,
     evaluacion_360_tunel_lavado: 0,
     evaluacion_360_compactadora: 0,
-    evaluacion_360_trituradora: 0
+    evaluacion_360_trituradora: 0,
+    control_caldera: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -95,7 +96,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'evaluacion_360_incinerador', col: 'bitacora_evaluacion_360_incinerador' },
         { key: 'evaluacion_360_tunel_lavado', col: 'bitacora_evaluacion_360_tunel_lavado' },
         { key: 'evaluacion_360_compactadora', col: 'bitacora_evaluacion_360_compactadora' },
-        { key: 'evaluacion_360_trituradora', col: 'bitacora_evaluacion_360_trituradora' }
+        { key: 'evaluacion_360_trituradora', col: 'bitacora_evaluacion_360_trituradora' },
+        { key: 'control_caldera', col: 'bitacora_control_caldera' }
       ];
 
       const newCounts = {
@@ -120,7 +122,8 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         evaluacion_360_incinerador: 0,
         evaluacion_360_tunel_lavado: 0,
         evaluacion_360_compactadora: 0,
-        evaluacion_360_trituradora: 0
+        evaluacion_360_trituradora: 0,
+        control_caldera: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -393,6 +396,16 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       stats: `${counts.evaluacion_360_trituradora || 0} auditorías`
     },
     {
+      id: 'control_caldera',
+      title: 'Control y Operación de Caldera',
+      subtitle: 'Presión de vapor, purgas, combustión y mantenimiento preventivo',
+      code: 'BIOTRASH 4.2. F-OPR-000-23',
+      icon: <Flame className="w-5 h-5 text-amber-500" />,
+      color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
+      tag: 'Generación Térmica',
+      stats: `${counts.control_caldera || 0} bitácoras`
+    },
+    {
       id: 'reporte_recoleccion',
       title: 'Reporte de Recolección (Batch / Lote)',
       subtitle: 'Carga masiva histórica, diaria, semanal y mensual de rutas',
@@ -586,7 +599,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
                 <LayoutGrid className="w-4 h-4 text-[#64748B]" />
                 <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">Módulos de Formatos Operacionales (F-OPR)</h3>
               </div>
-              <span className="text-[10px] text-[#64748B] font-mono uppercase">9 Formularios de Captura Activos</span>
+              <span className="text-[10px] text-[#64748B] font-mono uppercase">{filteredModulos.length} Módulos de Operación & Calidad</span>
             </div>
 
             {/* 3x3 Grid cards */}

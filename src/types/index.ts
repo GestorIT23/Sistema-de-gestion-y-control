@@ -663,6 +663,72 @@ export interface Evaluacion360Trituradora extends BaseEvaluacion360Equipo {
   capacidadProcesamientoLbsHr?: number;
 }
 
+// 20. Bitácora Diaria de Operación, Control y Mantenimiento de Caldera
+export interface ParametrosTurnoCaldera {
+  presionVaporPsi?: number; // Referencia: 80 - 120 PSI
+  tempAguaAlimentacionC?: number; // Referencia: 80 - 90 °C
+  tempGasesChimeneaC?: number; // Referencia: 180 - 230 °C
+  nivelAguaVisorOk: boolean; // Normal [ OK ]
+  presionCombustibleGasPsi?: number; // Según manual
+  purgaColumnaNivel: boolean; // [ Sí / No ]
+  purgaFondoLodos: boolean; // [ Sí / No ]
+  dosificacionQuimicosPpm?: number; // Referencia: 1.5 litros/dia
+  tdsConductividadAgua?: number; // Referencia: < 3,000 µS/cm
+  inspeccionFugasOk: boolean; // Sin fugas [ OK ]
+}
+
+export interface ChecklistMantenimientoCaldera {
+  // A. Semanal
+  limpiezaFiltrosCombustibleTrampasAgua: boolean;
+  limpiezaFotoceldaElectrodoIgnicion: boolean;
+  pruebaParadaBajoNivelAguaCutOff: boolean;
+  inspeccionTrampasVaporRetornoCondensados: boolean;
+  limpiezaMallaVentilacionQuemador: boolean;
+
+  // B. Mensual
+  inspeccionQuemadorBoquillas: boolean;
+  verificacionPresostatosLimiteAlto: boolean;
+  inspeccionTubosGasesRegistroHollin: boolean;
+  inspeccionBombasAlimentacionSellos: boolean;
+  accionamientoManualValvulasSeguridad: boolean;
+
+  // C. Semestral / Anual
+  inspeccionLadoAguaDesincrustacion: boolean;
+  limpiezaMecanicaTubosRefractario: boolean;
+  calibracionValvulasSeguridadAcreditado: boolean;
+  analisisGasesCombustionEficiencia: boolean;
+  pruebaHidrostaticaEspesoresNorma: boolean;
+}
+
+export interface FilaEventoCaldera {
+  id?: string;
+  fecha: string;
+  componente: string;
+  falla: string;
+  accion: string;
+  repuesto: string;
+  proveedor: string;
+}
+
+export interface BitacoraControlCaldera extends BaseBitacora {
+  folio?: string;
+  identificacionCaldera: string;
+  operadorResponsable: string;
+  turnoSeleccionado: 'Turno 1' | 'Turno 2' | 'Ambos Turnos';
+  
+  turno1: ParametrosTurnoCaldera;
+  turno2: ParametrosTurnoCaldera;
+
+  checklist: ChecklistMantenimientoCaldera;
+  eventos: FilaEventoCaldera[];
+
+  comentarios: string;
+  dictamenTecnico: string;
+  estadoOperacional: 'Operativo / Conforme' | 'Operativo con Mantenimiento Pendiente' | 'Fuera de Servicio / Bloqueado';
+  firmaResponsable: string;
+  firmaSupervisor?: string;
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -686,4 +752,5 @@ export type BitacoraEntry =
   | { tipo: 'evaluacion_360_tunel_lavado'; data: Evaluacion360TunelLavado }
   | { tipo: 'evaluacion_360_compactadora'; data: Evaluacion360Compactadora }
   | { tipo: 'evaluacion_360_trituradora'; data: Evaluacion360Trituradora }
+  | { tipo: 'control_caldera'; data: BitacoraControlCaldera }
   | { tipo: 'reporte_recoleccion'; data: RegistroRecoleccion };

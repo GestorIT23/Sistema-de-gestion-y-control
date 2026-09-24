@@ -261,7 +261,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     evaluacion_360_incinerador: { code: 'BIOTRASH 4.2. F-OPR-000-19', name: 'EVALUACIÓN 360° DE INCINERADOR DSH' },
     evaluacion_360_tunel_lavado: { code: 'BIOTRASH 4.2. F-OPR-000-20', name: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO' },
     evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
-    evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' }
+    evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' },
+    control_caldera: { code: 'BIOTRASH 4.2. F-OPR-000-23', name: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };
@@ -1609,6 +1610,98 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Auditor / Inspector SGI', value: f.inspector || data.inspectorSgi || data.responsable || '' },
       { key: 'Operador Responsable de Equipo', value: f.operador || data.operadorAsignado || '' },
       { key: 'Supervisor / Gerente de Planta', value: f.supervisor || 'Gerente de Planta SGI' }
+    ]);
+  } else if (tipo === 'control_caldera') {
+    // 23. Bitácora de Operación, Control y Mantenimiento de Caldera
+    drawSectionHeader('I. DATOS GENERALES DE LA CALDERA (F-OPR-000-23)');
+    drawGridInfo([
+      { key: 'Fecha de Registro', value: data.fecha || '' },
+      { key: 'Turno Seleccionado', value: data.turnoSeleccionado || 'Turno 1 & 2' },
+      { key: 'Identificación Caldera', value: data.identificacionCaldera || 'CALD-01 (Caldera de Vapor)' },
+      { key: 'Operador Responsable', value: data.operadorResponsable || data.responsable || '' },
+      { key: 'Estado Operacional', value: data.estadoOperacional || 'Operativo / Conforme' }
+    ]);
+
+    drawSectionHeader('II. PARÁMETROS OPERATIVOS POR TURNO (NORMATIVA VAPOR)');
+    const t1 = data.turno1 || {};
+    const t2 = data.turno2 || {};
+
+    const pHeaders = ['PARÁMETRO / COMPONENTE', 'UNIDAD', 'REFERENCIA', 'TURNO 1', 'TURNO 2'];
+    const pWidths = [65, 25, 35, 30, 30];
+    const pRows = [
+      ['Presión de Vapor', 'PSI', '80 - 120', t1.presionVaporPsi !== undefined ? `${t1.presionVaporPsi} PSI` : '—', t2.presionVaporPsi !== undefined ? `${t2.presionVaporPsi} PSI` : '—'],
+      ['Temperatura Agua Alimentación', '°C', '80 - 90', t1.tempAguaAlimentacionC !== undefined ? `${t1.tempAguaAlimentacionC} °C` : '—', t2.tempAguaAlimentacionC !== undefined ? `${t2.tempAguaAlimentacionC} °C` : '—'],
+      ['Temperatura Gases Chimenea', '°C', '180 - 230', t1.tempGasesChimeneaC !== undefined ? `${t1.tempGasesChimeneaC} °C` : '—', t2.tempGasesChimeneaC !== undefined ? `${t2.tempGasesChimeneaC} °C` : '—'],
+      ['Nivel de Agua en Visor', 'Visual', 'Normal', t1.nivelAguaVisorOk ? '[X] OK' : '[ ] Falla', t2.nivelAguaVisorOk ? '[X] OK' : '[ ] Falla'],
+      ['Presión Combustible / Gas', 'PSI', 'Según manual', t1.presionCombustibleGasPsi !== undefined ? `${t1.presionCombustibleGasPsi} PSI` : '—', t2.presionCombustibleGasPsi !== undefined ? `${t2.presionCombustibleGasPsi} PSI` : '—'],
+      ['Purga de Columna / Nivel', 'Operativo', 'Requerido', t1.purgaColumnaNivel ? '[X] Sí' : '[ ] No', t2.purgaColumnaNivel ? '[X] Sí' : '[ ] No'],
+      ['Purga de Fondo (Lodos)', 'Operativo', 'Requerido', t1.purgaFondoLodos ? '[X] Sí' : '[ ] No', t2.purgaFondoLodos ? '[X] Sí' : '[ ] No'],
+      ['Dosificación Químicos (Tratamiento)', 'PPM / L', '1.5 L/día', t1.dosificacionQuimicosPpm !== undefined ? `${t1.dosificacionQuimicosPpm} L/d` : '1.5 L/d', t2.dosificacionQuimicosPpm !== undefined ? `${t2.dosificacionQuimicosPpm} L/d` : '1.5 L/d'],
+      ['TDS / Conductividad de Agua', 'µS/cm', '< 3,000', t1.tdsConductividadAgua !== undefined ? `${t1.tdsConductividadAgua} µS` : '—', t2.tdsConductividadAgua !== undefined ? `${t2.tdsConductividadAgua} µS` : '—'],
+      ['Inspección de Fugas (Vapor/Agua/Gas)', 'Visual', 'Sin fugas', t1.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga', t2.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga']
+    ];
+    drawDataTable(pHeaders, pWidths, pRows);
+
+    if (y > pageHeight - 75) {
+      doc.addPage();
+      drawHeader();
+    }
+
+    drawSectionHeader('III. PROGRAMA DE MANTENIMIENTO PREVENTIVO (CHECKLIST)');
+    const chk = data.checklist || {};
+    const cHeaders = ['ACTIVIDAD DE MANTENIMIENTO PREVENTIVO', 'PERIODICIDAD', 'ESTADO'];
+    const cWidths = [120, 35, 30];
+    const cRows = [
+      ['Limpieza y drenaje de filtros de combustible / trampas de agua', 'Semanal', chk.limpiezaFiltrosCombustibleTrampasAgua ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Limpieza de fotocelda y electrodo de ignición (hollín/residuos)', 'Semanal', chk.limpiezaFotoceldaElectrodoIgnicion ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Pruebas de simulación de falla por bajo nivel (Corte Cut-Off)', 'Semanal', chk.pruebaParadaBajoNivelAguaCutOff ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Inspección de trampas de vapor de retorno de condensados', 'Semanal', chk.inspeccionTrampasVaporRetornoCondensados ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Limpieza de malla de ventilación del quemador (relación aire/comb.)', 'Semanal', chk.limpiezaMallaVentilacionQuemador ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Inspección de quemador y boquillas (patrón de llama y desgaste)', 'Mensual', chk.inspeccionQuemadorBoquillas ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Verificación y prueba de presostato operativo y límite alto', 'Mensual', chk.verificacionPresostatosLimiteAlto ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Inspección de tubos de gases / apertura de registro (hollín)', 'Mensual', chk.inspeccionTubosGasesRegistroHollin ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Inspección de bombas de alimentación y sellos mecánicos', 'Mensual', chk.inspeccionBombasAlimentacionSellos ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Accionamiento manual de palanca en válvulas de seguridad', 'Mensual', chk.accionamientoManualValvulasSeguridad ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Inspección lado agua / apertura tapas de hombre (desincrustación)', 'Semestral/Anual', chk.inspeccionLadoAguaDesincrustacion ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Deshollinado completo y refractarios cámara de combustión', 'Semestral/Anual', chk.limpiezaMecanicaTubosRefractario ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Calibración certificada de válvulas de seguridad', 'Semestral/Anual', chk.calibracionValvulasSeguridadAcreditado ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Análisis de gases de combustión con analizador (CO, CO2, O2, opacidad)', 'Semestral/Anual', chk.analisisGasesCombustionEficiencia ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Prueba hidrostática / Ultrasonido de espesores según norma', 'Semestral/Anual', chk.pruebaHidrostaticaEspesoresNorma ? '[X] Realizado' : '[ ] Pendiente']
+    ];
+    drawDataTable(cHeaders, cWidths, cRows);
+
+    if (data.eventos && data.eventos.length > 0) {
+      if (y > pageHeight - 50) {
+        doc.addPage();
+        drawHeader();
+      }
+      drawSectionHeader('IV. REGISTRO DE EVENTOS Y FALLAS');
+      const eHeaders = ['FECHA', 'COMPONENTE', 'FALLA', 'ACCIÓN', 'REPUESTO', 'PROVEEDOR'];
+      const eWidths = [24, 32, 36, 40, 26, 27];
+      const eRows: any[] = [];
+      data.eventos.forEach((ev: any) => {
+        eRows.push([
+          ev.fecha || '',
+          ev.componente || '',
+          ev.falla || '',
+          ev.accion || '',
+          ev.repuesto || '—',
+          ev.proveedor || '—'
+        ]);
+      });
+      drawDataTable(eHeaders, eWidths, eRows);
+    }
+
+    if (y > pageHeight - 45) {
+      doc.addPage();
+      drawHeader();
+    }
+    drawSectionHeader('V. DICTAMEN TÉCNICO Y FIRMAS');
+    drawGridInfo([
+      { key: 'Comentarios Operativos', value: data.comentarios || 'Sin observaciones' },
+      { key: 'Dictamen Técnico', value: data.dictamenTecnico || 'Caldera aprobada para operación continua de vapor.' },
+      { key: 'Firma Operador Responsable', value: data.firmaResponsable || data.operadorResponsable || '' },
+      { key: 'Vo.Bo. Supervisor SGI', value: data.firmaSupervisor || 'Supervisor de Planta' }
     ]);
   }
 

@@ -50,6 +50,11 @@ const BITACORAS_INFO = [
   { id: 'checklist_diario_planta', title: 'Checklist Diario de Planta e Informe Ejecutivo', col: 'bitacora_checklist_diario_planta', code: 'F-OPR-000-16' },
   { id: 'control_360_vehiculos', title: 'Control 360° de Vehículos (Transporte DSH)', col: 'bitacora_control_360_vehiculos', code: 'F-OPR-000-17' },
   { id: 'reporte_recoleccion', title: 'Reporte de Recolección de Residuos (Batch/Lote)', col: 'reportes_recoleccion', code: 'F-OPR-000-18' },
+  { id: 'evaluacion_360_incinerador', title: 'Evaluación 360° de Incinerador DSH', col: 'bitacora_evaluacion_360_incinerador', code: 'F-OPR-000-19' },
+  { id: 'evaluacion_360_tunel_lavado', title: 'Evaluación 360° de Túnel de Lavado', col: 'bitacora_evaluacion_360_tunel_lavado', code: 'F-OPR-000-20' },
+  { id: 'evaluacion_360_compactadora', title: 'Evaluación 360° de Compactadora de Pacas', col: 'bitacora_evaluacion_360_compactadora', code: 'F-OPR-000-21' },
+  { id: 'evaluacion_360_trituradora', title: 'Evaluación 360° de Trituradora Shredder', col: 'bitacora_evaluacion_360_trituradora', code: 'F-OPR-000-22' },
+  { id: 'control_caldera', title: 'Bitácora Diaria de Operación y Control de Caldera', col: 'bitacora_control_caldera', code: 'F-OPR-000-23' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {
@@ -1057,6 +1062,110 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                                           </tbody>
                                         </table>
                                       </div>
+                                    </div>
+                                  )}
+
+                                  {/* Subtable for Evaluaciones 360 (itemsEvaluados) */}
+                                  {log.itemsEvaluados && log.itemsEvaluados.length > 0 && (
+                                    <div className="mt-2 text-[10px] bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                      <div className="flex items-center justify-between mb-1.5">
+                                        <span className="font-bold text-slate-700 uppercase text-[9px] tracking-wide">
+                                          Auditoría de Criterios 360° ({log.itemsEvaluados.length} Criterios Evaluados):
+                                        </span>
+                                        {log.puntajeGlobal !== undefined && (
+                                          <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                            Puntaje Global: {log.puntajeGlobal}% ({log.nivelCumplimiento || 'Calificado'})
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="max-h-56 overflow-y-auto rounded border border-slate-200">
+                                        <table className="w-full text-left text-[9px] border-collapse">
+                                          <thead>
+                                            <tr className="bg-[#F8FAFC] text-slate-600 uppercase font-bold border-b border-slate-200 text-[8px]">
+                                              <th className="px-2 py-1.5">Cód</th>
+                                              <th className="px-2 py-1.5">Categoría / Criterio</th>
+                                              <th className="px-2 py-1.5 text-center">Pond.</th>
+                                              <th className="px-2 py-1.5 text-center">Calificación</th>
+                                              <th className="px-2 py-1.5 text-center">Estado</th>
+                                              <th className="px-2 py-1.5">Hallazgo / Observación</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100">
+                                            {log.itemsEvaluados.map((item: any, idx: number) => (
+                                              <tr key={idx} className="hover:bg-slate-50/50">
+                                                <td className="px-2 py-1 font-mono font-bold text-slate-600">{item.codigo}</td>
+                                                <td className="px-2 py-1">
+                                                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">{item.categoria}</span>
+                                                  <span className="text-slate-700">{item.criterio}</span>
+                                                </td>
+                                                <td className="px-2 py-1 text-center font-mono text-slate-500">{item.ponderacion}%</td>
+                                                <td className="px-2 py-1 text-center font-bold text-slate-800 font-mono">
+                                                  {item.calificacion || item.puntuacion || 0}/5
+                                                </td>
+                                                <td className="px-2 py-1 text-center">
+                                                  <span className={`px-1.5 py-0.5 rounded text-[7.5px] font-bold uppercase ${
+                                                    item.estado === 'Conforme' ? 'bg-emerald-100 text-emerald-800' :
+                                                    item.estado === 'Observación' ? 'bg-amber-100 text-amber-800' :
+                                                    item.estado === 'No Conforme' ? 'bg-rose-100 text-rose-800' :
+                                                    'bg-slate-100 text-slate-600'
+                                                  }`}>
+                                                    {item.estado || 'N/A'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1 text-slate-600 italic">
+                                                  {item.observacion || item.hallazgo || '—'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Subtable for Caldera Parameters & Operation */}
+                                  {(log.turno1 || log.identificacionCaldera) && (
+                                    <div className="mt-2 text-[10px] bg-white p-3 rounded-lg border border-slate-200 shadow-sm space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-700 uppercase text-[9px] tracking-wide">
+                                          Parámetros Operativos de Caldera ({log.identificacionCaldera || 'Caldera Principal'}):
+                                        </span>
+                                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold">
+                                          {log.estadoOperacional || 'Operativo / Conforme'}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px]">
+                                        <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                                          <span className="text-slate-500 block uppercase font-bold text-[8px]">Presión Vapor (80-120 PSI):</span>
+                                          <span className="font-bold text-slate-800 font-mono">T1: {log.turno1?.presionVaporPsi || 0} PSI | T2: {log.turno2?.presionVaporPsi || 0} PSI</span>
+                                        </div>
+                                        <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                                          <span className="text-slate-500 block uppercase font-bold text-[8px]">Agua Alimentación (80-90°C):</span>
+                                          <span className="font-bold text-slate-800 font-mono">T1: {log.turno1?.tempAguaAlimentacionC || 0}°C | T2: {log.turno2?.tempAguaAlimentacionC || 0}°C</span>
+                                        </div>
+                                        <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                                          <span className="text-slate-500 block uppercase font-bold text-[8px]">Gases Chimenea (180-230°C):</span>
+                                          <span className="font-bold text-slate-800 font-mono">T1: {log.turno1?.tempGasesChimeneaC || 0}°C | T2: {log.turno2?.tempGasesChimeneaC || 0}°C</span>
+                                        </div>
+                                        <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                                          <span className="text-slate-500 block uppercase font-bold text-[8px]">Conductividad TDS (&lt;3000):</span>
+                                          <span className="font-bold text-slate-800 font-mono">T1: {log.turno1?.tdsConductividadAgua || 0} µS | T2: {log.turno2?.tdsConductividadAgua || 0} µS</span>
+                                        </div>
+                                      </div>
+
+                                      {log.eventos && log.eventos.length > 0 && (
+                                        <div className="mt-2 border-t border-slate-100 pt-2">
+                                          <span className="font-bold text-slate-600 block text-[8px] uppercase mb-1">Registro de Fallas y Eventos:</span>
+                                          <div className="space-y-1">
+                                            {log.eventos.map((ev: any, evIdx: number) => (
+                                              <div key={evIdx} className="bg-amber-50/50 p-1.5 rounded border border-amber-200 text-[8.5px] flex flex-wrap gap-2 justify-between">
+                                                <span><strong>Componente:</strong> {ev.componente} - {ev.falla}</span>
+                                                <span><strong>Acción:</strong> {ev.accion} ({ev.repuesto || 'Sin repuesto'})</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
 
