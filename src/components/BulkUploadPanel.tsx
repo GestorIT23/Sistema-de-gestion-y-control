@@ -167,6 +167,60 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             { Fecha: today, Turno: 'Matutino', Area: 'Planta Principal', Responsable: userEmail, 'Puntaje HSE': 100, 'Puntaje Calidad': 100, 'Puntaje Mantenimiento': 90, 'Puntaje 5S': 95, Observaciones: 'Carga inicial checklist' }
           ]
         };
+      case 'control_caldera':
+        return {
+          filename: 'Modelo_Carga_Caldera_F-OPR-000-23.xlsx',
+          sheetName: 'Caldera F-OPR-000-23',
+          columns: [
+            'Fecha', 'Turno', 'Identificacion Caldera', 'Operador Responsable',
+            'T1 Presion Vapor (PSI)', 'T1 Temp Agua Alimentacion (C)', 'T1 Temp Gases Chimenea (C)', 'T1 Nivel Agua Visor (OK/Falla)', 'T1 Presion Combustible (PSI)', 'T1 Purga Columna (Si/No)', 'T1 Purga Fondo (Si/No)', 'T1 Dosificacion Quimicos (L/dia)', 'T1 TDS Conductividad (uS/cm)', 'T1 Fugas (OK/Falla)',
+            'T2 Presion Vapor (PSI)', 'T2 Temp Agua Alimentacion (C)', 'T2 Temp Gases Chimenea (C)', 'T2 Nivel Agua Visor (OK/Falla)', 'T2 Presion Combustible (PSI)', 'T2 Purga Columna (Si/No)', 'T2 Purga Fondo (Si/No)', 'T2 Dosificacion Quimicos (L/dia)', 'T2 TDS Conductividad (uS/cm)', 'T2 Fugas (OK/Falla)',
+            'Mantenimiento Semanal Completo (Si/No)', 'Mantenimiento Mensual Completo (Si/No)', 'Mantenimiento Semestral Completo (Si/No)',
+            'Falla Componente', 'Falla Descripcion', 'Accion Correctiva', 'Repuesto', 'Proveedor',
+            'Comentarios', 'Dictamen Tecnico', 'Estado Caldera', 'Firma Operador', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Ambos Turnos',
+              'Identificacion Caldera': 'Caldera Clayton Mod. E-100 (Principal)',
+              'Operador Responsable': userEmail,
+              'T1 Presion Vapor (PSI)': 105,
+              'T1 Temp Agua Alimentacion (C)': 85,
+              'T1 Temp Gases Chimenea (C)': 195,
+              'T1 Nivel Agua Visor (OK/Falla)': 'OK',
+              'T1 Presion Combustible (PSI)': 35,
+              'T1 Purga Columna (Si/No)': 'Si',
+              'T1 Purga Fondo (Si/No)': 'Si',
+              'T1 Dosificacion Quimicos (L/dia)': 1.5,
+              'T1 TDS Conductividad (uS/cm)': 2200,
+              'T1 Fugas (OK/Falla)': 'OK',
+              'T2 Presion Vapor (PSI)': 110,
+              'T2 Temp Agua Alimentacion (C)': 87,
+              'T2 Temp Gases Chimenea (C)': 200,
+              'T2 Nivel Agua Visor (OK/Falla)': 'OK',
+              'T2 Presion Combustible (PSI)': 36,
+              'T2 Purga Columna (Si/No)': 'Si',
+              'T2 Purga Fondo (Si/No)': 'Si',
+              'T2 Dosificacion Quimicos (L/dia)': 1.5,
+              'T2 TDS Conductividad (uS/cm)': 2350,
+              'T2 Fugas (OK/Falla)': 'OK',
+              'Mantenimiento Semanal Completo (Si/No)': 'Si',
+              'Mantenimiento Mensual Completo (Si/No)': 'Si',
+              'Mantenimiento Semestral Completo (Si/No)': 'No',
+              'Falla Componente': 'Quemador / Boquillas',
+              'Falla Descripcion': 'Hollín leve en tobera',
+              'Accion Correctiva': 'Limpieza preventiva programada',
+              'Repuesto': 'Ninguno',
+              'Proveedor': 'Interno BIOTRASH',
+              Comentarios: 'Operación continua en parámetros óptimos de vapor para autoclaves',
+              'Dictamen Tecnico': 'Caldera en condiciones óptimas y seguras',
+              'Estado Caldera': 'Operativo / Conforme',
+              'Firma Operador': userEmail,
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
       default:
         return {
           filename: 'Formato_Generico.xlsx',
@@ -864,6 +918,90 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                 inspector: row.Responsable || 'Inspector SGI',
                 gerentePlanta: 'Ing. Manuel López — Gerente de Planta'
               }
+            });
+          });
+        } else if (tipo === 'control_caldera') {
+          jsonData.forEach((row: any, idx: number) => {
+            const isOk = (val: any) => {
+              if (!val) return false;
+              const s = String(val).trim().toLowerCase();
+              return s === 'ok' || s === 'conforme' || s === 'si' || s === 'sí' || s === 'true' || s === '1' || s === 'bien';
+            };
+
+            const turnoVal = row.Turno || row['Turno (Turno 1 / Turno 2 / Ambos)'] || 'Ambos Turnos';
+            const normalizedTurno = turnoVal.includes('1') && !turnoVal.includes('2') && !turnoVal.includes('Ambos') ? 'Turno 1' :
+                                    turnoVal.includes('2') && !turnoVal.includes('1') && !turnoVal.includes('Ambos') ? 'Turno 2' : 'Ambos Turnos';
+
+            const eventosList: any[] = [];
+            if (row['Falla Componente'] || row['Falla Descripcion'] || row.Componente || row.Falla) {
+              eventosList.push({
+                id: `ev-${Date.now()}-${idx}`,
+                fecha: parseExcelDate(row.Fecha),
+                componente: row['Falla Componente'] || row.Componente || 'Caldera / Quemador',
+                falla: row['Falla Descripcion'] || row.Falla || 'Ajuste operativo',
+                accion: row['Accion Correctiva'] || row.Accion || 'Mantenimiento preventivo',
+                repuesto: row.Repuesto || row['Repuesto Utilizado'] || 'Ninguno',
+                proveedor: row.Proveedor || 'Interno BIOTRASH'
+              });
+            }
+
+            recordsToSave.push({
+              folio: `CAL-${Date.now().toString().slice(-6)}-${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Operador Responsable'] || row.Operador || userEmail,
+              observaciones: row.Comentarios || row['Comentarios Operativos'] || 'Operación de caldera registrada vía carga masiva Excel',
+              turnoSeleccionado: normalizedTurno,
+              identificacionCaldera: row['Identificacion Caldera'] || row.Caldera || 'Caldera Clayton Mod. E-100 (Principal)',
+              operadorResponsable: row['Operador Responsable'] || row.Operador || userEmail,
+              turno1: {
+                presionVaporPsi: parseNum(row['T1 Presion Vapor (PSI)'] || row['T1 Presión Vapor PSI (80-120)'] || 105),
+                tempAguaAlimentacionC: parseNum(row['T1 Temp Agua Alimentacion (C)'] || row['T1 Temp Agua Alimentación °C (80-90)'] || 85),
+                tempGasesChimeneaC: parseNum(row['T1 Temp Gases Chimenea (C)'] || row['T1 Temp Gases Chimenea °C (180-230)'] || 195),
+                nivelAguaVisorOk: isOk(row['T1 Nivel Agua Visor (OK/Falla)'] ?? true),
+                presionCombustibleGasPsi: parseNum(row['T1 Presion Combustible (PSI)'] || row['T1 Presión Combustible Gas PSI'] || 35),
+                purgaColumnaNivel: isYes((row['T1 Purga Columna (Si/No)'] || row['T1 Purga Columna Nivel (Si/No)']) ?? true),
+                purgaFondoLodos: isYes((row['T1 Purga Fondo (Si/No)'] || row['T1 Purga Fondo Lodos (Si/No)']) ?? true),
+                dosificacionQuimicosPpm: parseNum(row['T1 Dosificacion Quimicos (L/dia)'] || row['T1 Dosificación Químicos L/día (1.5)'] || 1.5),
+                tdsConductividadAgua: parseNum(row['T1 TDS Conductividad (uS/cm)'] || row['T1 TDS Conductividad Agua µS/cm (<3000)'] || 2200),
+                inspeccionFugasOk: isOk((row['T1 Fugas (OK/Falla)'] || row['T1 Inspección Fugas (OK/Fuga)']) ?? true)
+              },
+              turno2: {
+                presionVaporPsi: parseNum(row['T2 Presion Vapor (PSI)'] || row['T2 Presión Vapor PSI (80-120)'] || 110),
+                tempAguaAlimentacionC: parseNum(row['T2 Temp Agua Alimentacion (C)'] || row['T2 Temp Agua Alimentación °C (80-90)'] || 87),
+                tempGasesChimeneaC: parseNum(row['T2 Temp Gases Chimenea (C)'] || row['T2 Temp Gases Chimenea °C (180-230)'] || 200),
+                nivelAguaVisorOk: isOk(row['T2 Nivel Agua Visor (OK/Falla)'] ?? true),
+                presionCombustibleGasPsi: parseNum(row['T2 Presion Combustible (PSI)'] || row['T2 Presión Combustible Gas PSI'] || 36),
+                purgaColumnaNivel: isYes((row['T2 Purga Columna (Si/No)'] || row['T2 Purga Columna Nivel (Si/No)']) ?? true),
+                purgaFondoLodos: isYes((row['T2 Purga Fondo (Si/No)'] || row['T2 Purga Fondo Lodos (Si/No)']) ?? true),
+                dosificacionQuimicosPpm: parseNum(row['T2 Dosificacion Quimicos (L/dia)'] || row['T2 Dosificación Químicos L/día (1.5)'] || 1.5),
+                tdsConductividadAgua: parseNum(row['T2 TDS Conductividad (uS/cm)'] || row['T2 TDS Conductividad Agua µS/cm (<3000)'] || 2350),
+                inspeccionFugasOk: isOk((row['T2 Fugas (OK/Falla)'] || row['T2 Inspección Fugas (OK/Fuga)']) ?? true)
+              },
+              checklist: {
+                limpiezaFiltrosCombustibleTrampasAgua: isYes(row['Mantenimiento Semanal Completo (Si/No)'] ?? true),
+                limpiezaFotoceldaElectrodoIgnicion: isYes(row['Mantenimiento Semanal Completo (Si/No)'] ?? true),
+                pruebaParadaBajoNivelAguaCutOff: isYes(row['Mantenimiento Semanal Completo (Si/No)'] ?? true),
+                inspeccionTrampasVaporRetornoCondensados: isYes(row['Mantenimiento Semanal Completo (Si/No)'] ?? true),
+                limpiezaMallaVentilacionQuemador: isYes(row['Mantenimiento Semanal Completo (Si/No)'] ?? true),
+
+                inspeccionQuemadorBoquillas: isYes(row['Mantenimiento Mensual Completo (Si/No)'] ?? true),
+                verificacionPresostatosLimiteAlto: isYes(row['Mantenimiento Mensual Completo (Si/No)'] ?? true),
+                inspeccionTubosGasesRegistroHollin: isYes(row['Mantenimiento Mensual Completo (Si/No)'] ?? true),
+                inspeccionBombasAlimentacionSellos: isYes(row['Mantenimiento Mensual Completo (Si/No)'] ?? true),
+                accionamientoManualValvulasSeguridad: isYes(row['Mantenimiento Mensual Completo (Si/No)'] ?? true),
+
+                inspeccionLadoAguaDesincrustacion: isYes(row['Mantenimiento Semestral Completo (Si/No)'] ?? false),
+                limpiezaMecanicaTubosRefractario: isYes(row['Mantenimiento Semestral Completo (Si/No)'] ?? false),
+                calibracionValvulasSeguridadAcreditado: isYes(row['Mantenimiento Semestral Completo (Si/No)'] ?? true),
+                analisisGasesCombustionEficiencia: isYes(row['Mantenimiento Semestral Completo (Si/No)'] ?? true),
+                pruebaHidrostaticaEspesoresNorma: isYes(row['Mantenimiento Semestral Completo (Si/No)'] ?? false)
+              },
+              eventos: eventosList,
+              comentarios: row.Comentarios || row['Comentarios Operativos'] || 'Operación de caldera registrada vía carga masiva Excel',
+              dictamenTecnico: row['Dictamen Tecnico'] || row['Dictamen Técnico'] || 'Caldera operando conforme a estándares del SGI',
+              estadoOperacional: (row['Estado Caldera'] || 'Operativo / Conforme') as any,
+              firmaResponsable: row['Firma Operador'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
             });
           });
         }

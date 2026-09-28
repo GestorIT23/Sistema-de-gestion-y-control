@@ -1509,3 +1509,137 @@ export function downloadRecoleccionTemplate(): void {
   XLSX.writeFile(wb, `Plantilla_Reporte_Recoleccion_BIOTRASH.xlsx`);
 }
 
+/**
+ * Descarga del modelo / plantilla oficial de carga masiva en Excel para
+ * BITÁCORA DIARIA DE OPERACIÓN, CONTROL Y MANTENIMIENTO DE CALDERA (F-OPR-000-23)
+ */
+export function downloadCalderaTemplate() {
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Turno 1 / Turno 2 / Ambos Turnos)',
+    'Identificación Caldera',
+    'Operador Responsable',
+    'T1 Presión Vapor PSI (80-120)',
+    'T1 Temp Agua Alimentación °C (80-90)',
+    'T1 Temp Gases Chimenea °C (180-230)',
+    'T1 Nivel Agua Visor (OK/Falla)',
+    'T1 Presión Combustible Gas PSI',
+    'T1 Purga Columna Nivel (Si/No)',
+    'T1 Purga Fondo Lodos (Si/No)',
+    'T1 Dosificación Químicos L/día (1.5)',
+    'T1 TDS Conductividad Agua µS/cm (<3000)',
+    'T1 Inspección Fugas (OK/Fuga)',
+    'T2 Presión Vapor PSI (80-120)',
+    'T2 Temp Agua Alimentación °C (80-90)',
+    'T2 Temp Gases Chimenea °C (180-230)',
+    'T2 Nivel Agua Visor (OK/Falla)',
+    'T2 Presión Combustible Gas PSI',
+    'T2 Purga Columna Nivel (Si/No)',
+    'T2 Purga Fondo Lodos (Si/No)',
+    'T2 Dosificación Químicos L/día (1.5)',
+    'T2 TDS Conductividad Agua µS/cm (<3000)',
+    'T2 Inspección Fugas (OK/Fuga)',
+    'Mantenimiento Semanal Completo (Si/No)',
+    'Mantenimiento Mensual Completo (Si/No)',
+    'Mantenimiento Semestral Completo (Si/No)',
+    'Falla Componente',
+    'Falla Descripción',
+    'Acción Correctiva',
+    'Repuesto Utilizado',
+    'Proveedor',
+    'Comentarios Operativos',
+    'Dictamen Técnico',
+    'Estado Caldera (Operativo / Conforme | Operativo con Mantenimiento Pendiente | Fuera de Servicio / Bloqueado)',
+    'Firma Operador',
+    'Firma Supervisor'
+  ];
+
+  const today = new Date().toISOString().split('T')[0];
+  const sampleRows = [
+    [
+      today,
+      'Ambos Turnos',
+      'Caldera Clayton Mod. E-100 (Principal)',
+      'Operador Caldera SGI',
+      105,
+      85,
+      195,
+      'OK',
+      35,
+      'Si',
+      'Si',
+      1.5,
+      2200,
+      'OK',
+      110,
+      87,
+      200,
+      'OK',
+      36,
+      'Si',
+      'Si',
+      1.5,
+      2350,
+      'OK',
+      'Si',
+      'Si',
+      'No',
+      'Quemador / Tobera',
+      'Ajuste de electrodo y hollín leve',
+      'Limpieza preventiva programada',
+      'Ninguno',
+      'Interno BIOTRASH',
+      'Presión y temperatura constantes en suministro de vapor para autoclaves',
+      'Caldera operando en condiciones óptimas y seguras',
+      'Operativo / Conforme',
+      'Operador Responsable SGI',
+      'Ing. Manuel López — Gerente de Planta'
+    ],
+    [
+      today,
+      'Turno 1',
+      'Caldera Fulton FB-050-A',
+      'Operador Turno Mañana',
+      115,
+      86,
+      210,
+      'OK',
+      38,
+      'Si',
+      'Si',
+      1.5,
+      2450,
+      'OK',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      'Si',
+      'Si',
+      'No',
+      '',
+      '',
+      '',
+      '',
+      '',
+      'Monitoreo normal del primer turno de operación',
+      'Equipo conforme a parámetros del fabricante',
+      'Operativo / Conforme',
+      'Operador Turno Mañana',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 22 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Modelo Carga Caldera');
+  XLSX.writeFile(wb, `Modelo_Carga_Caldera_F-OPR-000-23_BIOTRASH.xlsx`);
+}
+
