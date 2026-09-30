@@ -262,7 +262,13 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     evaluacion_360_tunel_lavado: { code: 'BIOTRASH 4.2. F-OPR-000-20', name: 'EVALUACIÓN 360° DE TÚNEL DE LAVADO' },
     evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
     evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' },
-    control_caldera: { code: 'BIOTRASH 4.2. F-OPR-000-23', name: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA' }
+    control_caldera: { code: 'BIOTRASH 4.2. F-OPR-000-23', name: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA' },
+    mantenimiento_incinerador: { code: 'BIOTRASH 4.2. BIT-MTO-INC-001', name: 'BITÁCORA DE MANTENIMIENTO INCINERADOR INDUSTRIAL RPBI' },
+    mantenimiento_lampinator: { code: 'BIOTRASH 4.2. BIT-MTO-LAMP-001', name: 'BITÁCORA DE MANTENIMIENTO MÁQUINA LAMPINATOR' },
+    mantenimiento_trituradora: { code: 'BIOTRASH 4.2. BIT-MTO-TRIT-001', name: 'BITÁCORA DE MANTENIMIENTO TRITURADORA DE RESIDUOS' },
+    mantenimiento_compactadora: { code: 'BIOTRASH 4.2. BIT-MTO-COMP-001', name: 'BITÁCORA DE MANTENIMIENTO COMPACTADORA / PRENSA' },
+    mantenimiento_autoclaves: { code: 'BIOTRASH 4.2. BIT-MTO-AUTO-001', name: 'BITÁCORA DE MANTENIMIENTO AUTOCLAVES DE ESTERILIZACIÓN' },
+    limpieza_desinfeccion_planta: { code: 'BIOTRASH 4.2. BIT-LIM-DES-001', name: 'CONTROL DIARIO DE LIMPIEZA Y DESINFECCIÓN DE PLANTA' }
   };
 
   const meta = titles[tipo] || { code: 'F-OPR-SGI', name: 'BITÁCORA DE GESTIÓN OPERACIONAL SGI' };

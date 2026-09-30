@@ -729,6 +729,220 @@ export interface BitacoraControlCaldera extends BaseBitacora {
   firmaSupervisor?: string;
 }
 
+export interface BitacoraMantenimientoIncinerador extends BaseBitacora {
+  folio?: string;
+  equipoId: string;
+  nombreEquipo: string;
+  tipoMantenimiento: 'Preventivo Programado' | 'Correctivo' | 'Emergencia' | 'Calibración e Instrumentación';
+  horaInicio: string;
+  horaFin: string;
+  horasOperacion: number;
+  tecnicoResponsable: string;
+  supervisadoPor: string;
+  lotoCandadeo: boolean;
+  temperaturaMenor40: boolean;
+  purgaCorteCombustible: boolean;
+  ventilacionCamaras: boolean;
+  checklistCamaras: {
+    revestimientoCamaraPrimaria: string;
+    revestimientoCamaraSecundaria: string;
+    sellosPuertas: string;
+    mirillasInspeccion: string;
+    estructuraExteriorCarter: string;
+  };
+  checklistCombustion: {
+    boquillasInyectores: string;
+    electrodosIgnicion: string;
+    detectoresLlama: string;
+    filtrosCombustible: string;
+    valvulasSolenoides: string;
+    valvulaCorteSlamOff: string;
+  };
+  checklistInstrumentacion: {
+    termocuplaCamaraPrimaria: string;
+    termocuplaCamaraSecundaria: string;
+    manometrosPresion: string;
+    panelPlcAlarmas: string;
+  };
+  repuestosUtilizados: Array<{
+    cantidad: number;
+    codigo: string;
+    descripcion: string;
+    causaReemplazo: string;
+  }>;
+  descripcionTrabajos: string;
+  pruebasHermeticidad: boolean;
+  pruebasInterlocks: boolean;
+  modulacionLlama: boolean;
+  tempConsignaSecundariaAlcanzada: boolean;
+  tiroNegativoVerificado: boolean;
+  estadoFinal: 'Operativo Conforme' | 'Operativo con Observaciones' | 'Fuera de Servicio';
+  firmaTecnico: string;
+  firmaSupervisor: string;
+}
+
+export interface BitacoraMantenimientoLampinator extends BaseBitacora {
+  folio?: string;
+  equipoId: string;
+  nombreEquipo: string;
+  tipoMantenimiento: 'Preventivo Programado' | 'Correctivo' | 'Emergencia';
+  horaInicio: string;
+  horaFin: string;
+  horometro: number;
+  tecnicoResponsable: string;
+  operadorTurno: string;
+  mascarillaVaporHg: boolean;
+  pruebaFugaVaporHgPpm: number;
+  protocoloLoto: boolean;
+  checklistFiltracion: {
+    diferencialPresionHepa: string;
+    moduloCarbonActivadoHg: string;
+    prefiltrosPolvo: string;
+  };
+  checklistMecanico: {
+    desgasteMartillosCuchillas: string;
+    hermeticidadEmpaquesTolva: string;
+  };
+  checklistExtraccion: {
+    nivelLlenadoTamborVidrio: string;
+    inspeccionManguerasSuccion: string;
+  };
+  checklistSeguridad: {
+    parosEmergenciaInterlocks: string;
+    medidoresDepresionVacio: string;
+  };
+  repuestosUtilizados: Array<{
+    cantidad: number;
+    codigo: string;
+    repuesto: string;
+    causa: string;
+  }>;
+  observaciones: string;
+  estadoFinal: 'Operativo Conforme' | 'Operativo Condicionado' | 'Fuera de Servicio';
+  firmaTecnico: string;
+  firmaSupervisor: string;
+}
+
+export interface BitacoraMantenimientoTrituradora extends BaseBitacora {
+  folio?: string;
+  equipoId: string;
+  nombreEquipo: string;
+  marcaModelo: string;
+  serie: string;
+  ubicacionPlanta: string;
+  horometro: number;
+  turno: 'Turno 1' | 'Turno 2' | 'Turno 3';
+  tipoMantenimiento: 'Rutinario Diario' | 'Preventivo Semanal/Mensual' | 'Correctivo';
+  tecnicoResponsable: string;
+  estadoCuchillas: string;
+  nivelAceiteReductor: string;
+  ruidosVibraciones: string;
+  limpiezaDesinfeccion: string;
+  pruebaAutoReverse: string;
+  engraseRodamientos: string;
+  tensionFajasCadenas: string;
+  consumoAmperajeMotorA: number;
+  presionSistemaHidraulicoPsi: number;
+  anomaliasDetectadas: string;
+  descripcionTrabajo: string;
+  repuestosUtilizados: Array<{
+    repuesto: string;
+    cantidad: number;
+    proveedor: string;
+  }>;
+  horasParo: number;
+  lotoAplicado: boolean;
+  estadoFinal: 'Operativo Conforme' | 'Requiere Mantenimiento' | 'Fuera de Servicio';
+  firmaTecnico: string;
+  firmaSupervisor: string;
+}
+
+export interface BitacoraMantenimientoCompactadora extends BaseBitacora {
+  folio?: string;
+  equipoId: string;
+  nombreEquipo: string;
+  horometro: number;
+  turno: 'Turno 1' | 'Turno 2' | 'Turno 3';
+  periodicidad: 'Diario (Operador)' | 'Semanal/Mensual (Técnico)' | 'Semestral/Anual (Especialista)';
+  tipoMantenimiento: 'Preventivo' | 'Correctivo' | 'Emergencia';
+  tecnicoResponsable: string;
+  fugaFluidosDebajoPlato: 'Conforme' | 'No Conforme';
+  hermeticidadSellosPuerta: 'Conforme' | 'No Conforme';
+  limpiezaDesinfeccionTolva: 'Conforme' | 'No Conforme';
+  parosEmergenciaFotoceldas: 'Conforme' | 'No Conforme';
+  ruidosMotorHidraulico: 'Conforme' | 'No Conforme';
+  inspeccionManguerasCilindros: string;
+  nivelAceiteHidraulicoIso68: string;
+  engraseChumacerasGuias: string;
+  filtrosAireRespiradero: string;
+  empaqueRetencionLixiviados: string;
+  horaParo?: string;
+  causaRaizFalla?: string;
+  accionCorrectiva?: string;
+  repuestosUtilizados?: string;
+  protocoloBioseguridadEpp: boolean;
+  estadoFinal: 'Aprobado para Operar' | 'Condicionado' | 'Fuera de Servicio';
+  firmaTecnico: string;
+  firmaSupervisor: string;
+}
+
+export interface BitacoraMantenimientoAutoclaves extends BaseBitacora {
+  folio?: string;
+  equipoId: 'AUTO CLAVE 1' | 'AUTO CLAVE 2' | 'AUTO CLAVE 3';
+  turno: 'Turno 1' | 'Turno 2' | 'Turno 3';
+  tipoMantenimiento: 'Inspección Operativa Turno' | 'Preventivo Periódico' | 'Correctivo y Calibración';
+  horometro: number;
+  tecnicoResponsable: string;
+  presionVaporCalderaPsi: number;
+  presionCamaraPsi: number;
+  temperaturaC: number;
+  tiempoCicloMin: number;
+  pruebaVacioResultado: 'Conforme' | 'No Conforme';
+  drenajeCondensadosTrampa: 'Conforme' | 'No Conforme';
+  estadoEmpaquePuerta: 'Excelente' | 'Bueno' | 'Desgastado' | 'Fuga Detectada';
+  valvulasSeguridadAlivio: string;
+  manometrosCalibracion: string;
+  transmisoresPt100: string;
+  filtroCanastaDescarga: string;
+  engraseBrazosCierre: string;
+  descripcionIntervencion: string;
+  repuestosCalibraciones: string;
+  estadoFinal: 'Operativa al 100%' | 'Observaciones Menores' | 'Fuera de Servicio';
+  firmaTecnico: string;
+  firmaSupervisor: string;
+}
+
+export interface BitacoraLimpiezaDesinfeccionPlanta extends BaseBitacora {
+  folio?: string;
+  turno: 'Mañana' | 'Tarde' | 'Noche';
+  supervisorResponsable: string;
+  cuadrillaOperadores: string;
+  productoQuimico: string;
+  loteProducto: string;
+  concentracionObjetivoPpm: number;
+  concentracionMedidaPpm: number;
+  horaPreparacion: string;
+  zonas: Array<{
+    area: string;
+    frecuencia: string;
+    tipoLimpieza: 'Limpieza Profunda' | 'Desinfección de Choque' | 'Rutinaria';
+    hora: string;
+    estatus: 'Conforme' | 'No Conforme';
+    operador: string;
+  }>;
+  eppGuantesNitrilo: boolean;
+  eppBotasImpermeables: boolean;
+  eppTrajeTyvekMandil: boolean;
+  eppRespiradorVapores: boolean;
+  eppCaretaFacial: boolean;
+  panosMopasLímpias: boolean;
+  desviacionesNovedades: string;
+  accionesCorrectivas: string;
+  veredictoCumplimiento: 'Cumplimiento Total (100%)' | 'Cumplimiento Parcial' | 'No Conforme';
+  firmaOperadorLider: string;
+  firmaSupervisorHse: string;
+}
+
 // Unified Union type for all log entries
 export type BitacoraEntry =
   | { tipo: 'inventarios'; data: BitacoraInventarios }
@@ -753,4 +967,10 @@ export type BitacoraEntry =
   | { tipo: 'evaluacion_360_compactadora'; data: Evaluacion360Compactadora }
   | { tipo: 'evaluacion_360_trituradora'; data: Evaluacion360Trituradora }
   | { tipo: 'control_caldera'; data: BitacoraControlCaldera }
-  | { tipo: 'reporte_recoleccion'; data: RegistroRecoleccion };
+  | { tipo: 'reporte_recoleccion'; data: RegistroRecoleccion }
+  | { tipo: 'mantenimiento_incinerador'; data: BitacoraMantenimientoIncinerador }
+  | { tipo: 'mantenimiento_lampinator'; data: BitacoraMantenimientoLampinator }
+  | { tipo: 'mantenimiento_trituradora'; data: BitacoraMantenimientoTrituradora }
+  | { tipo: 'mantenimiento_compactadora'; data: BitacoraMantenimientoCompactadora }
+  | { tipo: 'mantenimiento_autoclaves'; data: BitacoraMantenimientoAutoclaves }
+  | { tipo: 'limpieza_desinfeccion_planta'; data: BitacoraLimpiezaDesinfeccionPlanta };

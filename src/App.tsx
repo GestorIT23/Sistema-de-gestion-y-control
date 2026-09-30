@@ -26,6 +26,12 @@ import BitacoraEvaluacion360TunelLavado from './components/modules/BitacoraEvalu
 import BitacoraEvaluacion360Compactadora from './components/modules/BitacoraEvaluacion360Compactadora';
 import BitacoraEvaluacion360Trituradora from './components/modules/BitacoraEvaluacion360Trituradora';
 import BitacoraControlCaldera from './components/modules/BitacoraControlCaldera';
+import BitacoraMantenimientoIncinerador from './components/modules/BitacoraMantenimientoIncinerador';
+import BitacoraMantenimientoLampinator from './components/modules/BitacoraMantenimientoLampinator';
+import BitacoraMantenimientoTrituradora from './components/modules/BitacoraMantenimientoTrituradora';
+import BitacoraMantenimientoCompactadora from './components/modules/BitacoraMantenimientoCompactadora';
+import BitacoraMantenimientoAutoclaves from './components/modules/BitacoraMantenimientoAutoclaves';
+import BitacoraLimpiezaDesinfeccionPlanta from './components/modules/BitacoraLimpiezaDesinfeccionPlanta';
 import ReporteRecoleccionModule from './components/modules/ReporteRecoleccion';
 import ReportesModule from './components/modules/Reportes';
 import GestionUsuarios from './components/modules/GestionUsuarios';
@@ -96,7 +102,10 @@ export default function App() {
             'checklist_diario_planta', 'control_360_vehiculos',
             'evaluacion_360_incinerador', 'evaluacion_360_tunel_lavado',
             'evaluacion_360_compactadora', 'evaluacion_360_trituradora',
-            'control_caldera', 'reporte_recoleccion'
+            'control_caldera', 'reporte_recoleccion',
+            'mantenimiento_incinerador', 'mantenimiento_lampinator',
+            'mantenimiento_trituradora', 'mantenimiento_compactadora',
+            'mantenimiento_autoclaves', 'limpieza_desinfeccion_planta'
           ]
         };
         const docRef = await addDoc(collection(db, 'usuarios'), defaultAdmin);
@@ -318,6 +327,48 @@ export default function App() {
       case 'control_caldera':
         return (
           <BitacoraControlCaldera
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'mantenimiento_incinerador':
+        return (
+          <BitacoraMantenimientoIncinerador
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'mantenimiento_lampinator':
+        return (
+          <BitacoraMantenimientoLampinator
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'mantenimiento_trituradora':
+        return (
+          <BitacoraMantenimientoTrituradora
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'mantenimiento_compactadora':
+        return (
+          <BitacoraMantenimientoCompactadora
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'mantenimiento_autoclaves':
+        return (
+          <BitacoraMantenimientoAutoclaves
+            onBack={() => setModuloActivo(null)}
+            userEmail={currentUser.email}
+          />
+        );
+      case 'limpieza_desinfeccion_planta':
+        return (
+          <BitacoraLimpiezaDesinfeccionPlanta
             onBack={() => setModuloActivo(null)}
             userEmail={currentUser.email}
           />

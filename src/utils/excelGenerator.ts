@@ -1999,4 +1999,386 @@ export function downloadControl360VehiculosTemplate() {
   XLSX.writeFile(wb, `Modelo_Carga_Control_360_Vehiculos_F-OPR-000-17.xlsx`);
 }
 
+/**
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Incinerador RPBI
+ */
+export function downloadMantenimientoIncineradorTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Equipo ID (INC-01 / INC-02)',
+    'Tipo Mantenimiento (Preventivo Programado / Correctivo / Emergencia / Calibración e Instrumentación)',
+    'Hora Inicio (HH:MM)',
+    'Hora Fin (HH:MM)',
+    'Horómetro (Horas Operación)',
+    'Técnico Responsable',
+    'Supervisado Por',
+    'LOTO Candadeo (Si/No)',
+    'Temperatura Menor 40C (Si/No)',
+    'Purga Corte Combustible (Si/No)',
+    'Ventilacion Camaras (Si/No)',
+    'Estado Refractario Camara Primaria (Bueno/Regular/Malo)',
+    'Estado Refractario Camara Secundaria (Bueno/Regular/Malo)',
+    'Estado Sellos Puertas (Bueno/Regular/Malo)',
+    'Estado Boquillas Inyectores (Bueno/Regular/Malo)',
+    'Estado Electrodos Ignicion (Bueno/Regular/Malo)',
+    'Estado Detectores Llama (Bueno/Regular/Malo)',
+    'Estado Termocuplas (Bueno/Regular/Malo)',
+    'Estado Manometros (Bueno/Regular/Malo)',
+    'Descripcion Trabajos y Repuestos',
+    'Pruebas Hermeticidad (Si/No)',
+    'Pruebas Interlocks (Si/No)',
+    'Modulacion Llama (Si/No)',
+    'Estado Final (Operativo Conforme / Operativo con Observaciones / Fuera de Servicio)',
+    'Firma Tecnico',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'INC-01',
+      'Preventivo Programado',
+      '07:00',
+      '11:30',
+      4200,
+      'Juan Carlos Méndez (Técnico Térmico)',
+      'Ing. Manuel López — Gerente de Planta',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Limpieza profunda de toberas de quemador principal, calibración de electrodos de chispa y sustitución de empaquetadura de compuerta de carga.',
+      'Si',
+      'Si',
+      'Si',
+      'Operativo Conforme',
+      'Juan Carlos Méndez',
+      'Ing. Manuel López'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento Incinerador');
+  XLSX.writeFile(wb, `Modelo_Carga_Mantenimiento_Incinerador_BIT-MTO-INC-001.xlsx`);
+}
+
+/**
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Máquina Lampinator
+ */
+export function downloadMantenimientoLampinatorTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Equipo ID (LAMP-01)',
+    'Tipo Mantenimiento (Preventivo Programado / Correctivo / Emergencia)',
+    'Hora Inicio (HH:MM)',
+    'Hora Fin (HH:MM)',
+    'Horómetro (Horas)',
+    'Técnico Responsable',
+    'Operador Turno',
+    'Mascarilla Vapor Hg 3M (Si/No)',
+    'Fuga Vapor Hg Ppm (0-0.05)',
+    'Protocolo LOTO (Si/No)',
+    'Filtro HEPA Presion Diferencial (Conforme/No Conforme)',
+    'Modulo Carbon Activado Hg (Conforme/No Conforme)',
+    'Prefiltros Polvo (Conforme/No Conforme)',
+    'Desgaste Martillos Trituracion (Conforme/No Conforme)',
+    'Hermeticidad Empaques Tolva (Conforme/No Conforme)',
+    'Nivel Tambor Vidrio y Fósforo (Conforme/No Conforme)',
+    'Mangueras Succion Vacio (Conforme/No Conforme)',
+    'Paros Emergencia Interlocks (Conforme/No Conforme)',
+    'Descripcion Trabajos y Repuestos',
+    'Estado Final (Operativo Conforme / Operativo Condicionado / Fuera de Servicio)',
+    'Firma Tecnico',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'LAMP-01',
+      'Preventivo Programado',
+      '08:00',
+      '10:45',
+      1850,
+      'Pedro Fernando Alvarado (Técnico Especialista Hg)',
+      'Carlos Rodas (Operador Planta)',
+      'Si',
+      0.002,
+      'Si',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Reemplazo de prefiltro de partículas de fósforo y revisión de hermeticidad en tolva de alimentación de tubos fluorescentes.',
+      'Operativo Conforme',
+      'Pedro Fernando Alvarado',
+      'Ing. Manuel López'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento Lampinator');
+  XLSX.writeFile(wb, `Modelo_Carga_Mantenimiento_Lampinator_BIT-MTO-LAMP-001.xlsx`);
+}
+
+/**
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Trituradora Industrial
+ */
+export function downloadMantenimientoTrituradoraTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Turno 1 / Turno 2 / Turno 3)',
+    'Equipo ID (TRIT-01 / TRIT-02)',
+    'Tipo Mantenimiento (Rutinario Diario / Preventivo Semanal/Mensual / Correctivo)',
+    'Horómetro Actual',
+    'Técnico Responsable',
+    'Estado Cuchillas (Bueno/Regular/Malo)',
+    'Nivel Aceite Reductor (Conforme/Bajo/Critico)',
+    'Ruidos o Vibraciones (Normal/Anormal)',
+    'Limpieza y Desinfección Interna (Si/No)',
+    'Prueba Auto-Reverse (Si/No)',
+    'Engrase Rodamientos (Si/No)',
+    'Consumo Amperaje Motor A (50-75)',
+    'Presion Hidraulica Empuje PSI (1800-2500)',
+    'Descripcion Trabajos y Repuestos',
+    'Horas Paro',
+    'LOTO Aplicado (Si/No)',
+    'Estado Final (Operativo Conforme / Requiere Mantenimiento / Fuera de Servicio)',
+    'Firma Tecnico',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Turno 1',
+      'TRIT-01',
+      'Preventivo Semanal/Mensual',
+      5340,
+      'Byron Estuardo Reyes (Mecánico Industrial)',
+      'Bueno',
+      'Conforme',
+      'Normal',
+      'Si',
+      'Si',
+      'Si',
+      62.5,
+      2100,
+      'Engrase general de chumaceras SKF, ajuste de fajas motrices y prueba de reversa automática ante sobrecarga simulada.',
+      0,
+      'Si',
+      'Operativo Conforme',
+      'Byron Estuardo Reyes',
+      'Ing. Manuel López'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento Trituradora');
+  XLSX.writeFile(wb, `Modelo_Carga_Mantenimiento_Trituradora_BIT-MTO-TRIT-001.xlsx`);
+}
+
+/**
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Compactadora DSH
+ */
+export function downloadMantenimientoCompactadoraTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Turno 1 / Turno 2 / Turno 3)',
+    'Equipo ID (COMP-01 / COMP-02)',
+    'Periodicidad (Diario (Operador) / Semanal/Mensual (Técnico) / Semestral/Anual (Especialista))',
+    'Tipo Mantenimiento (Preventivo / Correctivo / Emergencia)',
+    'Horómetro Actual',
+    'Técnico Responsable',
+    'Fugas Fluidos Debajo Plato (Conforme/No Conforme)',
+    'Hermeticidad Sellos Puerta (Conforme/No Conforme)',
+    'Limpieza Desinfección Tolva (Conforme/No Conforme)',
+    'Paros Emergencia y Fotoceldas (Conforme/No Conforme)',
+    'Ruidos Motor Hidráulico (Conforme/No Conforme)',
+    'Inspeccion Mangueras y Cilindros (Bueno/Regular/Malo)',
+    'Nivel Aceite ISO 68 (Conforme/Bajo/Critico)',
+    'Engrase Guias y Chumaceras (Si/No)',
+    'Filtros Aire Respiradero (Bueno/Regular/Malo)',
+    'Empaque Retencion Lixiviados (Bueno/Regular/Malo)',
+    'Descripcion Trabajos y Repuestos',
+    'Protocolo Bioseguridad y EPP (Si/No)',
+    'Estado Final (Aprobado para Operar / Condicionado / Fuera de Servicio)',
+    'Firma Tecnico',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Turno 1',
+      'COMP-01',
+      'Semanal/Mensual (Técnico)',
+      'Preventivo',
+      4180,
+      'Marcos Tulio Juárez (Técnico Hidráulico)',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Conforme',
+      'Bueno',
+      'Conforme',
+      'Si',
+      'Bueno',
+      'Bueno',
+      'Relleno de nivel de aceite hidráulico ISO 68, engrase de correderas de plato compactador y limpieza de drenaje de lixiviados.',
+      'Si',
+      'Aprobado para Operar',
+      'Marcos Tulio Juárez',
+      'Ing. Manuel López'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento Compactadora');
+  XLSX.writeFile(wb, `Modelo_Carga_Mantenimiento_Compactadora_BIT-MTO-COMP-001.xlsx`);
+}
+
+/**
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Autoclaves DSH
+ */
+export function downloadMantenimientoAutoclavesTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Turno 1 / Turno 2 / Turno 3)',
+    'Equipo ID (AUTO CLAVE 1 / AUTO CLAVE 2 / AUTO CLAVE 3)',
+    'Tipo Mantenimiento (Inspección Operativa Turno / Preventivo Periódico / Correctivo y Calibración)',
+    'Horómetro Actual',
+    'Técnico Responsable',
+    'Presion Vapor Caldera PSI (60-90)',
+    'Presion Camara PSI (30-45)',
+    'Temperatura C (121-138)',
+    'Tiempo Ciclo Min (45-60)',
+    'Prueba Vacio (Conforme/No Conforme)',
+    'Drenaje Condensados Trampa (Conforme/No Conforme)',
+    'Estado Empaque Puerta (Excelente/Bueno/Desgastado/Fuga Detectada)',
+    'Valvulas Seguridad y Alivio (Bueno/Regular/Malo)',
+    'Manometros Calibrados (Bueno/Regular/Malo)',
+    'Transmisores Temp PT100 (Bueno/Regular/Malo)',
+    'Filtro Canasta Descarga (Limpio/Obstruido)',
+    'Engrase Brazos Cierre (Si/No)',
+    'Descripcion Trabajos y Repuestos',
+    'Estado Final (Operativa al 100% / Observaciones Menores / Fuera de Servicio)',
+    'Firma Tecnico',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Turno 1',
+      'AUTO CLAVE 1',
+      'Preventivo Periódico',
+      6120,
+      'Héctor David Morales (Técnico Autoclaves)',
+      75,
+      35,
+      134,
+      50,
+      'Conforme',
+      'Conforme',
+      'Excelente',
+      'Bueno',
+      'Bueno',
+      'Bueno',
+      'Limpio',
+      'Si',
+      'Limpieza de filtro canasta de residuos, prueba hidrostática de compuerta y calibración de termopar de temperatura de cámara.',
+      'Operativa al 100%',
+      'Héctor David Morales',
+      'Ing. Manuel López'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mantenimiento Autoclaves');
+  XLSX.writeFile(wb, `Modelo_Carga_Mantenimiento_Autoclaves_BIT-MTO-AUTO-001.xlsx`);
+}
+
+/**
+ * Plantilla de Carga Masiva: Control Diario de Limpieza y Desinfección de Planta
+ */
+export function downloadLimpiezaDesinfeccionPlantaTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Mañana / Tarde / Noche)',
+    'Supervisor Responsable',
+    'Cuadrilla Operadores',
+    'Producto Quimico Desinfectante',
+    'Lote Quimico',
+    'Concentracion Objetivo PPM',
+    'Concentracion Medida PPM',
+    'Hora Preparacion (HH:MM)',
+    'Zonas Conformes (Descarga, Cuarto Frio, Autoclaves, Incinerador, Trituracion, Compactacion, Tunel)',
+    'EPP Completo Verificado (Si/No)',
+    'Disponibilidad Insumos y Panos (Si/No)',
+    'Novedades y Desviaciones',
+    'Acciones Correctivas Inmediatas',
+    'Veredicto Cumplimiento (Cumplimiento Total (100%) / Cumplimiento Parcial / No Conforme)',
+    'Firma Operador Lider',
+    'Firma Supervisor HSE'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Mañana',
+      'Ing. Astrid Guzmán (Supervisora HSE)',
+      'Cuadrilla A (Mario Pérez, Luis Gómez, Estuardo Xicay)',
+      'Amonio Cuaternario 5ta Generación',
+      'L-AQ-2026-09',
+      400,
+      405,
+      '06:15',
+      'Todas las zonas conforme',
+      'Si',
+      'Si',
+      'Desinfección de choque completada con tiempo de contacto de 15 minutos en bahía de descarga.',
+      'Ninguna requerida, parámetros en norma.',
+      'Cumplimiento Total (100%)',
+      'Mario Pérez',
+      'Ing. Astrid Guzmán'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 25 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Limpieza y Desinfección');
+  XLSX.writeFile(wb, `Modelo_Carga_Limpieza_Desinfeccion_Planta_BIT-LIM-DES-001.xlsx`);
+}
+
 

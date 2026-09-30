@@ -25,7 +25,8 @@ import {
   Droplets,
   Truck,
   UploadCloud,
-  Layers
+  Layers,
+  Wrench
 } from 'lucide-react';
 import { Usuario } from '../types';
 import DashboardAnalytics from './DashboardAnalytics';
@@ -59,7 +60,13 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     evaluacion_360_tunel_lavado: 0,
     evaluacion_360_compactadora: 0,
     evaluacion_360_trituradora: 0,
-    control_caldera: 0
+    control_caldera: 0,
+    mantenimiento_incinerador: 0,
+    mantenimiento_lampinator: 0,
+    mantenimiento_trituradora: 0,
+    mantenimiento_compactadora: 0,
+    mantenimiento_autoclaves: 0,
+    limpieza_desinfeccion_planta: 0
   });
   const [totalTreatedWeight, setTotalTreatedWeight] = useState(0);
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
@@ -97,7 +104,13 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         { key: 'evaluacion_360_tunel_lavado', col: 'bitacora_evaluacion_360_tunel_lavado' },
         { key: 'evaluacion_360_compactadora', col: 'bitacora_evaluacion_360_compactadora' },
         { key: 'evaluacion_360_trituradora', col: 'bitacora_evaluacion_360_trituradora' },
-        { key: 'control_caldera', col: 'bitacora_control_caldera' }
+        { key: 'control_caldera', col: 'bitacora_control_caldera' },
+        { key: 'mantenimiento_incinerador', col: 'bitacora_mantenimiento_incinerador' },
+        { key: 'mantenimiento_lampinator', col: 'bitacora_mantenimiento_lampinator' },
+        { key: 'mantenimiento_trituradora', col: 'bitacora_mantenimiento_trituradora' },
+        { key: 'mantenimiento_compactadora', col: 'bitacora_mantenimiento_compactadora' },
+        { key: 'mantenimiento_autoclaves', col: 'bitacora_mantenimiento_autoclaves' },
+        { key: 'limpieza_desinfeccion_planta', col: 'bitacora_limpieza_desinfeccion_planta' }
       ];
 
       const newCounts = {
@@ -123,7 +136,13 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
         evaluacion_360_tunel_lavado: 0,
         evaluacion_360_compactadora: 0,
         evaluacion_360_trituradora: 0,
-        control_caldera: 0
+        control_caldera: 0,
+        mantenimiento_incinerador: 0,
+        mantenimiento_lampinator: 0,
+        mantenimiento_trituradora: 0,
+        mantenimiento_compactadora: 0,
+        mantenimiento_autoclaves: 0,
+        limpieza_desinfeccion_planta: 0
       };
       let accumWeight = 0;
       let totalAutoclaveTests = 0;
@@ -404,6 +423,66 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
       color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
       tag: 'Generación Térmica',
       stats: `${counts.control_caldera || 0} bitácoras`
+    },
+    {
+      id: 'mantenimiento_incinerador',
+      title: 'Mantenimiento Incinerador RPBI',
+      subtitle: 'LOTO, quemadores, refractarios, termocuplas y pruebas de combustión',
+      code: 'BIOTRASH 4.2. BIT-MTO-INC-001',
+      icon: <Wrench className="w-5 h-5 text-orange-600" />,
+      color: 'border-orange-200 hover:border-orange-400 focus:ring-orange-500',
+      tag: 'Mantenimiento',
+      stats: `${counts.mantenimiento_incinerador || 0} bitácoras`
+    },
+    {
+      id: 'mantenimiento_lampinator',
+      title: 'Mantenimiento Máquina Lampinator',
+      subtitle: 'Filtros HEPA, carbón activado Hg, prueba de vacío y martillos',
+      code: 'BIOTRASH 4.2. BIT-MTO-LAMP-001',
+      icon: <Zap className="w-5 h-5 text-amber-600" />,
+      color: 'border-amber-200 hover:border-amber-400 focus:ring-amber-500',
+      tag: 'Mantenimiento',
+      stats: `${counts.mantenimiento_lampinator || 0} bitácoras`
+    },
+    {
+      id: 'mantenimiento_trituradora',
+      title: 'Mantenimiento Trituradora de Residuos',
+      subtitle: 'Cuchillas, nivel de aceite reductor, auto-reverse y amperaje',
+      code: 'BIOTRASH 4.2. BIT-MTO-TRIT-001',
+      icon: <Activity className="w-5 h-5 text-red-600" />,
+      color: 'border-red-200 hover:border-red-400 focus:ring-red-500',
+      tag: 'Mantenimiento',
+      stats: `${counts.mantenimiento_trituradora || 0} bitácoras`
+    },
+    {
+      id: 'mantenimiento_compactadora',
+      title: 'Mantenimiento Compactadora / Prensa',
+      subtitle: 'Prensa hidráulica, sellos, ISO 68, fotoceldas y lixiviados',
+      code: 'BIOTRASH 4.2. BIT-MTO-COMP-001',
+      icon: <Layers className="w-5 h-5 text-emerald-600" />,
+      color: 'border-emerald-200 hover:border-emerald-400 focus:ring-emerald-500',
+      tag: 'Mantenimiento',
+      stats: `${counts.mantenimiento_compactadora || 0} bitácoras`
+    },
+    {
+      id: 'mantenimiento_autoclaves',
+      title: 'Mantenimiento Autoclaves Esterilización',
+      subtitle: 'Empaque de puerta, trampas de vapor, prueba de vacío y manómetros',
+      code: 'BIOTRASH 4.2. BIT-MTO-AUTO-001',
+      icon: <ShieldCheck className="w-5 h-5 text-blue-600" />,
+      color: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500',
+      tag: 'Mantenimiento',
+      stats: `${counts.mantenimiento_autoclaves || 0} bitácoras`
+    },
+    {
+      id: 'limpieza_desinfeccion_planta',
+      title: 'Control Diario Limpieza y Desinfección',
+      subtitle: 'Sanitización de bahías, PPM biocida, matriz de zonas y EPP',
+      code: 'BIOTRASH 4.2. BIT-LIM-DES-001',
+      icon: <Sparkles className="w-5 h-5 text-teal-600" />,
+      color: 'border-teal-200 hover:border-teal-400 focus:ring-teal-500',
+      tag: 'Sanitización HSE',
+      stats: `${counts.limpieza_desinfeccion_planta || 0} controles`
     },
     {
       id: 'reporte_recoleccion',

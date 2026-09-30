@@ -54,6 +54,12 @@ export const AVAILABLE_MODULES = [
   { id: 'evaluacion_360_compactadora', title: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS', code: 'F-OPR-000-21' },
   { id: 'evaluacion_360_trituradora', title: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER', code: 'F-OPR-000-22' },
   { id: 'control_caldera', title: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA', code: 'F-OPR-000-23' },
+  { id: 'mantenimiento_incinerador', title: 'BITÁCORA DE MANTENIMIENTO INCINERADOR RPBI', code: 'BIT-MTO-INC-001' },
+  { id: 'mantenimiento_lampinator', title: 'BITÁCORA DE MANTENIMIENTO MÁQUINA LAMPINATOR', code: 'BIT-MTO-LAMP-001' },
+  { id: 'mantenimiento_trituradora', title: 'BITÁCORA DE MANTENIMIENTO TRITURADORA DE RESIDUOS', code: 'BIT-MTO-TRIT-001' },
+  { id: 'mantenimiento_compactadora', title: 'BITÁCORA DE MANTENIMIENTO COMPACTADORA / PRENSA', code: 'BIT-MTO-COMP-001' },
+  { id: 'mantenimiento_autoclaves', title: 'BITÁCORA DE MANTENIMIENTO AUTOCLAVES ESTERILIZACIÓN', code: 'BIT-MTO-AUTO-001' },
+  { id: 'limpieza_desinfeccion_planta', title: 'CONTROL DIARIO DE LIMPIEZA Y DESINFECCIÓN DE PLANTA', code: 'BIT-LIM-DES-001' },
 ];
 
 interface Props {

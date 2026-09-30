@@ -433,6 +433,230 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             }
           ]
         };
+      case 'mantenimiento_incinerador':
+        return {
+          filename: 'Modelo_Carga_Mantenimiento_Incinerador_BIT-MTO-INC-001.xlsx',
+          sheetName: 'Mantenimiento Incinerador',
+          columns: [
+            'Fecha', 'Equipo ID', 'Tipo Mantenimiento', 'Hora Inicio', 'Hora Fin', 'Horometro', 'Tecnico Responsable', 'Supervisado Por',
+            'LOTO Candadeo', 'Temperatura Menor 40C', 'Purga Corte Combustible', 'Ventilacion Camaras',
+            'Estado Refractario Camara Primaria', 'Estado Refractario Camara Secundaria', 'Estado Sellos Puertas',
+            'Estado Boquillas Inyectores', 'Estado Electrodos Ignicion', 'Estado Detectores Llama', 'Estado Termocuplas', 'Estado Manometros',
+            'Descripcion Trabajos y Repuestos', 'Pruebas Hermeticidad', 'Pruebas Interlocks', 'Modulacion Llama', 'Estado Final', 'Firma Tecnico', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              'Equipo ID': 'INC-01',
+              'Tipo Mantenimiento': 'Preventivo Programado',
+              'Hora Inicio': '07:00',
+              'Hora Fin': '11:30',
+              Horometro: 4200,
+              'Tecnico Responsable': 'Juan Carlos Méndez',
+              'Supervisado Por': 'Ing. Manuel López',
+              'LOTO Candadeo': 'Si',
+              'Temperatura Menor 40C': 'Si',
+              'Purga Corte Combustible': 'Si',
+              'Ventilacion Camaras': 'Si',
+              'Estado Refractario Camara Primaria': 'Bueno',
+              'Estado Refractario Camara Secundaria': 'Bueno',
+              'Estado Sellos Puertas': 'Bueno',
+              'Estado Boquillas Inyectores': 'Bueno',
+              'Estado Electrodos Ignicion': 'Bueno',
+              'Estado Detectores Llama': 'Bueno',
+              'Estado Termocuplas': 'Bueno',
+              'Estado Manometros': 'Bueno',
+              'Descripcion Trabajos y Repuestos': 'Limpieza de toberas de quemador principal y sustitución de empaquetadura de puerta.',
+              'Pruebas Hermeticidad': 'Si',
+              'Pruebas Interlocks': 'Si',
+              'Modulacion Llama': 'Si',
+              'Estado Final': 'Operativo Conforme',
+              'Firma Tecnico': 'Juan Carlos Méndez',
+              'Firma Supervisor': 'Ing. Manuel López'
+            }
+          ]
+        };
+      case 'mantenimiento_lampinator':
+        return {
+          filename: 'Modelo_Carga_Mantenimiento_Lampinator_BIT-MTO-LAMP-001.xlsx',
+          sheetName: 'Mantenimiento Lampinator',
+          columns: [
+            'Fecha', 'Equipo ID', 'Tipo Mantenimiento', 'Hora Inicio', 'Hora Fin', 'Horometro', 'Tecnico Responsable', 'Operador Turno',
+            'Mascarilla Vapor Hg 3M', 'Fuga Vapor Hg Ppm', 'Protocolo LOTO', 'Filtro HEPA Presion Diferencial', 'Modulo Carbon Activado Hg',
+            'Prefiltros Polvo', 'Desgaste Martillos Trituracion', 'Hermeticidad Empaques Tolva', 'Nivel Tambor Vidrio y Fósforo',
+            'Mangueras Succion Vacio', 'Paros Emergencia Interlocks', 'Descripcion Trabajos y Repuestos', 'Estado Final', 'Firma Tecnico', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              'Equipo ID': 'LAMP-01',
+              'Tipo Mantenimiento': 'Preventivo Programado',
+              'Hora Inicio': '08:00',
+              'Hora Fin': '10:45',
+              Horometro: 1850,
+              'Tecnico Responsable': 'Pedro Fernando Alvarado',
+              'Operador Turno': 'Carlos Rodas',
+              'Mascarilla Vapor Hg 3M': 'Si',
+              'Fuga Vapor Hg Ppm': 0.002,
+              'Protocolo LOTO': 'Si',
+              'Filtro HEPA Presion Diferencial': 'Conforme',
+              'Modulo Carbon Activado Hg': 'Conforme',
+              'Prefiltros Polvo': 'Conforme',
+              'Desgaste Martillos Trituracion': 'Conforme',
+              'Hermeticidad Empaques Tolva': 'Conforme',
+              'Nivel Tambor Vidrio y Fósforo': 'Conforme',
+              'Mangueras Succion Vacio': 'Conforme',
+              'Paros Emergencia Interlocks': 'Conforme',
+              'Descripcion Trabajos y Repuestos': 'Reemplazo de prefiltro de polvo y revisión de sellos de tolva.',
+              'Estado Final': 'Operativo Conforme',
+              'Firma Tecnico': 'Pedro Fernando Alvarado',
+              'Firma Supervisor': 'Ing. Manuel López'
+            }
+          ]
+        };
+      case 'mantenimiento_trituradora':
+        return {
+          filename: 'Modelo_Carga_Mantenimiento_Trituradora_BIT-MTO-TRIT-001.xlsx',
+          sheetName: 'Mantenimiento Trituradora',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Tipo Mantenimiento', 'Horometro', 'Tecnico Responsable',
+            'Estado Cuchillas', 'Nivel Aceite Reductor', 'Ruidos o Vibraciones', 'Limpieza y Desinfección Interna', 'Prueba Auto-Reverse',
+            'Engrase Rodamientos', 'Consumo Amperaje Motor A', 'Presion Hidraulica Empuje PSI', 'Descripcion Trabajos y Repuestos',
+            'Horas Paro', 'LOTO Aplicado', 'Estado Final', 'Firma Tecnico', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Turno 1',
+              'Equipo ID': 'TRIT-01',
+              'Tipo Mantenimiento': 'Preventivo Semanal/Mensual',
+              Horometro: 5340,
+              'Tecnico Responsable': 'Byron Estuardo Reyes',
+              'Estado Cuchillas': 'Bueno',
+              'Nivel Aceite Reductor': 'Conforme',
+              'Ruidos o Vibraciones': 'Normal',
+              'Limpieza y Desinfección Interna': 'Si',
+              'Prueba Auto-Reverse': 'Si',
+              'Engrase Rodamientos': 'Si',
+              'Consumo Amperaje Motor A': 62.5,
+              'Presion Hidraulica Empuje PSI': 2100,
+              'Descripcion Trabajos y Repuestos': 'Engrase general de chumaceras SKF y ajuste de fajas motrices.',
+              'Horas Paro': 0,
+              'LOTO Aplicado': 'Si',
+              'Estado Final': 'Operativo Conforme',
+              'Firma Tecnico': 'Byron Estuardo Reyes',
+              'Firma Supervisor': 'Ing. Manuel López'
+            }
+          ]
+        };
+      case 'mantenimiento_compactadora':
+        return {
+          filename: 'Modelo_Carga_Mantenimiento_Compactadora_BIT-MTO-COMP-001.xlsx',
+          sheetName: 'Mantenimiento Compactadora',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Periodicidad', 'Tipo Mantenimiento', 'Horometro', 'Tecnico Responsable',
+            'Fugas Fluidos Debajo Plato', 'Hermeticidad Sellos Puerta', 'Limpieza Desinfección Tolva', 'Paros Emergencia y Fotoceldas',
+            'Ruidos Motor Hidráulico', 'Inspeccion Mangueras y Cilindros', 'Nivel Aceite ISO 68', 'Engrase Guias y Chumaceras',
+            'Filtros Aire Respiradero', 'Empaque Retencion Lixiviados', 'Descripcion Trabajos y Repuestos', 'Protocolo Bioseguridad y EPP',
+            'Estado Final', 'Firma Tecnico', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Turno 1',
+              'Equipo ID': 'COMP-01',
+              Periodicidad: 'Semanal/Mensual (Técnico)',
+              'Tipo Mantenimiento': 'Preventivo',
+              Horometro: 4180,
+              'Tecnico Responsable': 'Marcos Tulio Juárez',
+              'Fugas Fluidos Debajo Plato': 'Conforme',
+              'Hermeticidad Sellos Puerta': 'Conforme',
+              'Limpieza Desinfección Tolva': 'Conforme',
+              'Paros Emergencia y Fotoceldas': 'Conforme',
+              'Ruidos Motor Hidráulico': 'Conforme',
+              'Inspeccion Mangueras y Cilindros': 'Bueno',
+              'Nivel Aceite ISO 68': 'Conforme',
+              'Engrase Guias y Chumaceras': 'Si',
+              'Filtros Aire Respiradero': 'Bueno',
+              'Empaque Retencion Lixiviados': 'Bueno',
+              'Descripcion Trabajos y Repuestos': 'Relleno de aceite hidráulico ISO 68 y engrase de guías correderas.',
+              'Protocolo Bioseguridad y EPP': 'Si',
+              'Estado Final': 'Aprobado para Operar',
+              'Firma Tecnico': 'Marcos Tulio Juárez',
+              'Firma Supervisor': 'Ing. Manuel López'
+            }
+          ]
+        };
+      case 'mantenimiento_autoclaves':
+        return {
+          filename: 'Modelo_Carga_Mantenimiento_Autoclaves_BIT-MTO-AUTO-001.xlsx',
+          sheetName: 'Mantenimiento Autoclaves',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Tipo Mantenimiento', 'Horometro', 'Tecnico Responsable',
+            'Presion Vapor Caldera PSI', 'Presion Camara PSI', 'Temperatura C', 'Tiempo Ciclo Min', 'Prueba Vacio',
+            'Drenaje Condensados Trampa', 'Estado Empaque Puerta', 'Valvulas Seguridad y Alivio', 'Manometros Calibrados',
+            'Transmisores Temp PT100', 'Filtro Canasta Descarga', 'Engrase Brazos Cierre', 'Descripcion Trabajos y Repuestos',
+            'Estado Final', 'Firma Tecnico', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Turno 1',
+              'Equipo ID': 'AUTO CLAVE 1',
+              'Tipo Mantenimiento': 'Preventivo Periódico',
+              Horometro: 6120,
+              'Tecnico Responsable': 'Héctor David Morales',
+              'Presion Vapor Caldera PSI': 75,
+              'Presion Camara PSI': 35,
+              'Temperatura C': 134,
+              'Tiempo Ciclo Min': 50,
+              'Prueba Vacio': 'Conforme',
+              'Drenaje Condensados Trampa': 'Conforme',
+              'Estado Empaque Puerta': 'Excelente',
+              'Valvulas Seguridad y Alivio': 'Bueno',
+              'Manometros Calibrados': 'Bueno',
+              'Transmisores Temp PT100': 'Bueno',
+              'Filtro Canasta Descarga': 'Limpio',
+              'Engrase Brazos Cierre': 'Si',
+              'Descripcion Trabajos y Repuestos': 'Limpieza de filtro canasta y verificación de calibración manométrica.',
+              'Estado Final': 'Operativa al 100%',
+              'Firma Tecnico': 'Héctor David Morales',
+              'Firma Supervisor': 'Ing. Manuel López'
+            }
+          ]
+        };
+      case 'limpieza_desinfeccion_planta':
+        return {
+          filename: 'Modelo_Carga_Limpieza_Desinfeccion_Planta_BIT-LIM-DES-001.xlsx',
+          sheetName: 'Limpieza y Desinfección',
+          columns: [
+            'Fecha', 'Turno', 'Supervisor Responsable', 'Cuadrilla Operadores', 'Producto Quimico Desinfectante',
+            'Lote Quimico', 'Concentracion Objetivo PPM', 'Concentracion Medida PPM', 'Hora Preparacion',
+            'Zonas Conformes', 'EPP Completo Verificado', 'Disponibilidad Insumos y Panos', 'Novedades y Desviaciones',
+            'Acciones Correctivas Inmediatas', 'Veredicto Cumplimiento', 'Firma Operador Lider', 'Firma Supervisor HSE'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Mañana',
+              'Supervisor Responsable': 'Ing. Astrid Guzmán',
+              'Cuadrilla Operadores': 'Cuadrilla A (Mario Pérez, Luis Gómez, Estuardo Xicay)',
+              'Producto Quimico Desinfectante': 'Amonio Cuaternario 5ta Generación',
+              'Lote Quimico': 'L-AQ-2026-09',
+              'Concentracion Objetivo PPM': 400,
+              'Concentracion Medida PPM': 405,
+              'Hora Preparacion': '06:15',
+              'Zonas Conformes': 'Todas las zonas conforme',
+              'EPP Completo Verificado': 'Si',
+              'Disponibilidad Insumos y Panos': 'Si',
+              'Novedades y Desviaciones': 'Desinfección de choque completada con tiempo de contacto de 15 minutos.',
+              'Acciones Correctivas Inmediatas': 'Ninguna requerida, parámetros en norma.',
+              'Veredicto Cumplimiento': 'Cumplimiento Total (100%)',
+              'Firma Operador Lider': 'Mario Pérez',
+              'Firma Supervisor HSE': 'Ing. Astrid Guzmán'
+            }
+          ]
+        };
       default:
         return {
           filename: 'Formato_Generico.xlsx',
@@ -1469,6 +1693,245 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               novedadesRuta: row['Novedades Ruta'] || 'Ruta completada sin incidencias mecánicas ni biológicas',
               firmaConductor: row['Firma Conductor'] || row.Conductor || 'Marcos Danilo Arriola',
               firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'mantenimiento_incinerador') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `MTO-INC-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              observaciones: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento preventivo de incinerador importado masivamente',
+              equipoId: row['Equipo ID'] || 'INC-01',
+              nombreEquipo: (row['Equipo ID'] === 'INC-02') ? 'Incinerador Pirolítico Industrial 02' : 'Incinerador Pirolítico Industrial 01',
+              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Programado') as any,
+              horaInicio: row['Hora Inicio'] || '07:00',
+              horaFin: row['Hora Fin'] || '11:30',
+              horasOperacion: parseNum(row['Horometro'] || row['Horómetro (Horas Operación)'] || 4200),
+              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              supervisadoPor: row['Supervisado Por'] || 'Ing. Manuel López — Gerente de Planta',
+              lotoCandadeo: isYes(row['LOTO Candadeo'] ?? true),
+              temperaturaMenor40: isYes(row['Temperatura Menor 40C'] ?? true),
+              purgaCorteCombustible: isYes(row['Purga Corte Combustible'] ?? true),
+              ventilacionCamaras: isYes(row['Ventilacion Camaras'] ?? true),
+              checklistCamaras: {
+                revestimientoCamaraPrimaria: row['Estado Refractario Camara Primaria'] || 'Bueno',
+                revestimientoCamaraSecundaria: row['Estado Refractario Camara Secundaria'] || 'Bueno',
+                sellosPuertas: row['Estado Sellos Puertas'] || 'Bueno',
+                mirillasInspeccion: 'Bueno',
+                estructuraExteriorCarter: 'Bueno'
+              },
+              checklistCombustion: {
+                boquillasInyectores: row['Estado Boquillas Inyectores'] || 'Bueno',
+                electrodosIgnicion: row['Estado Electrodos Ignicion'] || 'Bueno',
+                detectoresLlama: row['Estado Detectores Llama'] || 'Bueno',
+                filtrosCombustible: 'Bueno',
+                valvulasSolenoides: 'Bueno',
+                valvulaCorteSlamOff: 'Bueno'
+              },
+              checklistInstrumentacion: {
+                termocuplaCamaraPrimaria: row['Estado Termocuplas'] || 'Bueno',
+                termocuplaCamaraSecundaria: row['Estado Termocuplas'] || 'Bueno',
+                manometrosPresion: row['Estado Manometros'] || 'Bueno',
+                panelPlcAlarmas: 'Bueno'
+              },
+              repuestosUtilizados: [
+                {
+                  cantidad: 1,
+                  codigo: 'MTO-REP-01',
+                  descripcion: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento preventivo e insumos',
+                  causaReemplazo: 'Servicio programado'
+                }
+              ],
+              descripcionTrabajos: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento preventivo e inspección general de componentes',
+              pruebasHermeticidad: isYes(row['Pruebas Hermeticidad'] ?? true),
+              pruebasInterlocks: isYes(row['Pruebas Interlocks'] ?? true),
+              modulacionLlama: isYes(row['Modulacion Llama'] ?? true),
+              tempConsignaSecundariaAlcanzada: true,
+              tiroNegativoVerificado: true,
+              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
+              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'mantenimiento_lampinator') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `MTO-LAMP-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              observaciones: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento Lampinator importado masivamente',
+              equipoId: row['Equipo ID'] || 'LAMP-01',
+              nombreEquipo: 'Máquina Desmercurizadora Lampinator 01',
+              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Programado') as any,
+              horaInicio: row['Hora Inicio'] || '08:00',
+              horaFin: row['Hora Fin'] || '10:45',
+              horometro: parseNum(row['Horometro'] || row['Horómetro (Horas)'] || 1850),
+              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              operadorTurno: row['Operador Turno'] || 'Carlos Rodas',
+              mascarillaVaporHg: isYes(row['Mascarilla Vapor Hg 3M'] ?? true),
+              pruebaFugaVaporHgPpm: parseNum(row['Fuga Vapor Hg Ppm'] || 0.002),
+              protocoloLoto: isYes(row['Protocolo LOTO'] ?? true),
+              checklistFiltracion: {
+                diferencialPresionHepa: row['Filtro HEPA Presion Diferencial'] || 'Conforme',
+                moduloCarbonActivadoHg: row['Modulo Carbon Activado Hg'] || 'Conforme',
+                prefiltrosPolvo: row['Prefiltros Polvo'] || 'Conforme'
+              },
+              checklistMecanico: {
+                desgasteMartillosCuchillas: row['Desgaste Martillos Trituracion'] || 'Conforme',
+                hermeticidadEmpaquesTolva: row['Hermeticidad Empaques Tolva'] || 'Conforme'
+              },
+              checklistExtraccion: {
+                nivelLlenadoTamborVidrio: row['Nivel Tambor Vidrio y Fósforo'] || 'Conforme',
+                inspeccionManguerasSuccion: row['Mangueras Succion Vacio'] || 'Conforme'
+              },
+              checklistSeguridad: {
+                parosEmergenciaInterlocks: row['Paros Emergencia Interlocks'] || 'Conforme',
+                medidoresDepresionVacio: 'Conforme'
+              },
+              repuestosUtilizados: [
+                {
+                  cantidad: 1,
+                  codigo: 'LAMP-FIL-01',
+                  repuesto: 'Prefiltro de partículas / Sellos herméticos',
+                  causa: 'Mantenimiento periódico'
+                }
+              ],
+              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
+              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'mantenimiento_trituradora') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `MTO-TRIT-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento trituradora importado masivamente',
+              turno: (row.Turno || 'Turno 1') as any,
+              equipoId: row['Equipo ID'] || 'TRIT-01',
+              nombreEquipo: 'Trituradora Industrial Shredder Doble Eje',
+              marcaModelo: 'Shred-Tech ST-50',
+              serie: 'ST50-9844-GT',
+              ubicacionPlanta: 'Área de Pre-Tratamiento Mecánico',
+              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 5340),
+              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Semanal/Mensual') as any,
+              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              estadoCuchillas: row['Estado Cuchillas'] || 'Bueno',
+              nivelAceiteReductor: row['Nivel Aceite Reductor'] || 'Conforme',
+              ruidosVibraciones: row['Ruidos o Vibraciones'] || 'Normal',
+              limpiezaDesinfeccion: isYes(row['Limpieza y Desinfección Interna'] ?? true) ? 'Realizada' : 'Pendiente',
+              pruebaAutoReverse: isYes(row['Prueba Auto-Reverse'] ?? true) ? 'Operativo' : 'Falla',
+              engraseRodamientos: isYes(row['Engrase Rodamientos'] ?? true) ? 'Completado' : 'Pendiente',
+              tensionFajasCadenas: 'Conforme',
+              consumoAmperajeMotorA: parseNum(row['Consumo Amperaje Motor A'] || 62.5),
+              presionSistemaHidraulicoPsi: parseNum(row['Presion Hidraulica Empuje PSI'] || 2100),
+              anomaliasDetectadas: 'Sin anomalías críticas registradas',
+              descripcionTrabajo: row['Descripcion Trabajos y Repuestos'] || 'Engrase general y verificación de holguras de corte',
+              repuestosUtilizados: [],
+              horasParo: parseNum(row['Horas Paro'] || 0),
+              lotoAplicado: isYes(row['LOTO Aplicado'] ?? true),
+              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
+              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'mantenimiento_compactadora') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `MTO-COMP-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento compactadora importado masivamente',
+              turno: (row.Turno || 'Turno 1') as any,
+              equipoId: row['Equipo ID'] || 'COMP-01',
+              nombreEquipo: 'Prensa Compactadora Hidráulica Vertical 01',
+              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 4180),
+              periodicidad: (row.Periodicidad || 'Semanal/Mensual (Técnico)') as any,
+              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo') as any,
+              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              fugaFluidosDebajoPlato: (row['Fugas Fluidos Debajo Plato'] || 'Conforme') as any,
+              hermeticidadSellosPuerta: (row['Hermeticidad Sellos Puerta'] || 'Conforme') as any,
+              limpiezaDesinfeccionTolva: (row['Limpieza Desinfección Tolva'] || 'Conforme') as any,
+              parosEmergenciaFotoceldas: (row['Paros Emergencia y Fotoceldas'] || 'Conforme') as any,
+              ruidosMotorHidraulico: (row['Ruidos Motor Hidráulico'] || 'Conforme') as any,
+              inspeccionManguerasCilindros: row['Inspeccion Mangueras y Cilindros'] || 'Bueno',
+              nivelAceiteHidraulicoIso68: row['Nivel Aceite ISO 68'] || 'Conforme',
+              engraseChumacerasGuias: isYes(row['Engrase Guias y Chumaceras'] ?? true) ? 'Realizado' : 'Pendiente',
+              filtrosAireRespiradero: row['Filtros Aire Respiradero'] || 'Bueno',
+              empaqueRetencionLixiviados: row['Empaque Retencion Lixiviados'] || 'Bueno',
+              accionCorrectiva: row['Descripcion Trabajos y Repuestos'] || 'Ajustes y lubricación preventiva conforme',
+              protocoloBioseguridadEpp: isYes(row['Protocolo Bioseguridad y EPP'] ?? true),
+              estadoFinal: (row['Estado Final'] || 'Aprobado para Operar') as any,
+              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'mantenimiento_autoclaves') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `MTO-AUTO-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento autoclaves importado masivamente',
+              turno: (row.Turno || 'Turno 1') as any,
+              equipoId: (row['Equipo ID'] || 'AUTO CLAVE 1') as any,
+              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Periódico') as any,
+              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 6120),
+              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
+              presionVaporCalderaPsi: parseNum(row['Presion Vapor Caldera PSI'] || 75),
+              presionCamaraPsi: parseNum(row['Presion Camara PSI'] || 35),
+              temperaturaC: parseNum(row['Temperatura C'] || 134),
+              tiempoCicloMin: parseNum(row['Tiempo Ciclo Min'] || 50),
+              pruebaVacioResultado: (row['Prueba Vacio'] || 'Conforme') as any,
+              drenajeCondensadosTrampa: (row['Drenaje Condensados Trampa'] || 'Conforme') as any,
+              estadoEmpaquePuerta: (row['Estado Empaque Puerta'] || 'Excelente') as any,
+              valvulasSeguridadAlivio: row['Valvulas Seguridad y Alivio'] || 'Bueno',
+              manometrosCalibracion: row['Manometros Calibrados'] || 'Bueno',
+              transmisoresPt100: row['Transmisores Temp PT100'] || 'Bueno',
+              filtroCanastaDescarga: row['Filtro Canasta Descarga'] || 'Limpio',
+              engraseBrazosCierre: isYes(row['Engrase Brazos Cierre'] ?? true) ? 'Realizado' : 'Pendiente',
+              descripcionIntervencion: row['Descripcion Trabajos y Repuestos'] || 'Inspección de empaquetaduras y calibración de instrumentos',
+              repuestosCalibraciones: 'Ninguno',
+              estadoFinal: (row['Estado Final'] || 'Operativa al 100%') as any,
+              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'limpieza_desinfeccion_planta') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `LIM-DES-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Supervisor Responsable'] || userEmail,
+              observaciones: row['Novedades y Desviaciones'] || 'Control de limpieza y desinfección de planta importado masivamente',
+              turno: (row.Turno || 'Mañana') as any,
+              supervisorResponsable: row['Supervisor Responsable'] || userEmail,
+              cuadrillaOperadores: row['Cuadrilla Operadores'] || 'Cuadrilla Operativa de Planta',
+              productoQuimico: row['Producto Quimico Desinfectante'] || 'Amonio Cuaternario 5ta Generación',
+              loteProducto: row['Lote Quimico'] || 'L-AQ-2026-09',
+              concentracionObjetivoPpm: parseNum(row['Concentracion Objetivo PPM'] || 400),
+              concentracionMedidaPpm: parseNum(row['Concentracion Medida PPM'] || 405),
+              horaPreparacion: row['Hora Preparacion'] || '06:15',
+              zonas: [
+                { area: 'Bahía de Descarga RPBI', frecuencia: 'Diaria', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
+                { area: 'Cuarto Frío de Almacenamiento', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '07:00', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
+                { area: 'Área de Autoclaves', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '07:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
+                { area: 'Área de Incineración', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '08:00', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
+                { area: 'Túnel de Lavado de Contenedores', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '08:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' }
+              ],
+              eppGuantesNitrilo: isYes(row['EPP Completo Verificado'] ?? true),
+              eppBotasImpermeables: isYes(row['EPP Completo Verificado'] ?? true),
+              eppTrajeTyvekMandil: isYes(row['EPP Completo Verificado'] ?? true),
+              eppRespiradorVapores: isYes(row['EPP Completo Verificado'] ?? true),
+              eppCaretaFacial: isYes(row['EPP Completo Verificado'] ?? true),
+              panosMopasLímpias: isYes(row['Disponibilidad Insumos y Panos'] ?? true),
+              desviacionesNovedades: row['Novedades y Desviaciones'] || 'Desinfección ejecutada conforme a cronograma SGI',
+              accionesCorrectivas: row['Acciones Correctivas Inmediatas'] || 'Ninguna requerida',
+              veredictoCumplimiento: (row['Veredicto Cumplimiento'] || 'Cumplimiento Total (100%)') as any,
+              firmaOperadorLider: row['Firma Operador Lider'] || 'Operador Líder de Limpieza',
+              firmaSupervisorHse: row['Firma Supervisor HSE'] || 'Ing. Astrid Guzmán — Supervisora HSE'
             });
           });
         }
