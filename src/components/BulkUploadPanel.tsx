@@ -3,6 +3,12 @@ import { db } from '../lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { 
+  DEFAULT_ITEMS_INCINERADOR, 
+  DEFAULT_ITEMS_TUNEL_LAVADO, 
+  DEFAULT_ITEMS_COMPACTADORA, 
+  DEFAULT_ITEMS_TRITURADORA 
+} from '../utils/evaluacion360Data';
 
 interface Props {
   tipo: string;
@@ -217,6 +223,212 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               'Dictamen Tecnico': 'Caldera en condiciones óptimas y seguras',
               'Estado Caldera': 'Operativo / Conforme',
               'Firma Operador': userEmail,
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
+      case 'evaluacion_360_incinerador':
+        return {
+          filename: 'Modelo_Carga_360_Incinerador_F-OPR-000-19.xlsx',
+          sheetName: '360 Incinerador',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Nombre Equipo', 'Horometro', 'Operador Responsable', 'Inspector SGI',
+            'Temp Camara Primaria (C)', 'Temp Camara Secundaria (C)', 'Presion Combustible (Bar)', 'Opacidad Humo (%)', 'Tipo Combustible',
+            'Puntaje Seguridad', 'Puntaje Mecanico', 'Puntaje Combustion', 'Puntaje Electrico', 'Puntaje Bioseguridad', 'Puntaje Operatividad',
+            'Veredicto Operacional', 'Nivel Riesgo', 'Observaciones Generales', 'Firma Inspector', 'Firma Operador', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Matutino',
+              'Equipo ID': 'INC-01',
+              'Nombre Equipo': 'Incinerador Pirolítico Industrial 01',
+              Horometro: 3850,
+              'Operador Responsable': 'Juan Carlos Méndez',
+              'Inspector SGI': userEmail,
+              'Temp Camara Primaria (C)': 850,
+              'Temp Camara Secundaria (C)': 1050,
+              'Presion Combustible (Bar)': 3.2,
+              'Opacidad Humo (%)': 5,
+              'Tipo Combustible': 'Diésel Bajo Azufre (LSD)',
+              'Puntaje Seguridad': 100,
+              'Puntaje Mecanico': 95,
+              'Puntaje Combustion': 95,
+              'Puntaje Electrico': 100,
+              'Puntaje Bioseguridad': 100,
+              'Puntaje Operatividad': 100,
+              'Veredicto Operacional': 'Aprobado para Operar',
+              'Nivel Riesgo': 'Bajo',
+              'Observaciones Generales': 'Evaluación 360° incinerador pirolítico conforme a ISO 14001',
+              'Firma Inspector': userEmail,
+              'Firma Operador': 'Juan Carlos Méndez',
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
+      case 'evaluacion_360_tunel_lavado':
+        return {
+          filename: 'Modelo_Carga_360_Tunel_Lavado_F-OPR-000-20.xlsx',
+          sheetName: '360 Tunel Lavado',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Nombre Equipo', 'Horometro', 'Operador Responsable', 'Inspector SGI',
+            'Presion Bomba Lavado (PSI)', 'PPM Desinfectante', 'Temperatura Agua (C)', 'Velocidad Cadena (m/min)', 'Quimico Dosificado',
+            'Puntaje Seguridad', 'Puntaje Mecanico', 'Puntaje Hidraulico', 'Puntaje Electrico', 'Puntaje Bioseguridad', 'Puntaje Operatividad',
+            'Veredicto Operacional', 'Nivel Riesgo', 'Observaciones Generales', 'Firma Inspector', 'Firma Operador', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Matutino',
+              'Equipo ID': 'TUN-01',
+              'Nombre Equipo': 'Túnel Hidro-Lavador Automático 01',
+              Horometro: 2495,
+              'Operador Responsable': 'Carlos Eduardo Gómez',
+              'Inspector SGI': userEmail,
+              'Presion Bomba Lavado (PSI)': 1850,
+              'PPM Desinfectante': 200,
+              'Temperatura Agua (C)': 60,
+              'Velocidad Cadena (m/min)': 3.5,
+              'Quimico Dosificado': 'Amonio Cuaternario 5ta Gen / Ácido Peracético',
+              'Puntaje Seguridad': 100,
+              'Puntaje Mecanico': 100,
+              'Puntaje Hidraulico': 95,
+              'Puntaje Electrico': 100,
+              'Puntaje Bioseguridad': 100,
+              'Puntaje Operatividad': 95,
+              'Veredicto Operacional': 'Aprobado para Operar',
+              'Nivel Riesgo': 'Bajo',
+              'Observaciones Generales': 'Evaluación 360° túnel hidrolavador de contenedores conforme a SGI',
+              'Firma Inspector': userEmail,
+              'Firma Operador': 'Carlos Eduardo Gómez',
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
+      case 'evaluacion_360_compactadora':
+        return {
+          filename: 'Modelo_Carga_360_Compactadora_F-OPR-000-21.xlsx',
+          sheetName: '360 Compactadora',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Nombre Equipo', 'Horometro', 'Operador Responsable', 'Inspector SGI',
+            'Presion Prensado (PSI)', 'Temperatura Aceite (C)', 'Peso Promedio Paca (Lbs)', 'Tiempo Ciclo Prensado (Seg)', 'Tipo Fleje',
+            'Puntaje Seguridad', 'Puntaje Mecanico', 'Puntaje Hidraulico', 'Puntaje Electrico', 'Puntaje Bioseguridad', 'Puntaje Operatividad',
+            'Veredicto Operacional', 'Nivel Riesgo', 'Observaciones Generales', 'Firma Inspector', 'Firma Operador', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Matutino',
+              'Equipo ID': 'COMP-01',
+              'Nombre Equipo': 'Compactadora Hidráulica Vertical 01',
+              Horometro: 4125,
+              'Operador Responsable': 'Marcos Tulio Juárez',
+              'Inspector SGI': userEmail,
+              'Presion Prensado (PSI)': 2800,
+              'Temperatura Aceite (C)': 48,
+              'Peso Promedio Paca (Lbs)': 450,
+              'Tiempo Ciclo Prensado (Seg)': 42,
+              'Tipo Fleje': 'Alambre Recocido Calibre 14 Alta Resistencia',
+              'Puntaje Seguridad': 100,
+              'Puntaje Mecanico': 95,
+              'Puntaje Hidraulico': 100,
+              'Puntaje Electrico': 95,
+              'Puntaje Bioseguridad': 100,
+              'Puntaje Operatividad': 100,
+              'Veredicto Operacional': 'Aprobado para Operar',
+              'Nivel Riesgo': 'Bajo',
+              'Observaciones Generales': 'Evaluación 360° prensa compactadora hidráulica conforme',
+              'Firma Inspector': userEmail,
+              'Firma Operador': 'Marcos Tulio Juárez',
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
+      case 'evaluacion_360_trituradora':
+        return {
+          filename: 'Modelo_Carga_360_Trituradora_F-OPR-000-22.xlsx',
+          sheetName: '360 Trituradora',
+          columns: [
+            'Fecha', 'Turno', 'Equipo ID', 'Nombre Equipo', 'Horometro', 'Operador Responsable', 'Inspector SGI',
+            'Amperaje Motor (A)', 'Velocidad Rotacion (RPM)', 'Tiempo Auto-Reverse (Seg)', 'Desgaste Cuchillas (mm)', 'Capacidad Procesamiento (Lbs/Hr)',
+            'Puntaje Seguridad', 'Puntaje Mecanico', 'Puntaje Hidraulico', 'Puntaje Electrico', 'Puntaje Bioseguridad', 'Puntaje Operatividad',
+            'Veredicto Operacional', 'Nivel Riesgo', 'Observaciones Generales', 'Firma Inspector', 'Firma Operador', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'Matutino',
+              'Equipo ID': 'TRIT-01',
+              'Nombre Equipo': 'Trituradora Shredder Industrial Doble Eje 01',
+              Horometro: 5285,
+              'Operador Responsable': 'Byron Estuardo Reyes',
+              'Inspector SGI': userEmail,
+              'Amperaje Motor (A)': 62,
+              'Velocidad Rotacion (RPM)': 24,
+              'Tiempo Auto-Reverse (Seg)': 1.2,
+              'Desgaste Cuchillas (mm)': 1.5,
+              'Capacidad Procesamiento (Lbs/Hr)': 2500,
+              'Puntaje Seguridad': 100,
+              'Puntaje Mecanico': 95,
+              'Puntaje Hidraulico': 95,
+              'Puntaje Electrico': 100,
+              'Puntaje Bioseguridad': 100,
+              'Puntaje Operatividad': 100,
+              'Veredicto Operacional': 'Aprobado para Operar',
+              'Nivel Riesgo': 'Bajo',
+              'Observaciones Generales': 'Evaluación 360° trituradora de doble eje shredder en orden',
+              'Firma Inspector': userEmail,
+              'Firma Operador': 'Byron Estuardo Reyes',
+              'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
+            }
+          ]
+        };
+      case 'control_360_vehiculos':
+        return {
+          filename: 'Modelo_Carga_Control_360_Vehiculos_F-OPR-000-17.xlsx',
+          sheetName: 'Control 360 Vehiculos',
+          columns: [
+            'Fecha', 'Turno', 'Centro Operaciones', 'Ruta', 'Placa', 'Tipo Vehiculo', 'Conductor',
+            'No Licencia', 'Tipo Licencia', 'Telefono', 'Contenedores Rojos Limpios Vacios',
+            'Hora Salida', 'KM Salida', 'Hora Llegada Planta', 'KM Llegada', 'Peso Entregado Lbs', 'Recibido Por Planta',
+            'Frenos Conforme (Si/No)', 'Llantas Conforme (Si/No)', 'Luces Conforme (Si/No)', 'Extintor Vigente (Si/No)',
+            'Cinturones Conforme (Si/No)', 'Sello Hermetico (Si/No)', 'Rotulo Biohazard Visible (Si/No)',
+            'Kit Antiderrame Conforme (Si/No)', 'EPP Completo (Si/No)', 'Desinfeccion Previa Realizada (Si/No)',
+            'Desinfectante Utilizado', 'Observaciones Salida', 'Novedades Ruta', 'Firma Conductor', 'Firma Supervisor'
+          ],
+          samples: [
+            {
+              Fecha: today,
+              Turno: 'AM',
+              'Centro Operaciones': 'VILLA NUEVA 1',
+              Ruta: 'VN1-BLA',
+              Placa: 'C-442BTL',
+              'Tipo Vehiculo': 'Camion',
+              Conductor: 'Marcos Danilo Arriola',
+              'No Licencia': '2489-1092-0101',
+              'Tipo Licencia': 'Tipo A Profesional',
+              Telefono: '5544-3322',
+              'Contenedores Rojos Limpios Vacios': 16,
+              'Hora Salida': '06:30',
+              'KM Salida': 128450,
+              'Hora Llegada Planta': '14:15',
+              'KM Llegada': 128540,
+              'Peso Entregado Lbs': 2450,
+              'Recibido Por Planta': 'Receptor Planta BIOTRASH',
+              'Frenos Conforme (Si/No)': 'Si',
+              'Llantas Conforme (Si/No)': 'Si',
+              'Luces Conforme (Si/No)': 'Si',
+              'Extintor Vigente (Si/No)': 'Si',
+              'Cinturones Conforme (Si/No)': 'Si',
+              'Sello Hermetico (Si/No)': 'Si',
+              'Rotulo Biohazard Visible (Si/No)': 'Si',
+              'Kit Antiderrame Conforme (Si/No)': 'Si',
+              'EPP Completo (Si/No)': 'Si',
+              'Desinfeccion Previa Realizada (Si/No)': 'Si',
+              'Desinfectante Utilizado': 'Amonio Cuaternario al 10%',
+              'Observaciones Salida': 'Vehículo listo para ruta matutina de recolección',
+              'Novedades Ruta': 'Ruta completada sin novedad',
+              'Firma Conductor': 'Marcos Danilo Arriola',
               'Firma Supervisor': 'Ing. Manuel López — Gerente de Planta'
             }
           ]
@@ -1001,6 +1213,261 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               dictamenTecnico: row['Dictamen Tecnico'] || row['Dictamen Técnico'] || 'Caldera operando conforme a estándares del SGI',
               estadoOperacional: (row['Estado Caldera'] || 'Operativo / Conforme') as any,
               firmaResponsable: row['Firma Operador'] || userEmail,
+              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+            });
+          });
+        } else if (tipo === 'evaluacion_360_incinerador') {
+          jsonData.forEach((row: any, idx: number) => {
+            const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
+            const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
+            const secComb = parseNum(row['Puntaje Combustion'] || row['Puntaje Combustión'] || 95);
+            const secElec = parseNum(row['Puntaje Electrico'] || row['Puntaje Eléctrico'] || 100);
+            const secBio = parseNum(row['Puntaje Bioseguridad'] || 100);
+            const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
+            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secComb*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+
+            recordsToSave.push({
+              folio: row.Folio || `EV360-INC-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
+              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° incinerador importada masivamente',
+              equipoId: row['Equipo ID'] || 'INC-01',
+              nombreEquipo: row['Nombre Equipo'] || 'Incinerador Pirolítico Industrial 01',
+              turno: (row.Turno || 'Matutino') as any,
+              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 3850),
+              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Juan Carlos Méndez',
+              inspectorSgi: row['Inspector SGI'] || userEmail,
+              tempCamaraPrimariaC: parseNum(row['Temp Camara Primaria (C)'] || row['Temp Cámara Primaria °C'] || 850),
+              tempCamaraSecundariaC: parseNum(row['Temp Camara Secundaria (C)'] || row['Temp Cámara Secundaria °C'] || 1050),
+              presionCombustibleBar: parseNum(row['Presion Combustible (Bar)'] || row['Presión Combustible Bar'] || 3.2),
+              opacidadHumoPorc: parseNum(row['Opacidad Humo (%)'] || row['Opacidad Humo %'] || 5),
+              tipoCombustible: row['Tipo Combustible'] || 'Diésel Bajo Azufre (LSD)',
+              itemsSeguridad: DEFAULT_ITEMS_INCINERADOR.seguridad,
+              itemsMecanico: DEFAULT_ITEMS_INCINERADOR.mecanico,
+              itemsHidraulicoCombustion: DEFAULT_ITEMS_INCINERADOR.hidraulicoCombustion,
+              itemsElectricoControl: DEFAULT_ITEMS_INCINERADOR.electricoControl,
+              itemsBioseguridadLimpieza: DEFAULT_ITEMS_INCINERADOR.bioseguridadLimpieza,
+              itemsOperatividad: DEFAULT_ITEMS_INCINERADOR.operatividad,
+              puntajeSeguridad: secSeg,
+              puntajeMecanico: secMec,
+              puntajeHidraulicoCombustion: secComb,
+              puntajeElectricoControl: secElec,
+              puntajeBioseguridadLimpieza: secBio,
+              puntajeOperatividad: secOpr,
+              puntajeGlobal: secGlob,
+              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
+              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
+              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de horno térmico registrada vía carga masiva Excel',
+              accionesCorrectivas: [],
+              firmas: {
+                inspector: row['Firma Inspector'] || userEmail,
+                operador: row['Firma Operador'] || 'Juan Carlos Méndez',
+                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              }
+            });
+          });
+        } else if (tipo === 'evaluacion_360_tunel_lavado') {
+          jsonData.forEach((row: any, idx: number) => {
+            const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
+            const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 100);
+            const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 95);
+            const secElec = parseNum(row['Puntaje Electrico'] || row['Puntaje Eléctrico'] || 100);
+            const secBio = parseNum(row['Puntaje Bioseguridad'] || 100);
+            const secOpr = parseNum(row['Puntaje Operatividad'] || 95);
+            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+
+            recordsToSave.push({
+              folio: row.Folio || `EV360-TUN-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
+              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° túnel de lavado importada masivamente',
+              equipoId: row['Equipo ID'] || 'TUN-01',
+              nombreEquipo: row['Nombre Equipo'] || 'Túnel Hidro-Lavador Automático 01',
+              turno: (row.Turno || 'Matutino') as any,
+              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 2495),
+              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Carlos Eduardo Gómez',
+              inspectorSgi: row['Inspector SGI'] || userEmail,
+              presionBombaLavadoPsi: parseNum(row['Presion Bomba Lavado (PSI)'] || row['Presión Bomba Lavado PSI'] || 1850),
+              ppmDesinfectante: parseNum(row['PPM Desinfectante'] || 200),
+              temperaturaAguaC: parseNum(row['Temperatura Agua (C)'] || row['Temperatura Agua °C'] || 60),
+              velocidadCadenaMetrosMin: parseNum(row['Velocidad Cadena (m/min)'] || 3.5),
+              quimicoDosificado: row['Quimico Dosificado'] || row['Químico Dosificado'] || 'Amonio Cuaternario 5ta Gen / Ácido Peracético',
+              itemsSeguridad: DEFAULT_ITEMS_TUNEL_LAVADO.seguridad,
+              itemsMecanico: DEFAULT_ITEMS_TUNEL_LAVADO.mecanico,
+              itemsHidraulicoCombustion: DEFAULT_ITEMS_TUNEL_LAVADO.hidraulicoCombustion,
+              itemsElectricoControl: DEFAULT_ITEMS_TUNEL_LAVADO.electricoControl,
+              itemsBioseguridadLimpieza: DEFAULT_ITEMS_TUNEL_LAVADO.bioseguridadLimpieza,
+              itemsOperatividad: DEFAULT_ITEMS_TUNEL_LAVADO.operatividad,
+              puntajeSeguridad: secSeg,
+              puntajeMecanico: secMec,
+              puntajeHidraulicoCombustion: secHid,
+              puntajeElectricoControl: secElec,
+              puntajeBioseguridadLimpieza: secBio,
+              puntajeOperatividad: secOpr,
+              puntajeGlobal: secGlob,
+              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
+              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
+              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de túnel hidrolavador registrada vía carga masiva Excel',
+              accionesCorrectivas: [],
+              firmas: {
+                inspector: row['Firma Inspector'] || userEmail,
+                operador: row['Firma Operador'] || 'Carlos Eduardo Gómez',
+                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              }
+            });
+          });
+        } else if (tipo === 'evaluacion_360_compactadora') {
+          jsonData.forEach((row: any, idx: number) => {
+            const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
+            const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
+            const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 100);
+            const secElec = parseNum(row['Puntaje Electrico'] || row['Puntaje Eléctrico'] || 95);
+            const secBio = parseNum(row['Puntaje Bioseguridad'] || 100);
+            const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
+            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+
+            recordsToSave.push({
+              folio: row.Folio || `EV360-COMP-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
+              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° compactadora importada masivamente',
+              equipoId: row['Equipo ID'] || 'COMP-01',
+              nombreEquipo: row['Nombre Equipo'] || 'Compactadora Hidráulica Vertical 01',
+              turno: (row.Turno || 'Matutino') as any,
+              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 4125),
+              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Marcos Tulio Juárez',
+              inspectorSgi: row['Inspector SGI'] || userEmail,
+              presionPrensadoPsi: parseNum(row['Presion Prensado (PSI)'] || row['Presión Prensado PSI'] || 2800),
+              temperaturaAceiteC: parseNum(row['Temperatura Aceite (C)'] || row['Temperatura Aceite °C'] || 48),
+              pesoPromedioPacaLbs: parseNum(row['Peso Promedio Paca (Lbs)'] || 450),
+              tiempoCicloPrensadoSeg: parseNum(row['Tiempo Ciclo Prensado (Seg)'] || 42),
+              tipoFleje: row['Tipo Fleje'] || 'Alambre Recocido Calibre 14 Alta Resistencia',
+              itemsSeguridad: DEFAULT_ITEMS_COMPACTADORA.seguridad,
+              itemsMecanico: DEFAULT_ITEMS_COMPACTADORA.mecanico,
+              itemsHidraulicoCombustion: DEFAULT_ITEMS_COMPACTADORA.hidraulicoCombustion,
+              itemsElectricoControl: DEFAULT_ITEMS_COMPACTADORA.electricoControl,
+              itemsBioseguridadLimpieza: DEFAULT_ITEMS_COMPACTADORA.bioseguridadLimpieza,
+              itemsOperatividad: DEFAULT_ITEMS_COMPACTADORA.operatividad,
+              puntajeSeguridad: secSeg,
+              puntajeMecanico: secMec,
+              puntajeHidraulicoCombustion: secHid,
+              puntajeElectricoControl: secElec,
+              puntajeBioseguridadLimpieza: secBio,
+              puntajeOperatividad: secOpr,
+              puntajeGlobal: secGlob,
+              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
+              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
+              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de compactadora registrada vía carga masiva Excel',
+              accionesCorrectivas: [],
+              firmas: {
+                inspector: row['Firma Inspector'] || userEmail,
+                operador: row['Firma Operador'] || 'Marcos Tulio Juárez',
+                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              }
+            });
+          });
+        } else if (tipo === 'evaluacion_360_trituradora') {
+          jsonData.forEach((row: any, idx: number) => {
+            const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
+            const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
+            const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 95);
+            const secElec = parseNum(row['Puntaje Electrico'] || row['Puntaje Eléctrico'] || 100);
+            const secBio = parseNum(row['Puntaje Bioseguridad'] || 100);
+            const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
+            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+
+            recordsToSave.push({
+              folio: row.Folio || `EV360-TRIT-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
+              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° trituradora importada masivamente',
+              equipoId: row['Equipo ID'] || 'TRIT-01',
+              nombreEquipo: row['Nombre Equipo'] || 'Trituradora Shredder Industrial Doble Eje 01',
+              turno: (row.Turno || 'Matutino') as any,
+              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 5285),
+              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Byron Estuardo Reyes',
+              inspectorSgi: row['Inspector SGI'] || userEmail,
+              amperajeMotorA: parseNum(row['Amperaje Motor (A)'] || 62),
+              velocidadRotacionRpm: parseNum(row['Velocidad Rotacion (RPM)'] || row['Velocidad Rotación RPM'] || 24),
+              tiempoRespuestaAutoReverseSeg: parseNum(row['Tiempo Auto-Reverse (Seg)'] || 1.2),
+              desgasteCuchillasMm: parseNum(row['Desgaste Cuchillas (mm)'] || 1.5),
+              capacidadProcesamientoLbsHr: parseNum(row['Capacidad Procesamiento (Lbs/Hr)'] || 2500),
+              itemsSeguridad: DEFAULT_ITEMS_TRITURADORA.seguridad,
+              itemsMecanico: DEFAULT_ITEMS_TRITURADORA.mecanico,
+              itemsHidraulicoCombustion: DEFAULT_ITEMS_TRITURADORA.hidraulicoCombustion,
+              itemsElectricoControl: DEFAULT_ITEMS_TRITURADORA.electricoControl,
+              itemsBioseguridadLimpieza: DEFAULT_ITEMS_TRITURADORA.bioseguridadLimpieza,
+              itemsOperatividad: DEFAULT_ITEMS_TRITURADORA.operatividad,
+              puntajeSeguridad: secSeg,
+              puntajeMecanico: secMec,
+              puntajeHidraulicoCombustion: secHid,
+              puntajeElectricoControl: secElec,
+              puntajeBioseguridadLimpieza: secBio,
+              puntajeOperatividad: secOpr,
+              puntajeGlobal: secGlob,
+              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
+              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
+              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de trituradora shredder registrada vía carga masiva Excel',
+              accionesCorrectivas: [],
+              firmas: {
+                inspector: row['Firma Inspector'] || userEmail,
+                operador: row['Firma Operador'] || 'Byron Estuardo Reyes',
+                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              }
+            });
+          });
+        } else if (tipo === 'control_360_vehiculos') {
+          jsonData.forEach((row: any, idx: number) => {
+            recordsToSave.push({
+              folio: row.Folio || `V360-${Date.now().toString().slice(-4)}${idx + 1}`,
+              fecha: parseExcelDate(row.Fecha),
+              responsable: row.Responsable || row.Conductor || userEmail,
+              observaciones: row['Observaciones Salida'] || row.Observaciones || 'Inspección 360° de vehículo importada masivamente',
+              turno: (row.Turno || 'AM') as any,
+              centro: row['Centro Operaciones'] || row.Centro || 'VILLA NUEVA 1',
+              ruta: row.Ruta || 'VN1-BLA',
+              placa: row.Placa || 'C-442BTL',
+              estadoPlaca: (row['Estado Placa'] || 'Activa') as any,
+              tipoVehiculo: (row['Tipo Vehiculo'] || row['Tipo Vehículo'] || 'Camion') as any,
+              conductor: row.Conductor || row['Piloto Asignado'] || 'Marcos Danilo Arriola',
+              noLicencia: row['No Licencia'] || '2489-1092-0101',
+              tipoLicencia: row['Tipo Licencia'] || 'Tipo A Profesional',
+              telefono: row.Telefono || row['Teléfono'] || '5544-3322',
+              contenedoresRojosLimpiosVacios: parseNum(row['Contenedores Rojos Limpios Vacios'] || row['Contenedores Rojos Limpios Vacíos'] || 16),
+              checklistMecanico: {
+                frenos: isYes(row['Frenos Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                llantas: isYes(row['Llantas Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                luces: isYes(row['Luces Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                extintor: isYes(row['Extintor Vigente (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                cinturones: isYes(row['Cinturones Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                espejos: 'OK',
+                combustible: 'OK',
+                botiquin: 'OK'
+              },
+              checklistBioseguridad: {
+                selloHermetico: isYes(row['Sello Hermetico (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                biohazardVisible: isYes(row['Rotulo Biohazard Visible (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                desinfeccionPrevia: isYes(row['Desinfeccion Previa Realizada (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                kitDerrame: isYes(row['Kit Antiderrame Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                eppCompleto: isYes(row['EPP Completo (Si/No)'] ?? true) ? 'OK' : 'Falla'
+              },
+              horaSalida: row['Hora Salida'] || '06:30',
+              kmSalida: parseNum(row['KM Salida'] || 128450),
+              obsSalida: row['Observaciones Salida'] || 'Vehículo despachado conforme a checklist 360',
+              todosCriticosAprobados: true,
+              horaLlegadaPlanta: row['Hora Llegada Planta'] || '14:15',
+              kmLlegada: parseNum(row['KM Llegada'] || 128540),
+              kmRecorridos: Math.max(0, parseNum(row['KM Llegada'] || 128540) - parseNum(row['KM Salida'] || 128450)),
+              horaLlegadaFinal: row['Hora Llegada Planta'] || '14:15',
+              pesoEntregadoLbs: parseNum(row['Peso Entregado Lbs'] || 2450),
+              recibidoPorPlanta: row['Recibido Por Planta'] || 'Receptor Planta BIOTRASH',
+              descargaCompleta: true,
+              limpiezaInterior: true,
+              desinfectanteUtilizado: row['Desinfectante Utilizado'] || 'Amonio Cuaternario al 10%',
+              tiempoContactoMinutos: 15,
+              horaFinDesinfeccion: '14:45',
+              novedadesRuta: row['Novedades Ruta'] || 'Ruta completada sin incidencias mecánicas ni biológicas',
+              firmaConductor: row['Firma Conductor'] || row.Conductor || 'Marcos Danilo Arriola',
               firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
             });
           });

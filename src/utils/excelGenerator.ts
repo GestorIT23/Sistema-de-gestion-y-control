@@ -1643,3 +1643,360 @@ export function downloadCalderaTemplate() {
   XLSX.writeFile(wb, `Modelo_Carga_Caldera_F-OPR-000-23_BIOTRASH.xlsx`);
 }
 
+/**
+ * Plantilla oficial de carga masiva para Evaluación 360° Incinerador
+ */
+export function downloadEvaluacion360IncineradorTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Matutino / Vespertino / Nocturno)',
+    'Equipo ID (INC-01 / INC-02)',
+    'Nombre Equipo',
+    'Horómetro Actual',
+    'Operador Responsable',
+    'Inspector SGI',
+    'Temp Cámara Primaria °C (800-950)',
+    'Temp Cámara Secundaria °C (1000-1200)',
+    'Presión Combustible Bar (3.0-4.0)',
+    'Opacidad Humo % (0-20)',
+    'Tipo Combustible',
+    'Puntaje Seguridad (0-100)',
+    'Puntaje Mecánico (0-100)',
+    'Puntaje Combustión (0-100)',
+    'Puntaje Eléctrico (0-100)',
+    'Puntaje Bioseguridad (0-100)',
+    'Puntaje Operatividad (0-100)',
+    'Veredicto Operacional (Aprobado para Operar | Condicionado con Acciones | Fuera de Servicio (Paro Inmediato))',
+    'Nivel Riesgo (Bajo | Medio | Alto | Crítico)',
+    'Observaciones Generales',
+    'Firma Inspector',
+    'Firma Operador',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Matutino',
+      'INC-01',
+      'Incinerador Pirolítico Industrial 01',
+      3850,
+      'Juan Carlos Méndez (Técnico Operador Térmico)',
+      'Auditor SGI Calidad y HSE',
+      850,
+      1050,
+      3.2,
+      5,
+      'Diésel Bajo Azufre (LSD)',
+      100,
+      95,
+      95,
+      100,
+      100,
+      100,
+      'Aprobado para Operar',
+      'Bajo',
+      'Auditoría 360° programada conforme norma ISO 14001',
+      'Auditor SGI Líder',
+      'Juan Carlos Méndez',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Evaluación 360 Incinerador');
+  XLSX.writeFile(wb, `Modelo_Carga_360_Incinerador_F-OPR-000-19.xlsx`);
+}
+
+/**
+ * Plantilla oficial de carga masiva para Evaluación 360° Túnel de Lavado
+ */
+export function downloadEvaluacion360TunelLavadoTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Matutino / Vespertino / Nocturno)',
+    'Equipo ID (TUN-01 / TUN-02)',
+    'Nombre Equipo',
+    'Horómetro Actual',
+    'Operador Responsable',
+    'Inspector SGI',
+    'Presión Bomba Lavado PSI (1500-2200)',
+    'PPM Desinfectante (150-300)',
+    'Temperatura Agua °C (45-70)',
+    'Velocidad Cadena m/min (2.5-4.5)',
+    'Químico Dosificado',
+    'Puntaje Seguridad (0-100)',
+    'Puntaje Mecánico (0-100)',
+    'Puntaje Hidráulico (0-100)',
+    'Puntaje Eléctrico (0-100)',
+    'Puntaje Bioseguridad (0-100)',
+    'Puntaje Operatividad (0-100)',
+    'Veredicto Operacional (Aprobado para Operar | Condicionado con Acciones | Fuera de Servicio (Paro Inmediato))',
+    'Nivel Riesgo (Bajo | Medio | Alto | Crítico)',
+    'Observaciones Generales',
+    'Firma Inspector',
+    'Firma Operador',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Matutino',
+      'TUN-01',
+      'Túnel Hidro-Lavador Automático 01',
+      2495,
+      'Carlos Eduardo Gómez (Operador Túnel de Lavado)',
+      'Auditor SGI Bioseguridad',
+      1850,
+      200,
+      60,
+      3.5,
+      'Amonio Cuaternario 5ta Gen / Ácido Peracético',
+      100,
+      100,
+      95,
+      100,
+      100,
+      95,
+      'Aprobado para Operar',
+      'Bajo',
+      'Auditoría 360° túnel de lavado con boquillas limpias y desinfección conforme',
+      'Auditor SGI Líder',
+      'Carlos Eduardo Gómez',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Evaluación 360 Túnel Lavado');
+  XLSX.writeFile(wb, `Modelo_Carga_360_Tunel_Lavado_F-OPR-000-20.xlsx`);
+}
+
+/**
+ * Plantilla oficial de carga masiva para Evaluación 360° Compactadora
+ */
+export function downloadEvaluacion360CompactadoraTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Matutino / Vespertino / Nocturno)',
+    'Equipo ID (COMP-01 / COMP-02)',
+    'Nombre Equipo',
+    'Horómetro Actual',
+    'Operador Responsable',
+    'Inspector SGI',
+    'Presión Prensado PSI (2500-3200)',
+    'Temperatura Aceite °C (35-60)',
+    'Peso Promedio Paca Lbs (350-550)',
+    'Tiempo Ciclo Prensado Seg (30-60)',
+    'Tipo Fleje',
+    'Puntaje Seguridad (0-100)',
+    'Puntaje Mecánico (0-100)',
+    'Puntaje Hidráulico (0-100)',
+    'Puntaje Eléctrico (0-100)',
+    'Puntaje Bioseguridad (0-100)',
+    'Puntaje Operatividad (0-100)',
+    'Veredicto Operacional (Aprobado para Operar | Condicionado con Acciones | Fuera de Servicio (Paro Inmediato))',
+    'Nivel Riesgo (Bajo | Medio | Alto | Crítico)',
+    'Observaciones Generales',
+    'Firma Inspector',
+    'Firma Operador',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Matutino',
+      'COMP-01',
+      'Compactadora Hidráulica Vertical 01',
+      4125,
+      'Marcos Tulio Juárez (Operador Prensa de Pacas)',
+      'Auditor SGI Operaciones',
+      2800,
+      48,
+      450,
+      42,
+      'Alambre Recocido Calibre 14 Alta Resistencia',
+      100,
+      95,
+      100,
+      95,
+      100,
+      100,
+      'Aprobado para Operar',
+      'Bajo',
+      'Evaluación 360° compactadora de pacas con sistema hidráulico en óptimas condiciones',
+      'Auditor SGI Operaciones',
+      'Marcos Tulio Juárez',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Evaluación 360 Compactadora');
+  XLSX.writeFile(wb, `Modelo_Carga_360_Compactadora_F-OPR-000-21.xlsx`);
+}
+
+/**
+ * Plantilla oficial de carga masiva para Evaluación 360° Trituradora
+ */
+export function downloadEvaluacion360TrituradoraTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (Matutino / Vespertino / Nocturno)',
+    'Equipo ID (TRIT-01 / TRIT-02)',
+    'Nombre Equipo',
+    'Horómetro Actual',
+    'Operador Responsable',
+    'Inspector SGI',
+    'Amperaje Motor A (50-75)',
+    'Velocidad Rotación RPM (20-30)',
+    'Tiempo Auto-Reverse Seg (1.0-2.5)',
+    'Desgaste Cuchillas mm (0-3.0)',
+    'Capacidad Procesamiento Lbs/Hr (2000-3500)',
+    'Puntaje Seguridad (0-100)',
+    'Puntaje Mecánico (0-100)',
+    'Puntaje Hidráulico (0-100)',
+    'Puntaje Eléctrico (0-100)',
+    'Puntaje Bioseguridad (0-100)',
+    'Puntaje Operatividad (0-100)',
+    'Veredicto Operacional (Aprobado para Operar | Condicionado con Acciones | Fuera de Servicio (Paro Inmediato))',
+    'Nivel Riesgo (Bajo | Medio | Alto | Crítico)',
+    'Observaciones Generales',
+    'Firma Inspector',
+    'Firma Operador',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'Matutino',
+      'TRIT-01',
+      'Trituradora Shredder Industrial Doble Eje 01',
+      5285,
+      'Byron Estuardo Reyes (Operador Trituradora Shredder)',
+      'Auditor SGI Mantenimiento',
+      62,
+      24,
+      1.2,
+      1.5,
+      2500,
+      100,
+      95,
+      95,
+      100,
+      100,
+      100,
+      'Aprobado para Operar',
+      'Bajo',
+      'Evaluación 360° trituradora de doble eje con cuchillas afiladas y auto-reverse activo',
+      'Auditor SGI Mantenimiento',
+      'Byron Estuardo Reyes',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Evaluación 360 Trituradora');
+  XLSX.writeFile(wb, `Modelo_Carga_360_Trituradora_F-OPR-000-22.xlsx`);
+}
+
+/**
+ * Plantilla oficial de carga masiva para Control 360° de Vehículos
+ */
+export function downloadControl360VehiculosTemplate() {
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    'Fecha (AAAA-MM-DD)',
+    'Turno (AM / PM / Nocturno)',
+    'Centro Operaciones',
+    'Ruta',
+    'Placa',
+    'Tipo Vehículo (Camion / Pickup / Motocicleta)',
+    'Conductor',
+    'No Licencia',
+    'Tipo Licencia',
+    'Teléfono',
+    'Contenedores Rojos Limpios Vacíos',
+    'Hora Salida (HH:MM)',
+    'KM Salida',
+    'Hora Llegada Planta (HH:MM)',
+    'KM Llegada',
+    'Peso Entregado Lbs',
+    'Recibido Por Planta',
+    'Frenos Conforme (Si/No)',
+    'Llantas Conforme (Si/No)',
+    'Luces Conforme (Si/No)',
+    'Extintor Vigente (Si/No)',
+    'Cinturones Conforme (Si/No)',
+    'Sello Hermético (Si/No)',
+    'Rótulo Biohazard Visible (Si/No)',
+    'Kit Antiderrame Conforme (Si/No)',
+    'EPP Completo (Si/No)',
+    'Desinfección Previa Realizada (Si/No)',
+    'Desinfectante Utilizado',
+    'Observaciones Salida',
+    'Novedades Ruta',
+    'Firma Conductor',
+    'Firma Supervisor'
+  ];
+
+  const sampleRows = [
+    [
+      today,
+      'AM',
+      'VILLA NUEVA 1',
+      'VN1-BLA',
+      'C-442BTL',
+      'Camion',
+      'Marcos Danilo Arriola',
+      '2489-1092-0101',
+      'Tipo A Profesional',
+      '5544-3322',
+      16,
+      '06:30',
+      128450,
+      '14:15',
+      128540,
+      2450,
+      'Receptor Planta BIOTRASH',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Si',
+      'Amonio Cuaternario al 10%',
+      'Vehículo listo para ruta matutina de recolección',
+      'Ruta completada sin novedad',
+      'Marcos Danilo Arriola',
+      'Ing. Manuel López — Gerente de Planta'
+    ]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  ws['!cols'] = headers.map(() => ({ wch: 24 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Control 360 Vehículos');
+  XLSX.writeFile(wb, `Modelo_Carga_Control_360_Vehiculos_F-OPR-000-17.xlsx`);
+}
+
+

@@ -27,10 +27,13 @@ import {
   Droplets,
   HelpCircle,
   FileCheck,
-  PackageCheck
+  PackageCheck,
+  Upload,
+  Download
 } from 'lucide-react';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
-import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { generateAndDownloadExcel, downloadControl360VehiculosTemplate } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject, sanitizeBiotrashText } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
 import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
@@ -119,7 +122,7 @@ const PLACAS_EN_ESPERA = [
 ];
 
 export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props) {
-  const [activeTab, setActiveTab] = useState<'formulario' | 'arbol' | 'matriz' | 'placas' | 'norma' | 'historial'>('formulario');
+  const [activeTab, setActiveTab] = useState<'formulario' | 'carga_excel' | 'arbol' | 'matriz' | 'placas' | 'norma' | 'historial'>('formulario');
   
   // Árbol de decisión state
   const [selectedCentroArbol, setSelectedCentroArbol] = useState<string>('villa_nueva_1');
@@ -437,6 +440,22 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button 
+            type="button"
+            onClick={downloadControl360VehiculosTemplate}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs px-3.5 py-2 rounded flex items-center gap-1.5 transition cursor-pointer"
+            title="Descargar modelo oficial de carga masiva en Excel"
+          >
+            <Download className="w-4 h-4 text-emerald-700" /> Descargar Modelo (.xlsx)
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab('carga_excel')}
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold text-xs px-3.5 py-2 rounded flex items-center gap-1.5 transition cursor-pointer"
+            title="Subir archivo Excel con boletas masivas"
+          >
+            <Upload className="w-4 h-4 text-emerald-600" /> Subir Archivo Excel
+          </button>
           <button
             onClick={handleExportPDF}
             className="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded flex items-center gap-1.5 transition cursor-pointer"
@@ -480,6 +499,17 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
           }`}
         >
           <FileCheck className="w-4 h-4" /> Formulario 360°
+        </button>
+
+        <button
+          onClick={() => setActiveTab('carga_excel')}
+          className={`px-4 py-2 text-xs font-bold rounded transition flex items-center gap-2 cursor-pointer ${
+            activeTab === 'carga_excel'
+              ? 'bg-emerald-700 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-500" /> Carga Manual / Masiva Excel
         </button>
 
         <button
@@ -982,6 +1012,41 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
             aproboCargo="Gerente General"
           />
 
+        </div>
+      )}
+
+      {/* ====================================================================
+           TAB: CARGA MASIVA / POR EXCEL
+           ==================================================================== */}
+      {activeTab === 'carga_excel' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-slate-900 via-[#1A3A5C] to-slate-950 text-white p-6 rounded-2xl shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase tracking-wider mb-2">
+                <FileSpreadsheet className="w-3.5 h-3.5" /> Módulo de Carga Masiva Oficial SGI
+              </span>
+              <h3 className="text-xl font-black text-white">Importación de Boletas de Control 360° de Vehículos</h3>
+              <p className="text-xs text-slate-300 max-w-2xl mt-1">
+                Descargue la plantilla estandarizada en Excel (.xlsx), complete los registros de despacho de ruta (placas, rutas, kilometrajes, verificación mecánica, bioseguridad y pesaje) y cargue el archivo para sincronizar inmediatamente en la base de datos oficial SGI.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={downloadControl360VehiculosTemplate}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md transition whitespace-nowrap cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Descargar Modelo de Carga (.xlsx)
+            </button>
+          </div>
+
+          <BulkUploadPanel
+            tipo="control_360_vehiculos"
+            userEmail={userEmail}
+            onSuccess={() => {
+              fetchRegistros();
+              setActiveTab('historial');
+            }}
+          />
         </div>
       )}
 

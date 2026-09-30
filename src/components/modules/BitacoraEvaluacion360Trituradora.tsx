@@ -30,7 +30,9 @@ import {
   Flame,
   Droplets,
   Layers,
-  Compass
+  Compass,
+  Upload,
+  Download
 } from 'lucide-react';
 import { 
   Radar, 
@@ -41,7 +43,8 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
-import { generateAndDownloadExcel } from '../../utils/excelGenerator';
+import { generateAndDownloadExcel, downloadEvaluacion360TrituradoraTemplate } from '../../utils/excelGenerator';
+import BulkUploadPanel from '../BulkUploadPanel';
 import { sanitizeBiotrashObject } from '../../utils/textSanitizer';
 import { isAuthorizedToDelete } from '../../utils/authUtils';
 import GestorItDeleteModuleRecords from '../GestorItDeleteModuleRecords';
@@ -61,7 +64,7 @@ interface Props {
 }
 
 export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, onNavigateToEquipment }: Props) {
-  const [activeTab, setActiveTab] = useState<'formulario' | 'historico' | 'analitica'>('formulario');
+  const [activeTab, setActiveTab] = useState<'formulario' | 'carga_excel' | 'historico' | 'analitica'>('formulario');
   const [categoryTab, setCategoryTab] = useState<'seguridad' | 'mecanico' | 'hidraulicoCombustion' | 'electricoControl' | 'bioseguridadLimpieza' | 'operatividad'>('seguridad');
   
   const [registros, setRegistros] = useState<Evaluacion360Trituradora[]>([]);
@@ -333,36 +336,22 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
           <ArrowLeft className="w-4 h-4" /> Volver al Tablero SGI
         </button>
 
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold overflow-x-auto">
-          <span className="text-[10px] uppercase font-bold text-slate-500 px-2 flex items-center gap-1">
-            <Compass className="w-3.5 h-3.5 text-[#1A7A4A]" /> Auditorías 360°:
-          </span>
-          {onNavigateToEquipment && (
-            <button 
-              onClick={() => onNavigateToEquipment('evaluacion_360_incinerador')}
-              className="px-2.5 py-1 rounded-lg text-slate-700 hover:bg-white transition flex items-center gap-1.5"
-            >
-              <Flame className="w-3.5 h-3.5 text-orange-600" /> Incinerador
-            </button>
-          )}
-          {onNavigateToEquipment && (
-            <button 
-              onClick={() => onNavigateToEquipment('evaluacion_360_tunel_lavado')}
-              className="px-2.5 py-1 rounded-lg text-slate-700 hover:bg-white transition flex items-center gap-1.5"
-            >
-              <Droplets className="w-3.5 h-3.5 text-cyan-600" /> Túnel Lavado
-            </button>
-          )}
-          {onNavigateToEquipment && (
-            <button 
-              onClick={() => onNavigateToEquipment('evaluacion_360_compactadora')}
-              className="px-2.5 py-1 rounded-lg text-slate-700 hover:bg-white transition flex items-center gap-1.5"
-            >
-              <Layers className="w-3.5 h-3.5 text-amber-600" /> Compactadora
-            </button>
-          )}
-          <button className="px-2.5 py-1 rounded-lg bg-emerald-700 text-white font-bold shadow-sm flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5" /> Trituradora
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            type="button"
+            onClick={downloadEvaluacion360TrituradoraTemplate}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg font-bold text-xs shadow-xs transition cursor-pointer"
+            title="Descargar modelo / plantilla de carga oficial en Excel"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-700" /> Descargar Modelo de Archivo (.xlsx)
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab('carga_excel')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg font-bold text-xs shadow-xs transition cursor-pointer"
+            title="Subir archivo Excel con registros masivos"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-600" /> Subir Archivo Excel
           </button>
         </div>
       </div>
@@ -375,10 +364,10 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
         fechaVersion="24/09/2026"
       />
 
-      <div className="flex border-b border-slate-200 mb-6 bg-white rounded-t-xl px-4 pt-2 shadow-xs">
+      <div className="flex border-b border-slate-200 mb-6 bg-white rounded-t-xl px-4 pt-2 shadow-xs overflow-x-auto">
         <button
           onClick={() => setActiveTab('formulario')}
-          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition ${
+          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'formulario'
               ? 'border-emerald-600 text-emerald-800 bg-emerald-50/40 rounded-t-lg'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -387,8 +376,18 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
           <Activity className="w-4 h-4 text-emerald-600" /> Formulario de Auditoría 360°
         </button>
         <button
+          onClick={() => setActiveTab('carga_excel')}
+          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'carga_excel'
+              ? 'border-emerald-600 text-emerald-800 bg-emerald-50/50 rounded-t-lg'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Carga Manual / Masiva Excel
+        </button>
+        <button
           onClick={() => setActiveTab('historico')}
-          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition ${
+          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'historico'
               ? 'border-emerald-600 text-emerald-800 bg-emerald-50/40 rounded-t-lg'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -398,7 +397,7 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
         </button>
         <button
           onClick={() => setActiveTab('analitica')}
-          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition ${
+          className={`px-4 py-2.5 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'analitica'
               ? 'border-emerald-600 text-emerald-800 bg-emerald-50/40 rounded-t-lg'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -894,7 +893,40 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
         </form>
       )}
 
-      {/* TAB 2: HISTÓRICO */}
+      {/* TAB 2: CARGA MASIVA / POR EXCEL */}
+      {activeTab === 'carga_excel' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-md border border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase tracking-wider mb-2">
+                <FileSpreadsheet className="w-3.5 h-3.5" /> Módulo de Carga Masiva Oficial SGI
+              </span>
+              <h3 className="text-xl font-black text-white">Importación de Evaluaciones 360° Trituradora</h3>
+              <p className="text-xs text-slate-300 max-w-2xl mt-1">
+                Descargue la plantilla estandarizada en Excel (.xlsx), complete las auditorías de trituradora industrial shredder (amperaje motor, velocidad RPM, auto-reverse, desgaste de cuchillas y calificaciones) y cargue el archivo para sincronizar inmediatamente en la base de datos oficial SGI.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={downloadEvaluacion360TrituradoraTemplate}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md transition whitespace-nowrap cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Descargar Modelo de Carga (.xlsx)
+            </button>
+          </div>
+
+          <BulkUploadPanel
+            tipo="evaluacion_360_trituradora"
+            userEmail={userEmail}
+            onSuccess={() => {
+              fetchRegistros();
+              setActiveTab('historico');
+            }}
+          />
+        </div>
+      )}
+
+      {/* TAB 3: HISTÓRICO */}
       {activeTab === 'historico' && (
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
