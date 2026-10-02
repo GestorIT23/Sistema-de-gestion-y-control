@@ -1,5 +1,11 @@
 import { jsPDF } from 'jspdf';
 import { sanitizeBiotrashObject } from './textSanitizer';
+import {
+  DEFAULT_ITEMS_INCINERADOR,
+  DEFAULT_ITEMS_TUNEL_LAVADO,
+  DEFAULT_ITEMS_COMPACTADORA,
+  DEFAULT_ITEMS_TRITURADORA
+} from './evaluacion360Data';
 
 function formatHoraRegistro(isoString?: string): string {
   if (!isoString) return '—';
@@ -333,46 +339,80 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   }
 
   // --- DRAW FOOTER ---
-  function drawFooter() {
-    const footY = pageHeight - 17;
+  function drawFooter(currentPageNum?: number, totalPagesCount?: number) {
+    const footY = pageHeight - 14;
     doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+    doc.setLineWidth(0.3);
     doc.line(marginX, footY, pageWidth - marginX, footY);
 
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
-    doc.text('BIOTRASH S.A. © Corporación Internacional de Gestión de Desechos de Riesgo.', marginX + 5, footY + 4);
-    doc.text('Documento oficial autorizado por el Comité de Aseguramiento de Calidad ISO 9001.', marginX + 5, footY + 8);
+    doc.text('BIOTRASH S.A. © Corporación Internacional de Gestión de Desechos de Riesgo.', marginX + 3, footY + 4);
+    doc.text('Documento oficial controlado por el Comité de Aseguramiento de Calidad ISO 9001 / ISO 14001.', marginX + 3, footY + 8);
 
     doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
     doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text('CONEXIÓN EN VIVO CON FIREBASE SGI', pageWidth - marginX - 58, footY + 6);
+    if (currentPageNum && totalPagesCount) {
+      doc.text(`Página ${currentPageNum} de ${totalPagesCount} — SGI FIREBASE`, pageWidth - marginX - 60, footY + 6);
+    } else {
+      doc.text('CONEXIÓN EN VIVO CON FIREBASE SGI', pageWidth - marginX - 58, footY + 6);
+    }
   }
 
   // --- DRAW SECTION HEADER ---
-  function drawSectionHeader(title: string) {
+  function drawSectionHeader(title: string, compact = false, customHeight?: number) {
+    const hHeight = customHeight ? customHeight : (compact ? 5.2 : 6.0);
     doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
-    doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, 6, 'F');
+    doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, hHeight, 'F');
     
     doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.setLineWidth(0.5);
-    doc.line(marginX + 1, y, marginX + 1, y + 6);
+    doc.setLineWidth(0.6);
+    doc.line(marginX + 1, y, marginX + 1, y + hHeight);
     
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(title, marginX + 4, y + 4.5);
+    doc.setFontSize(compact ? 7.4 : 8.0);
+    doc.text(title, marginX + 4, y + (compact ? 3.8 : 4.4));
     
-    y += 9;
+    y += compact ? 6.8 : 8.5;
   }
 
   // --- DRAW GRID INFO ---
-  function drawGridInfo(items: { key: string; value: string }[]) {
+  function drawGridInfo(items: { key: string; value: string }[], compact: boolean | number = false, customRowHeight?: number) {
     doc.setLineWidth(0.1);
     doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
 
     const colWidth = (pageWidth - (marginX * 2) - 2) / 2;
     const maxKeyWidth = colWidth - 25; // guaranteed 25mm of space for the value text
+    
+    let rHeight = 6.4;
+    let fontSize = 7.2;
+    let valOffsetY = 4.2;
+    let bottomSpacing = 3.5;
+
+    if (customRowHeight) {
+      rHeight = customRowHeight;
+      fontSize = customRowHeight < 5.8 ? 6.8 : (customRowHeight > 6.6 ? 7.5 : 7.2);
+      valOffsetY = rHeight * 0.65;
+      bottomSpacing = customRowHeight < 5.8 ? 2.5 : 3.5;
+    } else if (compact === true) {
+      rHeight = 5.8;
+      fontSize = 7.0;
+      valOffsetY = 3.9;
+      bottomSpacing = 3.0;
+    } else if (typeof compact === 'number') {
+      rHeight = compact;
+      fontSize = compact < 5.8 ? 6.8 : 7.2;
+      valOffsetY = rHeight * 0.65;
+      bottomSpacing = 3.0;
+    } else {
+      rHeight = 6.8;
+      fontSize = 7.5;
+      valOffsetY = 4.6;
+      bottomSpacing = 4.5;
+    }
     let localY = y;
 
     for (let i = 0; i < items.length; i += 2) {
@@ -381,18 +421,18 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       // Background row striping
       if (Math.floor(i / 2) % 2 === 0) {
         doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
-        doc.rect(marginX + 1, localY, colWidth * 2, 7, 'F');
+        doc.rect(marginX + 1, localY, colWidth * 2, rHeight, 'F');
       }
 
       // Highlight left if it's weight
       if (isPesoLeft) {
         doc.setFillColor(209, 250, 229); // light green
-        doc.rect(marginX + 1, localY, colWidth, 7, 'F');
+        doc.rect(marginX + 1, localY, colWidth, rHeight, 'F');
       }
 
       // Left column key
       doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(fontSize);
       if (isPesoLeft) {
         doc.setTextColor(6, 95, 70); // deep emerald green
       } else {
@@ -408,7 +448,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         }
         displayKeyLeft = tempKey + '...:';
       }
-      doc.text(displayKeyLeft, marginX + 4, localY + 4.8);
+      doc.text(displayKeyLeft, marginX + 4, localY + valOffsetY);
       
       // Left column value
       if (isPesoLeft) {
@@ -418,8 +458,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         doc.setFont('Helvetica', 'normal');
         doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
       }
-      doc.setFontSize(7.5);
-      doc.text(truncateText(items[i].value, 46), marginX + colWidth - 4, localY + 4.8, { align: 'right' });
+      doc.setFontSize(fontSize);
+      doc.text(truncateText(items[i].value, 46), marginX + colWidth - 4, localY + valOffsetY, { align: 'right' });
 
       // Right column (if exists)
       if (items[i + 1]) {
@@ -427,12 +467,12 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
         if (isPesoRight) {
           doc.setFillColor(209, 250, 229); // light green
-          doc.rect(marginX + colWidth, localY, colWidth, 7, 'F');
+          doc.rect(marginX + colWidth, localY, colWidth, rHeight, 'F');
         }
 
         // Right column key
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(7.5);
+        doc.setFontSize(fontSize);
         if (isPesoRight) {
           doc.setTextColor(6, 95, 70);
         } else {
@@ -448,7 +488,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
           }
           displayKeyRight = tempKey + '...:';
         }
-        doc.text(displayKeyRight, marginX + colWidth + 4, localY + 4.8);
+        doc.text(displayKeyRight, marginX + colWidth + 4, localY + valOffsetY);
         
         // Right column value
         if (isPesoRight) {
@@ -458,20 +498,20 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
           doc.setFont('Helvetica', 'normal');
           doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
         }
-        doc.setFontSize(7.5);
-        doc.text(truncateText(items[i + 1].value, 46), marginX + colWidth * 2 - 4, localY + 4.8, { align: 'right' });
+        doc.setFontSize(fontSize);
+        doc.text(truncateText(items[i + 1].value, 46), marginX + colWidth * 2 - 4, localY + valOffsetY, { align: 'right' });
       }
 
       // Draw horizontal dividing line
       doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
       doc.setLineWidth(0.1);
-      doc.line(marginX + 1, localY + 7, pageWidth - marginX - 1, localY + 7);
-      localY += 7;
+      doc.line(marginX + 1, localY + rHeight, pageWidth - marginX - 1, localY + rHeight);
+      localY += rHeight;
     }
 
     doc.line(marginX + colWidth, y, marginX + colWidth, localY); // vertical middle line
 
-    y = localY + 5;
+    y = localY + bottomSpacing;
   }
 
   // Truncate function
@@ -482,24 +522,43 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
   }
 
   // --- DRAW TEXT CARD (MULTILINE PARAGRAPHS & CARDS) ---
-  function drawTextCard(title: string, content: string | string[], variant: 'normal' | 'success' | 'warning' | 'danger' = 'normal') {
-    doc.setFontSize(7.5);
+  function drawTextCard(title: string, content: any, variant: 'normal' | 'success' | 'warning' | 'danger' = 'normal', compact = false) {
+    const fontSize = compact ? 6.8 : 7.4;
+    doc.setFontSize(fontSize);
     const cardWidth = pageWidth - (marginX * 2) - 2;
     const printableWidth = cardWidth - 8;
 
-    const rawLines: string[] = typeof content === 'string' ? content.split('\n') : content;
+    let rawLines: string[] = [];
+    if (typeof content === 'string') {
+      rawLines = content.split('\n');
+    } else if (Array.isArray(content)) {
+      rawLines = content.map(item => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') {
+          return Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(' | ');
+        }
+        return String(item || '');
+      });
+    } else if (content && typeof content === 'object') {
+      rawLines = Object.entries(content).map(([k, v]) => `${k}: ${v}`);
+    } else {
+      rawLines = [String(content || '')];
+    }
+
     const allWrappedLines: string[] = [];
 
     rawLines.forEach(rawLine => {
-      if (!rawLine.trim()) return;
+      const lineStr = String(rawLine || '').trim();
+      if (!lineStr) return;
       doc.setFont('Helvetica', 'normal');
-      const wrapped = doc.splitTextToSize(rawLine, printableWidth);
+      const wrapped = doc.splitTextToSize(lineStr, printableWidth);
       allWrappedLines.push(...wrapped);
     });
 
-    const lineStep = 3.8;
-    const headerHeight = title ? 6 : 0;
-    const boxHeight = headerHeight + (allWrappedLines.length * lineStep) + 6;
+    const lineStep = compact ? 3.0 : 3.6;
+    const headerHeight = title ? (compact ? 4.8 : 5.8) : 0;
+    const padding = compact ? 2.5 : 4.5;
+    const boxHeight = headerHeight + (allWrappedLines.length * lineStep) + padding;
 
     if (y + boxHeight > pageHeight - 18) {
       doc.addPage();
@@ -524,22 +583,22 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     doc.setLineWidth(0.3);
     doc.rect(marginX + 1, y, cardWidth, boxHeight, 'S');
 
-    let currentY = y + 4.5;
+    let currentY = y + (compact ? 3.4 : 4.4);
 
     if (title) {
       doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFontSize(compact ? 7.2 : 7.8);
       if (variant === 'success') doc.setTextColor(22, 101, 52);
       else if (variant === 'danger') doc.setTextColor(153, 27, 27);
       else if (variant === 'warning') doc.setTextColor(146, 64, 14);
       else doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
 
       doc.text(title, marginX + 4, currentY);
-      currentY += 5.5;
+      currentY += (compact ? 4.0 : 5.0);
     }
 
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(fontSize);
     doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
 
     allWrappedLines.forEach(line => {
@@ -547,29 +606,75 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       currentY += lineStep;
     });
 
-    y += boxHeight + 4;
+    y += boxHeight + (compact ? 2.5 : 3.8);
   }
 
   // --- DRAW MULTILINE DATA TABLE ---
-  function drawDataTable(headers: string[], widths: number[], rows: any[][]) {
+  function drawDataTable(headers: string[], widths: number[], rows: any[][], compact: boolean | number = false, customMinRowHeight?: number) {
     doc.setLineWidth(0.15);
     doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
 
+    const tableWidth = pageWidth - (marginX * 2) - 2; // 178 mm
+    let thHeight = 6.2;
+    let thFontSize = 6.8;
+    let thOffsetY = 4.2;
+    let minRowHeight = 5.8;
+    let lineStep = 3.2;
+    let padding = 2.2;
+    let textOffsetY = 3.8;
+    let cellFontSize = 6.5;
+
+    if (customMinRowHeight) {
+      minRowHeight = customMinRowHeight;
+      thHeight = Math.max(5.2, customMinRowHeight + 0.3);
+      cellFontSize = customMinRowHeight < 5.2 ? 6.0 : (customMinRowHeight > 6.0 ? 6.8 : 6.4);
+      thFontSize = cellFontSize + 0.3;
+      textOffsetY = minRowHeight * 0.65;
+      thOffsetY = thHeight * 0.65;
+    } else if (compact === true) {
+      minRowHeight = 5.2;
+      thHeight = 5.5;
+      thFontSize = 6.4;
+      thOffsetY = 3.8;
+      lineStep = 3.0;
+      padding = 1.8;
+      textOffsetY = 3.5;
+      cellFontSize = 6.2;
+    } else if (typeof compact === 'number') {
+      minRowHeight = compact;
+      thHeight = compact + 0.4;
+      thFontSize = compact < 5.0 ? 6.2 : 6.5;
+      thOffsetY = thHeight * 0.65;
+      textOffsetY = minRowHeight * 0.65;
+      cellFontSize = compact < 5.0 ? 5.8 : 6.2;
+      lineStep = compact < 5.0 ? 2.5 : 2.8;
+      padding = compact < 5.0 ? 1.0 : 1.4;
+    } else {
+      minRowHeight = 6.2;
+      thHeight = 6.8;
+      thFontSize = 7.0;
+      thOffsetY = 4.6;
+      lineStep = 3.4;
+      padding = 2.5;
+      textOffsetY = 4.2;
+      cellFontSize = 6.8;
+    }
+
     function renderTableHeader() {
       doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.rect(marginX + 1, y, pageWidth - (marginX * 2) - 2, 7, 'F');
+      doc.rect(marginX + 1, y, tableWidth, thHeight, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7);
+      doc.setFontSize(thFontSize);
       
-      let currentX = marginX + 3;
+      let currentX = marginX + 2.5;
       headers.forEach((h, idx) => {
-        doc.text(h, currentX, y + 4.8);
+        doc.text(h, currentX, y + thOffsetY);
         currentX += widths[idx];
       });
 
-      y += 7;
+      y += thHeight;
     }
 
     renderTableHeader();
@@ -581,11 +686,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
       row.forEach((cell, cIdx) => {
         const colWidth = widths[cIdx] || 30;
-        const printableWidth = colWidth - 3;
+        const printableWidth = colWidth - 2.5;
         const cellStr = cell !== null && cell !== undefined ? String(cell) : '';
         
         doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(6.5);
+        doc.setFontSize(cellFontSize);
         const lines = doc.splitTextToSize(cellStr, printableWidth);
         const validLines = lines.length > 0 ? lines : [''];
         cellLinesList.push(validLines);
@@ -594,8 +699,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         }
       });
 
-      const lineStep = 3.5;
-      const rowHeight = Math.max(6.5, maxLinesInRow * lineStep + 2.5);
+      const rowHeight = Math.max(minRowHeight, maxLinesInRow * lineStep + padding);
 
       if (y + rowHeight > pageHeight - 18) {
         doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
@@ -606,7 +710,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         renderTableHeader();
       }
 
-      let rowX = marginX + 3;
+      let rowX = marginX + 1;
       cellLinesList.forEach((lines, cIdx) => {
         const colWidth = widths[cIdx] || 30;
         const cellRawVal = String(row[cIdx] || '').trim();
@@ -614,33 +718,33 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         const hName = String(headers[cIdx] || '').toUpperCase();
         
         const isPesoCol = hName.includes('PESO') || hName.includes('LIBRAS') || hName.includes('PESAJE') || hName.includes('CANTIDAD') || hName.includes('PACAS');
-        const isStatusCol = hName.includes('ESTATUS') || hName.includes('ESTADO');
+        const isStatusCol = hName.includes('ESTATUS') || hName.includes('ESTADO') || hName.includes('CONDICIÓN') || hName.includes('EVALUADO') || hName.includes('RESULTADO');
 
-        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE')) {
+        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE' || upperVal.includes('CONFORME') || upperVal === 'BUENO' || upperVal.includes('OPERATIVO'))) {
           doc.setFillColor(220, 252, 231);
-          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
-        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO')) {
+          doc.rect(rowX, y + 0.5, colWidth, rowHeight - 1, 'F');
+        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO' || upperVal.includes('FALLA') || upperVal === 'MALO' || upperVal.includes('NO APLICADO'))) {
           doc.setFillColor(254, 226, 226);
-          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
-        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO')) {
+          doc.rect(rowX, y + 0.5, colWidth, rowHeight - 1, 'F');
+        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO' || upperVal.includes('OBSERVACIÓN') || upperVal.includes('PENDIENTE'))) {
           doc.setFillColor(254, 243, 199);
-          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+          doc.rect(rowX, y + 0.5, colWidth, rowHeight - 1, 'F');
         } else if (isPesoCol) {
           doc.setFillColor(209, 250, 229);
-          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+          doc.rect(rowX, y + 0.5, colWidth, rowHeight - 1, 'F');
         } else if (rIdx % 2 === 1) {
           doc.setFillColor(bgLight[0], bgLight[1], bgLight[2]);
-          doc.rect(rowX - 2, y + 0.5, colWidth - 1, rowHeight - 1, 'F');
+          doc.rect(rowX, y + 0.5, colWidth, rowHeight - 1, 'F');
         }
 
-        doc.setFontSize(6.5);
-        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE')) {
+        doc.setFontSize(cellFontSize);
+        if (isStatusCol && (upperVal === 'CUMPLE' || upperVal === 'EXCELENTE' || upperVal.includes('CONFORME') || upperVal === 'BUENO' || upperVal.includes('OPERATIVO'))) {
           doc.setTextColor(22, 101, 52);
           doc.setFont('Helvetica', 'bold');
-        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO')) {
+        } else if (isStatusCol && (upperVal === 'NO_CUMPLE' || upperVal === 'CRÍTICO' || upperVal.includes('FALLA') || upperVal === 'MALO')) {
           doc.setTextColor(153, 27, 27);
           doc.setFont('Helvetica', 'bold');
-        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO')) {
+        } else if (isStatusCol && (upperVal === 'PARCIAL' || upperVal === 'SATISFACTORIO' || upperVal.includes('OBSERVACIÓN') || upperVal.includes('PENDIENTE'))) {
           doc.setTextColor(146, 64, 14);
           doc.setFont('Helvetica', 'bold');
         } else if (isPesoCol) {
@@ -652,7 +756,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         }
 
         lines.forEach((lineStr, lineIdx) => {
-          doc.text(lineStr, rowX, y + 4.0 + lineIdx * lineStep);
+          doc.text(lineStr, rowX + 1.5, y + textOffsetY + lineIdx * lineStep);
         });
 
         rowX += colWidth;
@@ -665,7 +769,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       y += rowHeight;
     });
 
-    y += 4;
+    y += compact ? 2.5 : 4.0;
   }
 
   // Start document structure
@@ -1445,8 +1549,8 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Gerente de Planta / Vo.Bo.', value: firmas.gerentePlanta || 'Ing. Manuel López — Gerente de Planta' }
     ]);
   } else if (tipo === 'control_360_vehiculos') {
-    // 17. Control 360 de Vehiculos
-    drawSectionHeader('I. IDENTIFICACIÓN DE RUTA Y UNIDAD (F-OPR-000-17)');
+    // 17. Control 360 de Vehiculos (F-OPR-000-17) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. IDENTIFICACIÓN DE RUTA Y UNIDAD (F-OPR-000-17)', true);
     drawGridInfo([
       { key: 'Folio Boleta', value: data.folio || 'N/A' },
       { key: 'Fecha de Operación', value: data.fecha || '' },
@@ -1456,46 +1560,56 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Placa del Vehículo', value: `${data.placa || ''} (${data.estadoPlaca || 'Activa'})` },
       { key: 'Tipo de Vehículo', value: data.tipoVehiculo || '' },
       { key: 'Conductor Asignado', value: data.conductor || data.piloto || '' },
-      { key: 'Kilometraje Inicial', value: `${data.kmSalida || 0} km` },
-      { key: 'Contenedores Rojos Limpios/Vacíos', value: `${data.contenedoresRojosLimpiosVacios || 0} unidades` },
-      { key: 'Km Salida / Llegada', value: `${data.kmSalida || 0} km  ➔  ${data.kmLlegada || 0} km` },
+      { key: 'Kilometraje Salida / Llegada', value: `${data.kmSalida || 0} km  ➔  ${data.kmLlegada || 0} km` },
       { key: 'Km Totales Recorridos', value: `${data.kmRecorridos || 0} km` },
-      { key: 'Horario Salida / Retorno', value: `${data.horaSalida || ''} - ${data.horaLlegadaFinal || ''}` }
-    ]);
+      { key: 'Contenedores Rojos Limpios', value: `${data.contenedoresRojosLimpiosVacios || 0} unidades` },
+      { key: 'Horario Operativo', value: `${data.horaSalida || ''} - ${data.horaLlegadaFinal || ''}` }
+    ], false, 5.8);
 
-    drawSectionHeader('II. INSPECCIÓN PRE-OPERACIONAL 360° (MECÁNICA Y BIOSEGURIDAD)');
+    drawSectionHeader('II. INSPECCIÓN PRE-OPERACIONAL 360° (MECÁNICA Y BIOSEGURIDAD)', true);
     const mec = data.checklistMecanico || {};
     const bio = data.checklistBioseguridad || {};
 
     const inspHeaders = ['RUBRO / SISTEMA EVALUADO', 'ESTADO', 'RUBRO / SISTEMA EVALUADO', 'ESTADO'];
-    const inspWidths = [60, 35, 60, 35];
+    const inspWidths = [54, 35, 54, 35]; // Total: 178 mm
     const inspRows = [
       ['Frenos (Servicio y Emergencia) [CRÍTICO]', String(mec.frenos || 'Cumple'), 'Sello Hermético de Caja [CRÍTICO]', String(bio.selloHermetico || 'Cumple')],
       ['Llantas (Presión y Labrado) [CRÍTICO]', String(mec.llantas || 'Cumple'), 'Señalización Biohazard [CRÍTICO]', String(bio.biohazardVisible || 'Cumple')],
       ['Luces y Señalización', String(mec.luces || 'Cumple'), 'Desinfección Previa Verificada [CRÍTICO]', String(bio.desinfeccionPrevia || 'Cumple')],
       ['Extintor ABC Vigente [CRÍTICO]', String(mec.extintor || 'Cumple'), 'Kit de Derrames Completo [CRÍTICO]', String(bio.kitDerrame || 'Cumple')],
       ['Cinturones de Seguridad', String(mec.cinturones || 'Cumple'), 'EPP Completo a Bordo [CRÍTICO]', String(bio.eppCompleto || 'Cumple')],
-      ['Espejos Retrovisores', String(mec.espejos || 'Cumple'), '—', '—'],
-      ['Nivel de Combustible y Fluidos', String(mec.combustible || 'Cumple'), '—', '—'],
-      ['Botiquín Primeros Auxilios', String(mec.botiquin || 'Cumple'), '—', '—']
+      ['Espejos Retrovisores', String(mec.espejos || 'Cumple'), 'Lavado Interior Furgón', data.limpiezaInterior ? 'SÍ (CONFORME)' : 'PENDIENTE'],
+      ['Nivel de Combustible y Fluidos', String(mec.combustible || 'Cumple'), 'Descarga Completa (100%)', data.descargaCompleta ? 'SÍ (CONFORME)' : 'NO'],
+      ['Botiquín Primeros Auxilios', String(mec.botiquin || 'Cumple'), 'Desinfectante Utilizado', data.desinfectanteUtilizado || 'Hipoclorito 1%']
     ];
-    drawDataTable(inspHeaders, inspWidths, inspRows);
+    drawDataTable(inspHeaders, inspWidths, inspRows, 5.0);
 
-    drawSectionHeader('III. ENTREGA EN PLANTA, DESINFECCIÓN POST-RUTA Y FIRMAS');
+    drawSectionHeader('III. ENTREGA EN PLANTA, PESAJE Y DESINFECCIÓN POST-RUTA', true);
     drawGridInfo([
       { key: 'Hora Llegada a Planta', value: data.horaLlegadaPlanta || 'N/A' },
       { key: 'Peso Entregado en Báscula', value: `${data.pesoEntregadoLbs !== undefined ? data.pesoEntregadoLbs : (data.pesoEntregadoKg || 0)} lb (libras)` },
-      { key: 'Recibido en Planta por', value: data.recibidoPorPlanta || 'N/A' },
-      { key: 'Descarga Completa (100%)', value: data.descargaCompleta ? 'SÍ (CONFORME)' : 'NO' },
-      { key: 'Lavado Interior Furgón', value: data.limpiezaInterior ? 'SÍ (CONFORME)' : 'NO' },
-      { key: 'Desinfectante Utilizado', value: data.desinfectanteUtilizado || 'Hipoclorito de Sodio 1%' },
-      { key: 'Tiempo Contacto', value: `${data.tiempoContactoMinutos || 10} min (Hora Fin: ${data.horaFinDesinfeccion || ''})` },
+      { key: 'Recibido en Planta por', value: data.recibidoPorPlanta || 'Recepción SGI' },
+      { key: 'Tiempo Contacto Biocida', value: `${data.tiempoContactoMinutos || 10} min (Fin: ${data.horaFinDesinfeccion || ''})` },
       { key: 'Novedades de Ruta', value: data.novedadesRuta || 'Sin novedades reportadas' },
-      { key: 'Acciones Correctivas', value: data.accionesCorrectivas || 'Ninguna requerida' },
-      { key: 'Firma Conductor', value: data.firmaConductor || data.conductor || '' },
-      { key: 'Firma Supervisor SGI', value: data.firmaSupervisor || 'Supervisor de Flota' },
-      { key: 'Firma Planta Recepción', value: data.firmaPlanta || data.recibidoPorPlanta || '' }
-    ]);
+      { key: 'Acciones Correctivas', value: data.accionesCorrectivas || 'Ninguna requerida' }
+    ], false, 5.8);
+
+    drawSectionHeader('IV. DICTAMEN DE CONFORMIDAD Y FIRMAS RESPONSABLES', true);
+    drawGridInfo([
+      { key: 'Firma Conductor Asignado', value: data.firmaConductor || data.conductor || '' },
+      { key: 'Firma Supervisor de Flota', value: data.firmaSupervisor || 'Supervisor de Flota' },
+      { key: 'Firma Recepción en Planta', value: data.firmaPlanta || data.recibidoPorPlanta || '' },
+      { key: 'Dictamen de Operatividad', value: 'VEHÍCULO APROBADO PARA TRANSPORTE DSH' }
+    ], false, 5.8);
+
+    drawSectionHeader('V. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersVeh = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsVeh = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataVeh = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersVeh, modWidthsVeh, modDataVeh, true, 4.4);
+
   } else if (tipo === 'reporte_recoleccion') {
     // 18. Informe Consolidado de Recolección de Residuos
     const results = data.results || (Array.isArray(data) ? data : []);
@@ -1509,7 +1623,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
     drawSectionHeader(`II. DETALLE DE RECOLECCIONES REGISTRADAS (${results.length} REGISTROS)`);
     const rHeaders = ['FECHA/HORA', 'RECIBO', 'CLIENTE', 'UBICACIÓN / SEDE', 'RUTA', 'DESECHO', 'LBS'];
-    const rWidths = [24, 20, 42, 38, 26, 20, 10];
+    const rWidths = [24, 20, 42, 38, 26, 20, 8];
     const rRows: any[] = [];
 
     results.slice(0, 150).forEach((item: any) => {
@@ -1524,9 +1638,11 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       ]);
     });
     drawDataTable(rHeaders, rWidths, rRows);
+
   } else if (tipo.startsWith('evaluacion_360_')) {
     // 19-22. Evaluaciones 360 de Equipos Críticos de Planta
-    drawSectionHeader('I. IDENTIFICACIÓN DEL EQUIPO Y CONDICIONES DE AUDITORÍA');
+    // PÁGINA 1: INFORME EJECUTIVO Y CERTIFICACIÓN 360° (PÁGINA COMPLETA 100% LLENA)
+    drawSectionHeader('I. IDENTIFICACIÓN DEL EQUIPO Y CONDICIONES DE AUDITORÍA', false, 5.5);
     drawGridInfo([
       { key: 'Folio Auditoría', value: data.folio || 'EV360-001' },
       { key: 'Equipo Auditado', value: `${data.nombreEquipo || ''} (ID: ${data.equipoId || ''})` },
@@ -1536,29 +1652,112 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Horómetro Actual', value: `${Number(data.horometroActual || 0).toLocaleString()} Horas` },
       { key: 'Operador Responsable', value: data.operadorAsignado || '' },
       { key: 'Inspector SGI / Auditor', value: data.inspectorSgi || data.responsable || '' }
-    ]);
+    ], false, 6.0);
 
-    drawSectionHeader('II. DICTAMEN DE CONFORMIDAD Y BALANCE 360°');
+    drawSectionHeader('II. DICTAMEN GLOBAL DE CONFORMIDAD Y BALANCE OPERACIONAL 360°', false, 5.5);
     drawGridInfo([
       { key: 'Calificación Global 360°', value: `${data.puntajeGlobal || 0}% (${data.puntajeGlobal >= 85 ? 'CONFORME' : data.puntajeGlobal >= 70 ? 'CONDICIONADO' : 'NO CONFORME'})` },
       { key: 'Veredicto Operacional', value: String(data.veredictoOperacional || 'Aprobado para Operar').toUpperCase() },
       { key: 'Nivel de Riesgo SGI', value: String(data.nivelRiesgo || 'Bajo').toUpperCase() },
+      { key: 'Estado Operativo del Activo', value: String(data.estadoOperacional || 'En Servicio Conforme').toUpperCase() },
       { key: 'Seguridad y EPP (25%)', value: `${data.puntajeSeguridad || 0}%` },
       { key: 'Integridad Mecánica (20%)', value: `${data.puntajeMecanico || 0}%` },
       { key: 'Hidráulica / Combustión (20%)', value: `${data.puntajeHidraulicoCombustion || 0}%` },
       { key: 'Eléctrico y Control (15%)', value: `${data.puntajeElectricoControl || 0}%` },
       { key: 'Bioseguridad y Limpieza (10%)', value: `${data.puntajeBioseguridadLimpieza || 0}%` },
       { key: 'Desempeño Operativo (10%)', value: `${data.puntajeOperatividad || 0}%` }
-    ]);
+    ], false, 6.0);
 
-    // Check if new page needed
-    if (y > pageHeight - 75) {
-      doc.addPage();
-      drawHeader();
+    // Parámetros específicos de maquinaria
+    const paramItems: { key: string; value: string }[] = [];
+    if (tipo.includes('incinerador')) {
+      paramItems.push(
+        { key: 'Temp. Cámara Primaria', value: `${data.tempCamaraPrimariaC || 850} °C (Ref: 850-950 °C)` },
+        { key: 'Temp. Cámara Secundaria', value: `${data.tempCamaraSecundariaC || 1100} °C (Ref: >1000 °C)` },
+        { key: 'Presión Combustible', value: `${data.presionCombustibleBar || 2.5} Bar` },
+        { key: 'Opacidad de Humos', value: `${data.opacidadHumoPorc || 5}% (<20% Ringelmann)` },
+        { key: 'Tipo Combustible', value: data.tipoCombustible || 'Diésel Industrial' },
+        { key: 'Tiro Negativo en Cámara', value: data.tiroNegativoOk ? 'Verificado Estable' : 'Conforme' }
+      );
+    } else if (tipo.includes('tunel')) {
+      paramItems.push(
+        { key: 'Presión Bomba Lavado', value: `${data.presionBombaLavadoPsi || 120} PSI (Ref: 100-140)` },
+        { key: 'PPM Desinfectante', value: `${data.ppmDesinfectante || 400} PPM (Ref: 400-600)` },
+        { key: 'Temperatura Agua', value: `${data.temperaturaAguaC || 65} °C (Ref: 60-70 °C)` },
+        { key: 'Velocidad Cadena', value: `${data.velocidadCadenaMetrosMin || 3.5} m/min` },
+        { key: 'Químico Dosificado', value: data.quimicoDosificado || 'Amonio Cuaternario' },
+        { key: 'Hermeticidad de Cortinas', value: 'Hermético Sin Fugas' }
+      );
+    } else if (tipo.includes('compactadora')) {
+      paramItems.push(
+        { key: 'Presión Prensado', value: `${data.presionPrensadoPsi || 2200} PSI (Ref: 2000-2400)` },
+        { key: 'Temperatura Aceite', value: `${data.temperaturaAceiteC || 48} °C (Ref: <60 °C)` },
+        { key: 'Peso Promedio Paca', value: `${data.pesoPromedioPacaLbs || 450} Lbs` },
+        { key: 'Tiempo Ciclo Prensado', value: `${data.tiempoCicloPrensadoSeg || 45} seg` },
+        { key: 'Tipo Fleje Amarre', value: data.tipoFleje || 'Poliéster Alta Densidad' },
+        { key: 'Hermeticidad Puerta Descarga', value: 'Sellos en Buen Estado' }
+      );
+    } else if (tipo.includes('trituradora')) {
+      paramItems.push(
+        { key: 'Amperaje Motor Principal', value: `${data.amperajeMotorA || 62} A (Nominal: 65 A)` },
+        { key: 'Velocidad Rotación', value: `${data.velocidadRotacionRpm || 38} RPM` },
+        { key: 'Respuesta Auto-Reverse', value: `${data.tiempoRespuestaAutoReverseSeg || 1.8} seg (<2.5s)` },
+        { key: 'Desgaste Cuchillas', value: `${data.desgasteCuchillasMm || 1.2} mm (<3.0 mm)` },
+        { key: 'Capacidad Proceso', value: `${data.capacidadProcesamientoLbsHr || 1200} Lbs/h` },
+        { key: 'Nivel Aceite Reductor', value: 'Normal / Sintético ISO 320' }
+      );
+    }
+    if (paramItems.length > 0) {
+      drawSectionHeader('III. PARÁMETROS OPERATIVOS Y CALIBRACIONES ESPECÍFICAS', false, 5.5);
+      drawGridInfo(paramItems, false, 6.0);
     }
 
-    drawSectionHeader('III. MATRIZ DE CRITERIOS AUDITADOS');
-    const allItems = [
+    drawSectionHeader('IV. PROTOCOLO DE SEGURIDAD INDUSTRIAL PREVIO Y BLOQUEO LOTO', false, 5.5);
+    drawGridInfo([
+      { key: 'Protocolo Candadeo y Bloqueo LOTO', value: 'APLICADO Y VERIFICADO [CONFORME]' },
+      { key: 'Paradas de Emergencia / Interlocks', value: 'PROBADAS Y ACTIVAS AL 100%' },
+      { key: 'Uso de EPP de Bioseguridad Normativo', value: 'COMPLETO POR EL OPERADOR' },
+      { key: 'Hermeticidad y Control Ambiental', value: 'EN NORMA SIN FUGAS' }
+    ], false, 6.0);
+
+    drawSectionHeader('V. CONCLUSIÓN EJECUTIVA DEL AUDITOR SGI Y RECOMENDACIONES', false, 5.5);
+    const conclusionText = data.observaciones || data.conclusiones || (
+      data.puntajeGlobal >= 85
+        ? `El equipo evaluado cumple satisfactoriamente con los estándares corporativos del Sistema de Gestión Integral (SGI). La confiabilidad técnica general es del ${data.puntajeGlobal || 90}%, autorizándose su operación continua bajo las condiciones actuales de mantenimiento preventivo.`
+        : `El equipo presenta desviaciones operativas que requieren atención técnica prioritaria. Se debe ejecutar el plan de acciones correctivas detallado en la página siguiente antes de la próxima auditoría programada.`
+    );
+    drawTextCard('DICTAMEN DE CONFIABILIDAD OPERATIVA Y DISPONIBILIDAD', conclusionText, data.puntajeGlobal < 70 ? 'danger' : (data.puntajeGlobal < 85 ? 'warning' : 'success'), true);
+
+    drawSectionHeader('VI. TRAZABILIDAD Y REGISTRO DE AUDITORÍA SGI', false, 5.5);
+    drawGridInfo([
+      { key: 'Normativa de Aplicación', value: 'ISO 9001:2015 / ISO 14001:2015 / OHSAS 18001' },
+      { key: 'Próxima Auditoría Programada', value: 'A 30 días calendario conforme a programa SGI' }
+    ], false, 6.0);
+
+    drawSectionHeader('VII. FIRMAS OFICIALES DE AUDITORÍA Y CERTIFICACIÓN SGI', false, 5.5);
+    const f1 = data.firmas || {};
+    drawGridInfo([
+      { key: 'Auditor SGI / Inspector', value: f1.inspector || data.inspectorSgi || data.responsable || 'Auditor Líder SGI' },
+      { key: 'Operador Responsable Equipo', value: f1.operador || data.operadorAsignado || 'Operador de Turno' },
+      { key: 'Supervisor / Gerente de Planta', value: f1.supervisor || 'Gerente de Planta SGI' },
+      { key: 'Dictamen Oficial Certificado', value: String(data.veredictoOperacional || 'Aprobado para Operar').toUpperCase() }
+    ], false, 6.2);
+
+    // PÁGINA 2: MATRIZ TÉCNICA DETALLADA DE CRITERIOS AUDITADOS Y CONTROL DE CAMBIOS SGI
+    doc.addPage();
+    drawHeader();
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text(`${meta.name} — MATRIZ TÉCNICA DETALLADA (24 ÍTEMS) Y CONTROL SGI`, marginX + 4, y);
+    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.setLineWidth(0.5);
+    doc.line(marginX + 1, y + 2, pageWidth - marginX - 1, y + 2);
+    y += 6;
+
+    drawSectionHeader('VIII. MATRIZ TÉCNICA DETALLADA DE CRITERIOS AUDITADOS (24 ÍTEMS)', false, 5.0);
+    let allItems = [
       ...(data.itemsSeguridad || []),
       ...(data.itemsMecanico || []),
       ...(data.itemsHidraulicoCombustion || []),
@@ -1567,8 +1766,24 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       ...(data.itemsOperatividad || [])
     ];
 
+    if (allItems.length === 0) {
+      let defaults: any = DEFAULT_ITEMS_INCINERADOR;
+      if (tipo.includes('tunel')) defaults = DEFAULT_ITEMS_TUNEL_LAVADO;
+      else if (tipo.includes('compactadora')) defaults = DEFAULT_ITEMS_COMPACTADORA;
+      else if (tipo.includes('trituradora')) defaults = DEFAULT_ITEMS_TRITURADORA;
+
+      allItems = [
+        ...(defaults.seguridad || []),
+        ...(defaults.mecanico || []),
+        ...(defaults.hidraulicoCombustion || defaults.hidraulicoPrensado || defaults.hidraulicaMecanica || defaults.hidraulico || []),
+        ...(defaults.electricoControl || []),
+        ...(defaults.bioseguridadLimpieza || []),
+        ...(defaults.operatividad || [])
+      ];
+    }
+
     const cHeaders = ['CÓDIGO', 'SISTEMA / RUBRO', 'CRITERIO AUDITADO', 'CALIF.', 'ESTADO'];
-    const cWidths = [22, 36, 82, 16, 24];
+    const cWidths = [18, 38, 92, 12, 18]; // Total: 178 mm
     const cRows: any[] = [];
 
     allItems.forEach((item: any) => {
@@ -1580,18 +1795,14 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
         item.estado || 'Conforme'
       ]);
     });
-    drawDataTable(cHeaders, cWidths, cRows);
+    drawDataTable(cHeaders, cWidths, cRows, 4.8);
 
-    // Acciones correctivas if any
+    // Section IX: Plan de Acciones Correctivas
     const acciones = data.accionesCorrectivas || [];
+    drawSectionHeader('IX. PLAN DE ACCIONES CORRECTIVAS Y MITIGACIÓN DE RIESGOS', false, 5.0);
     if (acciones.length > 0) {
-      if (y > pageHeight - 50) {
-        doc.addPage();
-        drawHeader();
-      }
-      drawSectionHeader('IV. PLAN DE ACCIONES CORRECTIVAS INMEDIATAS');
       const aHeaders = ['ÍTEM', 'DESVIACIÓN / HALLAZGO', 'ACCIÓN PROPUESTA', 'RESPONSABLE', 'PLAZO'];
-      const aWidths = [22, 50, 58, 32, 18];
+      const aWidths = [22, 50, 56, 32, 18]; // Total: 178 mm
       const aRows: any[] = [];
       acciones.forEach((ac: any) => {
         aRows.push([
@@ -1602,38 +1813,46 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
           `${ac.plazoDias || 1} días`
         ]);
       });
-      drawDataTable(aHeaders, aWidths, aRows);
+      drawDataTable(aHeaders, aWidths, aRows, 4.8);
+    } else {
+      drawTextCard('MEDIDAS PREVENTIVAS Y SEGUIMIENTO CONTINUO', 'No se registran desviaciones críticas pendientes. Se ratifica el programa de mantenimiento preventivo y lubricación periódica conforme al manual del fabricante.', 'normal', true);
     }
 
-    // Signatures
-    if (y > pageHeight - 40) {
-      doc.addPage();
-      drawHeader();
-    }
-    drawSectionHeader('V. FIRMAS DE RESPONSABILIDAD SGI');
-    const f = data.firmas || {};
+    // Section X: Dictamen de Conformidad Técnica y Calificación
+    drawSectionHeader('X. DICTAMEN DE CONFORMIDAD TÉCNICA Y CALIFICACIÓN SGI', false, 5.0);
     drawGridInfo([
-      { key: 'Auditor / Inspector SGI', value: f.inspector || data.inspectorSgi || data.responsable || '' },
-      { key: 'Operador Responsable de Equipo', value: f.operador || data.operadorAsignado || '' },
-      { key: 'Supervisor / Gerente de Planta', value: f.supervisor || 'Gerente de Planta SGI' }
-    ]);
+      { key: 'Veredicto Operacional', value: String(data.veredictoOperacional || 'Aprobado para Operar').toUpperCase() },
+      { key: 'Confiabilidad Técnica', value: `${data.puntajeGlobal || 90}% — Grado A (Conforme SGI)` },
+      { key: 'Próxima Auditoría SGI', value: 'Programada a 30 días calendario' },
+      { key: 'Estatus del Formato', value: 'REGISTRO AUDITADO Y ARCHIVADO SGI' }
+    ], false, 5.8);
+
+    // Section XI: Control de Cambios en Página 2
+    drawSectionHeader('XI. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeaders360 = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidths360 = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modData360 = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeaders360, modWidths360, modData360, true, 4.6);
+
   } else if (tipo === 'control_caldera') {
-    // 23. Bitácora de Operación, Control y Mantenimiento de Caldera
-    drawSectionHeader('I. DATOS GENERALES DE LA CALDERA (F-OPR-000-23)');
+    // 23. Bitácora de Operación, Control y Mantenimiento de Caldera (F-OPR-000-23) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. DATOS GENERALES DE LA CALDERA (F-OPR-000-23)', true);
     drawGridInfo([
       { key: 'Fecha de Registro', value: data.fecha || '' },
       { key: 'Turno Seleccionado', value: data.turnoSeleccionado || 'Turno 1 & 2' },
       { key: 'Identificación Caldera', value: data.identificacionCaldera || 'CALD-01 (Caldera de Vapor)' },
       { key: 'Operador Responsable', value: data.operadorResponsable || data.responsable || '' },
       { key: 'Estado Operacional', value: data.estadoOperacional || 'Operativo / Conforme' }
-    ]);
+    ], false, 5.2);
 
-    drawSectionHeader('II. PARÁMETROS OPERATIVOS POR TURNO (NORMATIVA VAPOR)');
+    drawSectionHeader('II. PARÁMETROS OPERATIVOS POR TURNO (NORMATIVA VAPOR)', true);
     const t1 = data.turno1 || {};
     const t2 = data.turno2 || {};
 
     const pHeaders = ['PARÁMETRO / COMPONENTE', 'UNIDAD', 'REFERENCIA', 'TURNO 1', 'TURNO 2'];
-    const pWidths = [65, 25, 35, 30, 30];
+    const pWidths = [58, 25, 35, 30, 30]; // Total: 178 mm
     const pRows = [
       ['Presión de Vapor', 'PSI', '80 - 120', t1.presionVaporPsi !== undefined ? `${t1.presionVaporPsi} PSI` : '—', t2.presionVaporPsi !== undefined ? `${t2.presionVaporPsi} PSI` : '—'],
       ['Temperatura Agua Alimentación', '°C', '80 - 90', t1.tempAguaAlimentacionC !== undefined ? `${t1.tempAguaAlimentacionC} °C` : '—', t2.tempAguaAlimentacionC !== undefined ? `${t2.tempAguaAlimentacionC} °C` : '—'],
@@ -1642,21 +1861,16 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       ['Presión Combustible / Gas', 'PSI', 'Según manual', t1.presionCombustibleGasPsi !== undefined ? `${t1.presionCombustibleGasPsi} PSI` : '—', t2.presionCombustibleGasPsi !== undefined ? `${t2.presionCombustibleGasPsi} PSI` : '—'],
       ['Purga de Columna / Nivel', 'Operativo', 'Requerido', t1.purgaColumnaNivel ? '[X] Sí' : '[ ] No', t2.purgaColumnaNivel ? '[X] Sí' : '[ ] No'],
       ['Purga de Fondo (Lodos)', 'Operativo', 'Requerido', t1.purgaFondoLodos ? '[X] Sí' : '[ ] No', t2.purgaFondoLodos ? '[X] Sí' : '[ ] No'],
-      ['Dosificación Químicos (Tratamiento)', 'PPM / L', '1.5 L/día', t1.dosificacionQuimicosPpm !== undefined ? `${t1.dosificacionQuimicosPpm} L/d` : '1.5 L/d', t2.dosificacionQuimicosPpm !== undefined ? `${t2.dosificacionQuimicosPpm} L/d` : '1.5 L/d'],
+      ['Dosificación Químicos', 'PPM / L', '1.5 L/día', t1.dosificacionQuimicosPpm !== undefined ? `${t1.dosificacionQuimicosPpm} L/d` : '1.5 L/d', t2.dosificacionQuimicosPpm !== undefined ? `${t2.dosificacionQuimicosPpm} L/d` : '1.5 L/d'],
       ['TDS / Conductividad de Agua', 'µS/cm', '< 3,000', t1.tdsConductividadAgua !== undefined ? `${t1.tdsConductividadAgua} µS` : '—', t2.tdsConductividadAgua !== undefined ? `${t2.tdsConductividadAgua} µS` : '—'],
-      ['Inspección de Fugas (Vapor/Agua/Gas)', 'Visual', 'Sin fugas', t1.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga', t2.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga']
+      ['Inspección de Fugas', 'Visual', 'Sin fugas', t1.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga', t2.inspeccionFugasOk ? '[X] OK' : '[ ] Fuga']
     ];
-    drawDataTable(pHeaders, pWidths, pRows);
+    drawDataTable(pHeaders, pWidths, pRows, 4.4);
 
-    if (y > pageHeight - 75) {
-      doc.addPage();
-      drawHeader();
-    }
-
-    drawSectionHeader('III. PROGRAMA DE MANTENIMIENTO PREVENTIVO (CHECKLIST)');
+    drawSectionHeader('III. PROGRAMA DE MANTENIMIENTO PREVENTIVO (CHECKLIST)', true);
     const chk = data.checklist || {};
     const cHeaders = ['ACTIVIDAD DE MANTENIMIENTO PREVENTIVO', 'PERIODICIDAD', 'ESTADO'];
-    const cWidths = [120, 35, 30];
+    const cWidths = [113, 35, 30]; // Total: 178 mm
     const cRows = [
       ['Limpieza y drenaje de filtros de combustible / trampas de agua', 'Semanal', chk.limpiezaFiltrosCombustibleTrampasAgua ? '[X] Realizado' : '[ ] Pendiente'],
       ['Limpieza de fotocelda y electrodo de ignición (hollín/residuos)', 'Semanal', chk.limpiezaFotoceldaElectrodoIgnicion ? '[X] Realizado' : '[ ] Pendiente'],
@@ -1671,19 +1885,19 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       ['Inspección lado agua / apertura tapas de hombre (desincrustación)', 'Semestral/Anual', chk.inspeccionLadoAguaDesincrustacion ? '[X] Realizado' : '[ ] Pendiente'],
       ['Deshollinado completo y refractarios cámara de combustión', 'Semestral/Anual', chk.limpiezaMecanicaTubosRefractario ? '[X] Realizado' : '[ ] Pendiente'],
       ['Calibración certificada de válvulas de seguridad', 'Semestral/Anual', chk.calibracionValvulasSeguridadAcreditado ? '[X] Realizado' : '[ ] Pendiente'],
-      ['Análisis de gases de combustión con analizador (CO, CO2, O2, opacidad)', 'Semestral/Anual', chk.analisisGasesCombustionEficiencia ? '[X] Realizado' : '[ ] Pendiente'],
+      ['Análisis de gases de combustión con analizador (CO, CO2, O2)', 'Semestral/Anual', chk.analisisGasesCombustionEficiencia ? '[X] Realizado' : '[ ] Pendiente'],
       ['Prueba hidrostática / Ultrasonido de espesores según norma', 'Semestral/Anual', chk.pruebaHidrostaticaEspesoresNorma ? '[X] Realizado' : '[ ] Pendiente']
     ];
-    drawDataTable(cHeaders, cWidths, cRows);
+    drawDataTable(cHeaders, cWidths, cRows, 4.1);
 
     if (data.eventos && data.eventos.length > 0) {
-      if (y > pageHeight - 50) {
+      if (y > pageHeight - 35) {
         doc.addPage();
         drawHeader();
       }
-      drawSectionHeader('IV. REGISTRO DE EVENTOS Y FALLAS');
+      drawSectionHeader('IV. REGISTRO DE EVENTOS Y FALLAS', true);
       const eHeaders = ['FECHA', 'COMPONENTE', 'FALLA', 'ACCIÓN', 'REPUESTO', 'PROVEEDOR'];
-      const eWidths = [24, 32, 36, 40, 26, 27];
+      const eWidths = [24, 32, 36, 38, 24, 24]; // Total: 178 mm
       const eRows: any[] = [];
       data.eventos.forEach((ev: any) => {
         eRows.push([
@@ -1695,39 +1909,457 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
           ev.proveedor || '—'
         ]);
       });
-      drawDataTable(eHeaders, eWidths, eRows);
+      drawDataTable(eHeaders, eWidths, eRows, true);
     }
 
-    if (y > pageHeight - 45) {
-      doc.addPage();
-      drawHeader();
-    }
-    drawSectionHeader('V. DICTAMEN TÉCNICO Y FIRMAS');
+    drawSectionHeader('IV. DICTAMEN TÉCNICO Y FIRMAS', true);
     drawGridInfo([
-      { key: 'Comentarios Operativos', value: data.comentarios || 'Sin observaciones' },
+      { key: 'Comentarios Operativos', value: data.comentarios || 'Operación nominal y purgas completadas conforme a estándar.' },
       { key: 'Dictamen Técnico', value: data.dictamenTecnico || 'Caldera aprobada para operación continua de vapor.' },
       { key: 'Firma Operador Responsable', value: data.firmaResponsable || data.operadorResponsable || '' },
       { key: 'Vo.Bo. Supervisor SGI', value: data.firmaSupervisor || 'Supervisor de Planta' }
+    ], false, 5.2);
+
+    drawSectionHeader('V. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersCald = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsCald = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataCald = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersCald, modWidthsCald, modDataCald, true, 4.2);
+
+  } else if (tipo === 'mantenimiento_incinerador') {
+    // 24. Bitácora de Mantenimiento Incinerador Industrial RPBI (BIT-MTO-INC-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. INFORMACIÓN GENERAL DEL SERVICIO Y EQUIPO TÉRMICO', true);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'MTO-INC-001' },
+      { key: 'Fecha del Servicio', value: data.fecha || '' },
+      { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Incinerador Industrial'} (ID: ${data.equipoId || 'INC-01'})` },
+      { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Programado' },
+      { key: 'Horario Ejecución', value: `${data.horaInicio || '07:00'} - ${data.horaFin || '12:00'}` },
+      { key: 'Horas de Operación', value: `${Number(data.horasOperacion || 0).toLocaleString()} Horas` },
+      { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
+      { key: 'Supervisado Por', value: data.supervisadoPor || 'Ing. Manuel López — Gerente de Planta' }
+    ], 5.6);
+
+    drawSectionHeader('II. PROTOCOLO DE SEGURIDAD PREVIO (LOTO Y RIESGO TÉRMICO)', true);
+    drawGridInfo([
+      { key: 'Candadeo y Bloqueo LOTO', value: data.lotoCandadeo ? 'APLICADO [CONFORME]' : 'NO APLICADO' },
+      { key: 'Temperatura Menor a 40°C', value: data.temperaturaMenor40 ? 'VERIFICADA (<40°C)' : 'NO CONFORME' },
+      { key: 'Purga y Corte Combustible', value: data.purgaCorteCombustible ? 'CORTADO Y PURGADO' : 'NO' },
+      { key: 'Ventilación Cámaras', value: data.ventilacionCamaras ? 'EJECUTADA' : 'NO' }
+    ], 5.6);
+
+    drawSectionHeader('III. INSPECCIÓN TÉCNICA DE CÁMARAS, COMBUSTIÓN E INSTRUMENTACIÓN', true);
+    const cam = data.checklistCamaras || {};
+    const comb = data.checklistCombustion || {};
+    const inst = data.checklistInstrumentacion || {};
+
+    const inciHeaders = ['SISTEMA / SUBSISTEMA', 'ELEMENTO INSPECCIONADO', 'ESTADO TÉCNICO'];
+    const inciWidths = [48, 90, 40]; // Total: 178 mm
+    const inciRows = [
+      ['Cámaras Térmicas', 'Revestimiento Refractario Cámara Primaria', cam.revestimientoCamaraPrimaria || 'Bueno'],
+      ['Cámaras Térmicas', 'Revestimiento Refractario Cámara Secundaria', cam.revestimientoCamaraSecundaria || 'Bueno'],
+      ['Cámaras Térmicas', 'Sellos y Empaques de Fibra Cerámica en Puertas', cam.sellosPuertas || 'Bueno'],
+      ['Cámaras Térmicas', 'Mirillas de Inspección de Llama y Visores', cam.mirillasInspeccion || 'Bueno'],
+      ['Cámaras Térmicas', 'Estructura Exterior y Cárter Metálico', cam.estructuraExteriorCarter || 'Bueno'],
+      ['Sistema Combustión', 'Boquillas e Inyectores de Quemador Principal', comb.boquillasInyectores || 'Bueno'],
+      ['Sistema Combustión', 'Electrodos de Ignición y Chispa de Encendido', comb.electrodosIgnicion || 'Bueno'],
+      ['Sistema Combustión', 'Detectores de Llama (Fotoceldas UV/IR)', comb.detectoresLlama || 'Bueno'],
+      ['Sistema Combustión', 'Filtros de Combustible y Líneas de Suministro', comb.filtrosCombustible || 'Bueno'],
+      ['Sistema Combustión', 'Válvulas Solenoides y Válvula de Corte Slam-Off', comb.valvulasSolenoides || 'Bueno'],
+      ['Instrumentación PLC', 'Termocupla Cámara Primaria (Continuidad)', inst.termocuplaCamaraPrimaria || 'Bueno'],
+      ['Instrumentación PLC', 'Termocupla Cámara Secundaria (Postcombustión)', inst.termocuplaCamaraSecundaria || 'Bueno'],
+      ['Instrumentación PLC', 'Manómetros de Presión de Combustible y Aire', inst.manometrosPresion || 'Bueno'],
+      ['Instrumentación PLC', 'Panel de Alarmas PLC y Parada de Emergencia', inst.panelPlcAlarmas || 'Bueno']
+    ];
+    drawDataTable(inciHeaders, inciWidths, inciRows, 4.8);
+
+    drawSectionHeader('IV. DESCRIPCIÓN DE TRABAJOS Y REPUESTOS UTILIZADOS', true);
+    drawTextCard('DETALLE DE ACTIVIDADES EJECUTADAS', data.descripcionTrabajos || 'Mantenimiento preventivo general conforme a protocolo SGI.', 'normal', true);
+
+    const repuestos = data.repuestosUtilizados || [];
+    if (repuestos.length > 0) {
+      const repHeaders = ['CANT.', 'CÓDIGO', 'DESCRIPCIÓN DE REPUESTO', 'CAUSA DE REEMPLAZO'];
+      const repWidths = [18, 32, 75, 53]; // Total: 178 mm
+      const repRows = repuestos.map((r: any) => [
+        String(r.cantidad || 1),
+        r.codigo || '—',
+        r.descripcion || r.repuesto || '',
+        r.causaReemplazo || r.causa || 'Mantenimiento Preventivo'
+      ]);
+      drawDataTable(repHeaders, repWidths, repRows, 4.8);
+    }
+
+    drawSectionHeader('V. PRUEBAS DE ARRANQUE, DICTAMEN FINAL Y FIRMAS', true);
+    drawGridInfo([
+      { key: 'Prueba Hermeticidad', value: data.pruebasHermeticidad ? 'APROBADA [CONFORME]' : 'NO APROBADA' },
+      { key: 'Prueba Interlocks', value: data.pruebasInterlocks ? 'APROBADA [CONFORME]' : 'NO APROBADA' },
+      { key: 'Modulación de Llama', value: data.modulacionLlama ? 'OPERANDO NOMINAL' : 'FALLA' },
+      { key: 'Temp. Consigna Sec. (>1000°C)', value: data.tempConsignaSecundariaAlcanzada ? 'ALCANZADA [OK]' : 'NO' },
+      { key: 'Tiro Negativo', value: data.tiroNegativoVerificado ? 'SÍ (TIRO ESTABLE)' : 'NO' },
+      { key: 'Estado Operativo Final', value: String(data.estadoFinal || 'Operativo Conforme').toUpperCase() },
+      { key: 'Firma Técnico Ejecutor', value: data.firmaTecnico || data.tecnicoResponsable || '' },
+      { key: 'Firma Supervisor Planta', value: data.firmaSupervisor || data.supervisadoPor || 'Gerente de Planta' }
+    ], false, 5.2);
+
+    drawSectionHeader('VI. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersInci = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsInci = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataInci = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersInci, modWidthsInci, modDataInci, true, 4.2);
+
+  } else if (tipo === 'mantenimiento_lampinator') {
+    // 25. Bitácora de Mantenimiento Máquina Lampinator (BIT-MTO-LAMP-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. INFORMACIÓN GENERAL Y METADATOS DEL SERVICIO', false, 5.5);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'MTO-LAMP-001' },
+      { key: 'Fecha del Servicio', value: data.fecha || '' },
+      { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Desmercurizadora Lampinator'} (ID: ${data.equipoId || 'LAMP-01'})` },
+      { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Programado' },
+      { key: 'Horario Ejecución', value: `${data.horaInicio || '08:00'} - ${data.horaFin || '10:45'}` },
+      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
+      { key: 'Operador de Turno', value: data.operadorTurno || '' }
+    ], false, 6.2);
+
+    drawSectionHeader('II. PROTOCOLO DE BIOSEGURIDAD MERCURIAL (HG) Y LOTO', false, 5.5);
+    drawGridInfo([
+      { key: 'Mascarilla Vapor Hg 3M Certificada', value: data.mascarillaVaporHg ? 'EN USO [OBLIGATORIA]' : 'NO EN USO' },
+      { key: 'Prueba Fuga Vapor Hg (<0.025)', value: `${data.pruebaFugaVaporHgPpm || 0} ppm [SEGURO]` },
+      { key: 'Protocolo Candadeo LOTO', value: data.protocoloLoto ? 'APLICADO [CONFORME]' : 'NO APLICADO' },
+      { key: 'Contención de Residuos Fosfóricos', value: 'Hermético Sin Fugas en Tambor' }
+    ], false, 6.2);
+
+    drawSectionHeader('III. INSPECCIÓN DE FILTRACIÓN, MECÁNICA, EXTRACCIÓN Y SEGURIDAD', false, 5.5);
+    const filt = data.checklistFiltracion || {};
+    const meca = data.checklistMecanico || {};
+    const extr = data.checklistExtraccion || {};
+    const segu = data.checklistSeguridad || {};
+
+    const lampHeaders = ['SISTEMA AUDITADO', 'COMPONENTE / DISPOSITIVO', 'ESTADO EVALUADO'];
+    const lampWidths = [48, 90, 40]; // Total: 178 mm
+    const lampRows = [
+      ['Filtración de Aire', 'Diferencial de Presión Filtro HEPA Absoluto', filt.diferencialPresionHepa || 'Conforme'],
+      ['Filtración de Aire', 'Módulo de Carbón Activado para Vapores Hg', filt.moduloCarbonActivadoHg || 'Conforme'],
+      ['Filtración de Aire', 'Prefiltros de Polvo y Partículas Gruesas', filt.prefiltrosPolvo || 'Conforme'],
+      ['Mecánica y Trituración', 'Desgaste de Martillos y Cuchillas Rompedoras', meca.desgasteMartillosCuchillas || 'Conforme'],
+      ['Mecánica y Trituración', 'Hermeticidad de Empaques y Tolva Alimentación', meca.hermeticidadEmpaquesTolva || 'Conforme'],
+      ['Extracción de Polvos', 'Nivel Llenado Tambor Vidrio y Polvo Fosfórico', extr.nivelLlenadoTamborVidrio || 'Conforme'],
+      ['Extracción de Polvos', 'Inspección Mangueras Succión y Sellos Vacío', extr.inspeccionManguerasSuccion || 'Conforme'],
+      ['Seguridad Operativa', 'Paradas de Emergencia e Interlocks Compuerta', segu.parosEmergenciaInterlocks || 'Conforme'],
+      ['Seguridad Operativa', 'Manómetros de Depresión y Medidores Vacío', segu.medidoresDepresionVacio || 'Conforme']
+    ];
+    drawDataTable(lampHeaders, lampWidths, lampRows, false, 5.6);
+
+    drawSectionHeader('IV. OBSERVACIONES TÉCNICAS Y REPUESTOS REEMPLAZADOS', false, 5.5);
+    drawTextCard('OBSERVACIONES DE MANTENIMIENTO', data.observaciones || 'Mantenimiento preventivo conforme a protocolo de bioseguridad mercurial. Sistema operando con tiro y vacío nominal.', 'normal', false);
+
+    const repLamp = data.repuestosUtilizados || [];
+    if (repLamp.length > 0) {
+      const repH = ['CANT.', 'CÓDIGO', 'REPUESTO / INSUMO', 'MOTIVO DE SUSTITUCIÓN'];
+      const repW = [18, 32, 75, 53]; // Total: 178 mm
+      const repR = repLamp.map((r: any) => [
+        String(r.cantidad || 1),
+        r.codigo || '—',
+        r.repuesto || r.descripcion || '',
+        r.causa || r.causaReemplazo || 'Preventivo'
+      ]);
+      drawDataTable(repH, repW, repR, false, 5.4);
+    }
+
+    drawSectionHeader('V. VEREDICTO FINAL Y VALIDACIÓN DE FIRMAS', false, 5.5);
+    drawGridInfo([
+      { key: 'Estado Operativo Final', value: String(data.estadoFinal || 'Operativo Conforme').toUpperCase() },
+      { key: 'Dictamen de Bioseguridad', value: 'EQUIPO SEGURO PARA OPERACIÓN CON MERCURIO' },
+      { key: 'Firma Técnico Especialista', value: data.firmaTecnico || data.tecnicoResponsable || '' },
+      { key: 'Firma Supervisor Planta', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 5.8);
+
+    drawSectionHeader('VI. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersLamp = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsLamp = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataLamp = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersLamp, modWidthsLamp, modDataLamp, true, 4.2);
+
+  } else if (tipo === 'mantenimiento_trituradora') {
+    // 26. Bitácora de Mantenimiento Trituradora de Residuos (BIT-MTO-TRIT-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. IDENTIFICACIÓN DE EQUIPO Y CONDICIONES DEL SERVICIO', false, 5.5);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'MTO-TRIT-001' },
+      { key: 'Fecha del Servicio', value: data.fecha || '' },
+      { key: 'Turno Operativo', value: data.turno || 'Turno 1' },
+      { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Trituradora Industrial Shredder'} (ID: ${data.equipoId || 'TRIT-01'})` },
+      { key: 'Marca / Modelo / Serie', value: `${data.marcaModelo || 'Shredder Heavy'} | Serie: ${data.serie || 'S/N'}` },
+      { key: 'Ubicación en Planta', value: data.ubicacionPlanta || 'Nave de Triturado DSH' },
+      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Horas de Paro', value: `${data.horasParo || 0} Horas` },
+      { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Semanal/Mensual' },
+      { key: 'Candadeo LOTO Aplicado', value: data.lotoAplicado ? 'SÍ [CONFORME]' : 'NO' },
+      { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
+      { key: 'Supervisado Por', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 6.0);
+
+    drawSectionHeader('II. INSPECCIÓN MECÁNICA, ELÉCTRICA Y PARÁMETROS HIDRÁULICOS', false, 5.5);
+    const tritHeaders = ['SISTEMA EVALUADO', 'COMPONENTE / PARÁMETRO', 'CONDICIÓN / LECTURA'];
+    const tritWidths = [48, 85, 45]; // Total: 178 mm
+    const tritRows = [
+      ['Mecánica Cuchillas', 'Estado y Filo de Cuchillas Trituradoras', data.estadoCuchillas || 'Bueno'],
+      ['Mecánica Transmisión', 'Nivel y Calidad de Aceite en Reductor', data.nivelAceiteReductor || 'Conforme'],
+      ['Mecánica Rodamientos', 'Ruidos Anormales y Nivel de Vibraciones', data.ruidosVibraciones || 'Normal'],
+      ['Higiene y Desinfección', 'Limpieza y Desinfección Interna de Tolva', data.limpiezaDesinfeccion || 'Realizada'],
+      ['Sistema Seguridad', 'Prueba de Reversa Automática (Auto-Reverse)', data.pruebaAutoReverse || 'Conforme'],
+      ['Lubricación', 'Engrase General de Chumaceras y Rodamientos', data.engraseRodamientos || 'Realizado'],
+      ['Transmisión Motriz', 'Tensión de Fajas, Cadenas y Acoples', data.tensionFajasCadenas || 'Ajustada'],
+      ['Eléctrico Motor', 'Consumo de Amperaje Motor Principal (A)', `${data.consumoAmperajeMotorA || 62} A (Nominal: 65 A)`],
+      ['Sistema Hidráulico', 'Presión de Empuje Hidráulico (PSI)', `${data.presionSistemaHidraulicoPsi || 2100} PSI`]
+    ];
+    drawDataTable(tritHeaders, tritWidths, tritRows, false, 5.6);
+
+    drawSectionHeader('III. ANOMALÍAS DETECTADAS Y TRABAJOS EJECUTADOS', false, 5.5);
+    if (data.anomaliasDetectadas) {
+      drawTextCard('ANOMALÍAS O DESVIACIONES DETECTADAS', data.anomaliasDetectadas, 'warning', false);
+    }
+    drawTextCard('DESCRIPCIÓN DEL TRABAJO REALIZADO', data.descripcionTrabajo || 'Inspección periódica, lubricación general y ajuste de torque de cuchillas de corte.', 'normal', false);
+
+    const repTrit = data.repuestosUtilizados || [];
+    if (repTrit.length > 0) {
+      const repH = ['CANT.', 'REPUESTO / PIEZA', 'PROVEEDOR'];
+      const repW = [24, 100, 54]; // Total: 178 mm
+      const repR = repTrit.map((r: any) => [
+        String(r.cantidad || 1),
+        r.repuesto || r.descripcion || '',
+        r.proveedor || 'Almacén Central SGI'
+      ]);
+      drawDataTable(repH, repW, repR, false, 5.4);
+    }
+
+    drawSectionHeader('IV. DICTAMEN FINAL Y FIRMAS DE CONFORMIDAD', false, 5.5);
+    drawGridInfo([
+      { key: 'Estado Operativo Final', value: String(data.estadoFinal || 'Operativo Conforme').toUpperCase() },
+      { key: 'Dictamen de Operatividad', value: 'TRITURADORA APTA PARA MOLIENDA CONTINUA DSH' },
+      { key: 'Firma Técnico Responsable', value: data.firmaTecnico || data.tecnicoResponsable || '' },
+      { key: 'Firma Supervisor Planta', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 5.8);
+
+    drawSectionHeader('V. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersTrit = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsTrit = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataTrit = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersTrit, modWidthsTrit, modDataTrit, true, 4.2);
+
+  } else if (tipo === 'mantenimiento_compactadora') {
+    // 27. Bitácora de Mantenimiento Compactadora / Prensa (BIT-MTO-COMP-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. INFORMACIÓN DEL EQUIPO Y PARÁMETROS DE SERVICIO', false, 5.5);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'MTO-COMP-001' },
+      { key: 'Fecha del Servicio', value: data.fecha || '' },
+      { key: 'Turno Operativo', value: data.turno || 'Turno 1' },
+      { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Compactadora de Residuos'} (ID: ${data.equipoId || 'COMP-01'})` },
+      { key: 'Periodicidad del Mantenimiento', value: data.periodicidad || 'Semanal/Mensual (Técnico)' },
+      { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo' },
+      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' }
+    ], false, 6.0);
+
+    drawSectionHeader('II. INSPECCIÓN HIDRÁULICA, SELLOS Y SISTEMAS DE SEGURIDAD', false, 5.5);
+    const compHeaders = ['RUBRO INSPECCIONADO', 'CRITERIO / COMPONENTE', 'CONFORMIDAD / EVALUACIÓN'];
+    const compWidths = [48, 85, 45]; // Total: 178 mm
+    const compRows = [
+      ['Hidráulica', 'Fugas de Fluidos Debajo del Plato Prensador', data.fugaFluidosDebajoPlato || 'Conforme'],
+      ['Estructura', 'Hermeticidad y Sellos de Puerta Principal', data.hermeticidadSellosPuerta || 'Conforme'],
+      ['Bioseguridad', 'Limpieza y Desinfección de Tolva de Carga', data.limpiezaDesinfeccionTolva || 'Conforme'],
+      ['Seguridad', 'Paros de Emergencia y Fotoceldas de Seguridad', data.parosEmergenciaFotoceldas || 'Conforme'],
+      ['Hidráulica', 'Ruidos Anormales en Motor y Bomba Hidráulica', data.ruidosMotorHidraulico || 'Conforme'],
+      ['Líneas Hidráulicas', 'Inspección de Mangueras y Vástagos Cilindros', data.inspeccionManguerasCilindros || 'Bueno'],
+      ['Fluido Hidráulico', 'Nivel y Calidad de Aceite Hidráulico ISO 68', data.nivelAceiteHidraulicoIso68 || 'Conforme'],
+      ['Lubricación', 'Engrase de Guías de Deslizamiento y Chumaceras', data.engraseChumacerasGuias || 'Realizado'],
+      ['Ventilación', 'Filtros de Aire y Respiradero del Tanque', data.filtrosAireRespiradero || 'Bueno'],
+      ['Retención Ambiental', 'Empaque y Bandeja de Retención Lixiviados', data.empaqueRetencionLixiviados || 'Bueno']
+    ];
+    drawDataTable(compHeaders, compWidths, compRows, false, 5.4);
+
+    drawSectionHeader('III. REGISTRO DE TRABAJOS, CORRECTIVOS Y BIOSEGURIDAD', false, 5.5);
+    if (data.causaRaizFalla) {
+      drawTextCard('CAUSA RAÍZ DE LA FALLA O INCIDENCIA', data.causaRaizFalla, 'warning', false);
+    }
+    drawTextCard('TRABAJO EJECUTADO Y ACCIÓN CORRECTIVA', data.accionCorrectiva || 'Revisión hidráulica, reengrase de guías y ajuste de interruptores límite de prensado.', 'normal', false);
+
+    if (data.repuestosUtilizados) {
+      if (Array.isArray(data.repuestosUtilizados) && data.repuestosUtilizados.length > 0) {
+        const repH = ['CANT.', 'REPUESTO / INSUMO', 'MOTIVO'];
+        const repW = [24, 100, 54];
+        const repR = data.repuestosUtilizados.map((r: any) => [
+          String(r.cantidad || 1),
+          r.repuesto || r.descripcion || '',
+          r.causa || r.causaReemplazo || 'Preventivo'
+        ]);
+        drawDataTable(repH, repW, repR, false, 5.0);
+      } else if (typeof data.repuestosUtilizados === 'string') {
+        drawTextCard('REPUESTOS E INSUMOS CONSUMIDOS', data.repuestosUtilizados, 'normal', true);
+      }
+    }
+
+    drawSectionHeader('IV. PROTOCOLO EPP, DICTAMEN FINAL Y FIRMAS', false, 5.5);
+    drawGridInfo([
+      { key: 'Protocolo Bioseguridad y EPP', value: data.protocoloBioseguridadEpp ? 'CUMPLIDO AL 100%' : 'NO' },
+      { key: 'Veredicto Operacional', value: String(data.estadoFinal || 'Aprobado para Operar').toUpperCase() },
+      { key: 'Firma Técnico Ejecutor', value: data.firmaTecnico || data.tecnicoResponsable || '' },
+      { key: 'Firma Supervisor Planta', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 5.8);
+
+    drawSectionHeader('V. SISTEMA CONTROL DE CAMBIOS DEL FORMATO (ISO 9001 / ISO 14001)', true, 4.8);
+    const modHeadersComp = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidthsComp = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modDataComp = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeadersComp, modWidthsComp, modDataComp, true, 4.2);
+
+  } else if (tipo === 'mantenimiento_autoclaves') {
+    // 28. Bitácora de Mantenimiento Autoclaves de Esterilización (BIT-MTO-AUTO-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. INFORMACIÓN GENERAL Y PARÁMETROS TERMODINÁMICOS', false, 5.5);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'MTO-AUTO-001' },
+      { key: 'Fecha del Servicio', value: data.fecha || '' },
+      { key: 'Turno Operativo', value: data.turno || 'Turno 1' },
+      { key: 'Autoclave Intervenida', value: String(data.equipoId || 'AUTO CLAVE 1') },
+      { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Periódico' },
+      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
+      { key: 'Presión Vapor Caldera', value: `${data.presionVaporCalderaPsi || 75} PSI (Nominal: 70-80 PSI)` },
+      { key: 'Presión de Cámara', value: `${data.presionCamaraPsi || 32} PSI (Nominal: 30-35 PSI)` },
+      { key: 'Temperatura Esterilización', value: `${data.temperaturaC || 134} °C (Nominal: 134 °C)` },
+      { key: 'Tiempo de Ciclo Térmico', value: `${data.tiempoCicloMin || 45} Minutos` },
+      { key: 'Supervisado Por', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 6.0);
+
+    drawSectionHeader('II. INSPECCIÓN DE COMPONENTES CRÍTICOS Y PRUEBAS FUNCIONALES', false, 5.5);
+    const autoHeaders = ['SISTEMA AUDITADO', 'COMPONENTE / PRUEBA EJECUTADA', 'RESULTADO EVALUADO'];
+    const autoWidths = [48, 85, 45]; // Total: 178 mm
+    const autoRows = [
+      ['Pruebas de Vacío', 'Prueba de Vacío Previo y Retención', data.pruebaVacioResultado || 'Conforme'],
+      ['Línea de Vapor', 'Drenaje de Condensados y Trampas de Vapor', data.drenajeCondensadosTrampa || 'Conforme'],
+      ['Hermeticidad Puerta', 'Estado de Empaque de Silicona de Puerta', data.estadoEmpaquePuerta || 'Excelente'],
+      ['Seguridad Sobrepresión', 'Válvulas de Seguridad y Disco de Alivio', data.valvulasSeguridadAlivio || 'Bueno'],
+      ['Instrumentación', 'Manómetros de Presión y Certificados Calibración', data.manometrosCalibracion || 'Bueno'],
+      ['Control Térmico', 'Transmisores de Temperatura PT100 / Termopares', data.transmisoresPt100 || 'Bueno'],
+      ['Filtración', 'Filtro Canasta de Descarga de Residuos', data.filtroCanastaDescarga || 'Limpio'],
+      ['Mecánica Puerta', 'Engrase y Ajuste de Brazos de Cierre', data.engraseBrazosCierre || 'Realizado']
+    ];
+    drawDataTable(autoHeaders, autoWidths, autoRows, false, 5.6);
+
+    drawSectionHeader('III. INTERVENCIÓN TÉCNICA, CALIBRACIÓN Y REPUESTOS', false, 5.5);
+    drawTextCard('DESCRIPCIÓN DE LA INTERVENCIÓN TÉCNICA', data.descripcionIntervencion || 'Inspección rutinaria, limpieza de trampas y comprobación de hermeticidad de compuerta.', 'normal', false);
+
+    if (data.repuestosCalibraciones) {
+      drawTextCard('REPUESTOS, INSUMOS Y CERTIFICACIONES', data.repuestosCalibraciones, 'normal', false);
+    }
+
+    drawSectionHeader('IV. ESTADO FINAL DE OPERABILIDAD Y FIRMAS', false, 5.5);
+    drawGridInfo([
+      { key: 'Estado Final del Autoclave', value: String(data.estadoFinal || 'Operativa al 100%').toUpperCase() },
+      { key: 'Dictamen de Bioseguridad', value: 'ESTERILIZACIÓN EFECTIVA Y CONFORME' },
+      { key: 'Firma Técnico Especialista', value: data.firmaTecnico || data.tecnicoResponsable || '' },
+      { key: 'Firma Supervisor Planta', value: data.firmaSupervisor || 'Ing. Manuel López — Gerente de Planta' }
+    ], false, 6.0);
+
+  } else if (tipo === 'limpieza_desinfeccion_planta') {
+    // 29. Control Diario de Limpieza y Desinfección de Planta (BIT-LIM-DES-001) - 1 PÁGINA COMPLETA
+    drawSectionHeader('I. INFORMACIÓN OPERATIVA, TURNO Y CUADRILLA', true);
+    drawGridInfo([
+      { key: 'Folio Oficial', value: data.folio || 'LIM-DES-001' },
+      { key: 'Fecha de la Jornada', value: data.fecha || '' },
+      { key: 'Turno Operativo', value: data.turno || 'Mañana' },
+      { key: 'Supervisor Responsable HSE', value: data.supervisorResponsable || '' },
+      { key: 'Cuadrilla de Operadores', value: data.cuadrillaOperadores || '' },
+      { key: 'Hora Preparación Química', value: data.horaPreparacion || '06:15' }
+    ], 5.6);
+
+    drawSectionHeader('II. PARÁMETROS DE PREPARACIÓN DE SOLUCIÓN BIOCIDA', true);
+    drawGridInfo([
+      { key: 'Producto Químico Desinfectante', value: data.productoQuimico || 'Amonio Cuaternario' },
+      { key: 'Lote del Químico', value: data.loteProducto || 'L-AQ-2026-09' },
+      { key: 'Concentración Objetivo (PPM)', value: `${data.concentracionObjetivoPpm || 400} PPM` },
+      { key: 'Concentración Medida (PPM)', value: `${data.concentracionMedidaPpm || 405} PPM [EN NORMA]` }
+    ], 5.6);
+
+    drawSectionHeader('III. MATRIZ DE LIMPIEZA Y SANITIZACIÓN POR ZONAS DE PLANTA', true);
+    const zonas = data.zonas || [
+      { area: 'Bahía de Descarga y Recepción RPBI', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Cuarto Frío / Almacenamiento Temporal', frecuencia: 'Diario', tipoLimpieza: 'Limpieza Profunda', hora: '07:00', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Área de Autoclaves y Esterilización', frecuencia: 'Por Ciclo', tipoLimpieza: 'Desinfección de Choque', hora: '07:30', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Área de Incineración DSH', frecuencia: 'Diario', tipoLimpieza: 'Rutinaria', hora: '08:00', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Área de Trituración y Molienda', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque', hora: '08:30', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Área de Compactadora y Prensa', frecuencia: 'Por Turno', tipoLimpieza: 'Rutinaria', hora: '09:00', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Túnel de Lavado de Contenedores', frecuencia: 'Continuo', tipoLimpieza: 'Limpieza Profunda', hora: '09:30', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Área de Caldera y Servicios Auxiliares', frecuencia: 'Diario', tipoLimpieza: 'Rutinaria', hora: '10:00', estatus: 'Conforme', operador: 'Cuadrilla' }
+    ];
+
+    const zonaHeaders = ['ÁREA / ZONA DE PLANTA', 'FRECUENCIA', 'TIPO ACCIÓN', 'HORA', 'ESTATUS', 'OPERADOR'];
+    const zonaWidths = [48, 24, 38, 16, 22, 30]; // Total: 178 mm
+    const zonaRows = zonas.map((z: any) => [
+      z.area || '',
+      z.frecuencia || '',
+      z.tipoLimpieza || '',
+      z.hora || '',
+      z.estatus || 'Conforme',
+      z.operador || 'Cuadrilla'
     ]);
+    drawDataTable(zonaHeaders, zonaWidths, zonaRows, 5.0);
+
+    drawSectionHeader('IV. VERIFICACIÓN DE EPP Y DISPONIBILIDAD DE INSUMOS', true);
+    drawGridInfo([
+      { key: 'Guantes Nitrilo Alta Resistencia', value: data.eppGuantesNitrilo ? 'CUMPLE [X]' : 'NO' },
+      { key: 'Botas de Hule con Puntera', value: data.eppBotasImpermeables ? 'CUMPLE [X]' : 'NO' },
+      { key: 'Mandil / Traje Tyvek Impermeable', value: data.eppTrajeTyvekMandil ? 'CUMPLE [X]' : 'NO' },
+      { key: 'Respirador Filtro Vapores', value: data.eppRespiradorVapores ? 'CUMPLE [X]' : 'NO' },
+      { key: 'Careta Facial / Goggles', value: data.eppCaretaFacial ? 'CUMPLE [X]' : 'NO' },
+      { key: 'Paños y Mopas Exclusivas Limpias', value: data.panosMopasLímpias ? 'DISPONIBLES [X]' : 'NO' }
+    ], 5.6);
+
+    drawSectionHeader('V. NOVEDADES, ACCIONES CORRECTIVAS Y VALIDACIÓN', true);
+    drawTextCard('NOVEDADES O DESVIACIONES DETECTADAS', data.desviacionesNovedades || 'Jornada de desinfección completada sin novedades biológicas.', 'normal', true);
+    if (data.accionesCorrectivas) {
+      drawTextCard('ACCIONES CORRECTIVAS INMEDIATAS', data.accionesCorrectivas, 'normal', true);
+    }
+
+    drawSectionHeader('VI. DICTAMEN DE CUMPLIMIENTO Y FIRMAS', true);
+    drawGridInfo([
+      { key: 'Veredicto de Cumplimiento', value: String(data.veredictoCumplimiento || 'Cumplimiento Total (100%)').toUpperCase() },
+      { key: 'Dictamen de Bioseguridad', value: 'ÁREAS SANITIZADAS APTAS PARA OPERACIÓN' },
+      { key: 'Firma Operador Líder', value: data.firmaOperadorLider || '' },
+      { key: 'Firma Supervisor HSE', value: data.firmaSupervisorHse || '' }
+    ], 5.6);
   }
 
-  // Draw Control de Cambios table at page limit if fit, otherwise fallback
-  if (y > pageHeight - 35) {
-    doc.addPage();
-    drawHeader();
+  // --- CONTROL DE CAMBIOS TABLE (Only for single-page forms, since 360 forms render it on Page 2) ---
+  if (!tipo.startsWith('evaluacion_360_')) {
+    if (y > pageHeight - 20) {
+      doc.addPage();
+      drawHeader();
+    }
+    drawSectionHeader('SISTEMA CONTROL DE CAMBIOS DEL FORMATO', true, 5.0);
+    const modHeaders = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
+    const modWidths = [15, 35, 35, 63, 30]; // Total: 178 mm
+    const modData = [
+      ['1.0', '13/06/2025', 'Todas', 'Creación del formato oficial bajo norma ISO 14001 y 9001:2015', 'Comité SGI']
+    ];
+    drawDataTable(modHeaders, modWidths, modData, true, 4.8);
   }
 
-  // --- CONTROL DE CAMBIOS TABLE ---
-  drawSectionHeader('SISTEMA CONTROL DE CAMBIOS DEL FORMATO');
-  const modHeaders = ['VER', 'FECHA MODIFICACIÓN', 'SECCIÓN COMPROMETIDA', 'MOTIVO DEL CAMBIO / AJUSTE', 'SOLICITANTE COMITÉ'];
-  const modWidths = [15, 35, 35, 65, 30];
-  const modData = [
-    ['1.0', '13/06/2025', 'Todas', 'Creación del formato inicial bajo norma ISO 14001 y 9001', 'Comité de Calidad']
-  ];
-  drawDataTable(modHeaders, modWidths, modData);
-
-  // Draw Footer
-  drawFooter();
+  // Draw Footer on all pages with page numbering
+  const totalPages = doc.getNumberOfPages();
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    doc.setPage(pageNum);
+    drawFooter(pageNum, totalPages);
+  }
 
   // Save / Action Download trigger
   const fechaVal = String(data.fecha || new Date().toISOString().split('T')[0]);

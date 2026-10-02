@@ -158,12 +158,9 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
     }
   };
 
-  const handleExportPDF = () => {
-    if (registros.length === 0) {
-      alert("No hay registros disponibles para exportar.");
-      return;
-    }
-    generateAndDownloadPDF('mantenimiento_incinerador', registros[0]);
+  const handleExportPDF = (targetRecord?: BitacoraMantenimientoIncinerador) => {
+    const dataToExport = targetRecord || modalRegistro || (registros.length > 0 ? registros[0] : formData);
+    generateAndDownloadPDF('mantenimiento_incinerador', dataToExport);
   };
 
   const handleExportExcel = () => {
@@ -728,6 +725,13 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
                         >
                           Ver
                         </button>
+                        <button
+                          onClick={() => handleExportPDF(r)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-700 rounded text-[11px] font-bold transition cursor-pointer"
+                          title="Descargar PDF Oficial"
+                        >
+                          <FileText className="w-3.5 h-3.5 inline text-red-600 mr-0.5" /> PDF
+                        </button>
                         {isAuthorizedToDelete(userEmail) && (
                           <button
                             onClick={() => handleDelete(r.id)}
@@ -790,7 +794,13 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
               </p>
             </div>
 
-            <div className="flex justify-end pt-3 border-t">
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <button
+                onClick={() => handleExportPDF(modalRegistro)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1.5"
+              >
+                <FileText className="w-3.5 h-3.5" /> Descargar PDF
+              </button>
               <button
                 onClick={() => setModalRegistro(null)}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer"

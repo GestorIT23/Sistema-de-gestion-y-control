@@ -72,6 +72,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
   const [activeSensorsCount, setActiveSensorsCount] = useState(0);
   const [autoclaveReliability, setAutoclaveReliability] = useState(100);
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'operaciones' | 'evaluaciones360' | 'mantenimiento'>('all');
   const [currentView, setCurrentView] = useState<'launchpad' | 'analytics'>('launchpad');
 
   useEffect(() => {
@@ -519,6 +520,19 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     });
   }
 
+  const getModuloCategory = (id: string): 'operaciones' | 'evaluaciones360' | 'mantenimiento' | 'sistema' => {
+    if (id.startsWith('evaluacion_360_') || id === 'control_360_vehiculos') {
+      return 'evaluaciones360';
+    }
+    if (id.startsWith('mantenimiento_') || id === 'limpieza_desinfeccion_planta') {
+      return 'mantenimiento';
+    }
+    if (id === 'usuarios' || id === 'dashboard_analitico') {
+      return 'sistema';
+    }
+    return 'operaciones';
+  };
+
   const filteredModulos = modulos.filter(mod => {
     if (currentUser.rol === 'Administrador' || mod.id === 'usuarios' || mod.id === 'dashboard_analitico') {
       return true;
@@ -528,6 +542,46 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     }
     return true;
   });
+
+  const operacionesModulos = filteredModulos.filter(m => getModuloCategory(m.id) === 'operaciones');
+  const evaluacion360Modulos = filteredModulos.filter(m => getModuloCategory(m.id) === 'evaluaciones360');
+  const mantenimientoModulos = filteredModulos.filter(m => getModuloCategory(m.id) === 'mantenimiento');
+  const sistemaModulos = filteredModulos.filter(m => getModuloCategory(m.id) === 'sistema');
+
+  const renderModuleCard = (mod: any) => (
+    <button
+      key={mod.id}
+      id={`modulo-card-${mod.id}`}
+      onClick={() => onSelectModulo(mod.id)}
+      className="text-left bg-white border border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-sm rounded-lg p-4 transition duration-150 flex flex-col justify-between h-44 focus:outline-none focus:ring-1 focus:ring-[#3B82F6] cursor-pointer"
+    >
+      {/* Card top */}
+      <div className="w-full space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-bold uppercase font-mono tracking-wider text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">
+            {mod.tag}
+          </span>
+          <div className="p-1 bg-[#F8FAFC] rounded">
+            {mod.icon}
+          </div>
+        </div>
+        <h4 className="font-bold text-[#1E293B] text-sm leading-tight">
+          {mod.title}
+        </h4>
+        <p className="text-[#64748B] text-xs line-clamp-2">
+          {mod.subtitle}
+        </p>
+      </div>
+
+      {/* Card Bottom */}
+      <div className="w-full flex items-center justify-between border-t border-[#F1F5F9] pt-2 mt-2 text-[10px] font-mono">
+        <span className="text-slate-400 font-medium text-[9px]">{mod.code}</span>
+        <span className="font-bold text-white bg-[#3B82F6] px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide">
+          {mod.stats}
+        </span>
+      </div>
+    </button>
+  );
 
   return (
     <div id="system-dashboard-root" className="max-w-7xl mx-auto px-6 py-6 space-y-6 animate-fade-in text-[#1A1C1E]">
@@ -671,55 +725,160 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
 
           </div>
 
-          {/* Grid launchpad modules */}
-          <div id="modules-selection-grid" className="space-y-3">
-            <div className="border-b pb-2 flex items-center justify-between border-[#E2E8F0]">
-              <div className="flex items-center gap-2">
-                <LayoutGrid className="w-4 h-4 text-[#64748B]" />
-                <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">Módulos de Formatos Operacionales (F-OPR)</h3>
-              </div>
-              <span className="text-[10px] text-[#64748B] font-mono uppercase">{filteredModulos.length} Módulos de Operación & Calidad</span>
-            </div>
-
-            {/* 3x3 Grid cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredModulos.map((mod) => (
+          {/* Category Tabs and Modules Sections */}
+          <div id="modules-selection-grid" className="space-y-6">
+            
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3 border-[#E2E8F0]">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  key={mod.id}
-                  id={`modulo-card-${mod.id}`}
-                  onClick={() => onSelectModulo(mod.id)}
-                  className="text-left bg-white border border-[#E2E8F0] hover:border-[#3B82F6] hover:shadow-sm rounded-lg p-4 transition duration-150 flex flex-col justify-between h-44 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                  type="button"
+                  id="tab-cat-all"
+                  onClick={() => setSelectedCategory('all')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    selectedCategory === 'all'
+                      ? 'bg-[#1A1C1E] text-white shadow-sm'
+                      : 'bg-white border border-[#E2E8F0] text-slate-600 hover:bg-slate-50'
+                  }`}
                 >
-                  
-                  {/* Card top */}
-                  <div className="w-full space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-bold uppercase font-mono tracking-wider text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded">
-                        {mod.tag}
-                      </span>
-                      <div className="p-1 bg-[#F8FAFC] rounded">
-                        {mod.icon}
-                      </div>
-                    </div>
-                    <h4 className="font-bold text-[#1E293B] text-sm leading-tight">
-                      {mod.title}
-                    </h4>
-                    <p className="text-[#64748B] text-xs line-clamp-2">
-                      {mod.subtitle}
-                    </p>
-                  </div>
-
-                  {/* Card Bottom */}
-                  <div className="w-full flex items-center justify-between border-t border-[#F1F5F9] pt-2 mt-2 text-[10px] font-mono">
-                    <span className="text-slate-400 font-medium text-[9px]">{mod.code}</span>
-                    <span className="font-bold text-white bg-[#3B82F6] px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide">
-                      {mod.stats}
-                    </span>
-                  </div>
-
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  Todos los Módulos ({filteredModulos.length})
                 </button>
-              ))}
+
+                <button
+                  type="button"
+                  id="tab-cat-operaciones"
+                  onClick={() => setSelectedCategory('operaciones')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    selectedCategory === 'operaciones'
+                      ? 'bg-[#3B82F6] text-white shadow-sm'
+                      : 'bg-white border border-[#E2E8F0] text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <ClipboardList className="w-3.5 h-3.5 text-blue-500" />
+                  Formatos Operacionales ({operacionesModulos.length})
+                </button>
+
+                <button
+                  type="button"
+                  id="tab-cat-evaluaciones360"
+                  onClick={() => setSelectedCategory('evaluaciones360')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    selectedCategory === 'evaluaciones360'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-white border border-[#E2E8F0] text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                  Evaluaciones 360° ({evaluacion360Modulos.length})
+                </button>
+
+                <button
+                  type="button"
+                  id="tab-cat-mantenimiento"
+                  onClick={() => setSelectedCategory('mantenimiento')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    selectedCategory === 'mantenimiento'
+                      ? 'bg-emerald-700 text-white shadow-sm'
+                      : 'bg-white border border-[#E2E8F0] text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Wrench className="w-3.5 h-3.5 text-emerald-600" />
+                  Bitácoras de Mantenimiento ({mantenimientoModulos.length})
+                </button>
+              </div>
+
+              <span className="text-[10px] text-[#64748B] font-mono uppercase">
+                {selectedCategory === 'all'
+                  ? `${filteredModulos.length} Módulos Totales SGI`
+                  : selectedCategory === 'operaciones'
+                  ? `${operacionesModulos.length} Formatos F-OPR`
+                  : selectedCategory === 'evaluaciones360'
+                  ? `${evaluacion360Modulos.length} Auditorías 360°`
+                  : `${mantenimientoModulos.length} Bitácoras de Mantenimiento`}
+              </span>
             </div>
+
+            {/* SECCIÓN 1: FORMATOS OPERACIONALES (F-OPR) */}
+            {(selectedCategory === 'all' || selectedCategory === 'operaciones') && operacionesModulos.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b pb-1.5 border-[#E2E8F0]">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-[#3B82F6]" />
+                    <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">
+                      Formatos Operacionales de Planta (F-OPR)
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {operacionesModulos.length} Formatos Normativos
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {operacionesModulos.map(renderModuleCard)}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 2: EVALUACIONES 360° DE MAQUINARIA Y FLOTA */}
+            {(selectedCategory === 'all' || selectedCategory === 'evaluaciones360') && evaluacion360Modulos.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b pb-1.5 border-[#E2E8F0]">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">
+                      Auditorías y Evaluaciones 360° de Maquinaria y Flota
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {evaluacion360Modulos.length} Auditorías 360°
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {evaluacion360Modulos.map(renderModuleCard)}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 3: BITÁCORAS DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO (POR APARTE) */}
+            {(selectedCategory === 'all' || selectedCategory === 'mantenimiento') && mantenimientoModulos.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b pb-1.5 border-[#E2E8F0]">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-emerald-700" />
+                    <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">
+                      Bitácoras Oficiales de Mantenimiento Preventivo y Correctivo
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {mantenimientoModulos.length} Bitácoras Especializadas
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mantenimientoModulos.map(renderModuleCard)}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 4: MÓDULOS DE SISTEMA (ADMIN/ANALÍTICA) */}
+            {(selectedCategory === 'all') && sistemaModulos.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b pb-1.5 border-[#E2E8F0]">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-indigo-600" />
+                    <h3 className="font-bold text-[#1E293B] text-xs uppercase tracking-wider">
+                      Control del Sistema, Analítica y Usuarios SGI
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {sistemaModulos.length} Módulos Administrativos
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sistemaModulos.map(renderModuleCard)}
+                </div>
+              </div>
+            )}
+
           </div>
         </>
       )}

@@ -55,6 +55,12 @@ const BITACORAS_INFO = [
   { id: 'evaluacion_360_compactadora', title: 'Evaluación 360° de Compactadora de Pacas', col: 'bitacora_evaluacion_360_compactadora', code: 'F-OPR-000-21' },
   { id: 'evaluacion_360_trituradora', title: 'Evaluación 360° de Trituradora Shredder', col: 'bitacora_evaluacion_360_trituradora', code: 'F-OPR-000-22' },
   { id: 'control_caldera', title: 'Bitácora Diaria de Operación y Control de Caldera', col: 'bitacora_control_caldera', code: 'F-OPR-000-23' },
+  { id: 'mantenimiento_incinerador', title: 'Mantenimiento Incinerador Industrial RPBI', col: 'bitacora_mantenimiento_incinerador', code: 'BIT-MTO-INC-001' },
+  { id: 'mantenimiento_lampinator', title: 'Mantenimiento Máquina Lampinator', col: 'bitacora_mantenimiento_lampinator', code: 'BIT-MTO-LAMP-001' },
+  { id: 'mantenimiento_trituradora', title: 'Mantenimiento Trituradora de Residuos', col: 'bitacora_mantenimiento_trituradora', code: 'BIT-MTO-TRIT-001' },
+  { id: 'mantenimiento_compactadora', title: 'Mantenimiento Compactadora / Prensa', col: 'bitacora_mantenimiento_compactadora', code: 'BIT-MTO-COMP-001' },
+  { id: 'mantenimiento_autoclaves', title: 'Mantenimiento Autoclaves de Esterilización', col: 'bitacora_mantenimiento_autoclaves', code: 'BIT-MTO-AUTO-001' },
+  { id: 'limpieza_desinfeccion_planta', title: 'Control Diario de Limpieza y Desinfección de Planta', col: 'bitacora_limpieza_desinfeccion_planta', code: 'BIT-LIM-DES-001' },
 ];
 
 export default function ReportesModule({ onBack, userEmail }: Props) {
@@ -446,9 +452,21 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                 onChange={(e) => setSelectedBitacora(e.target.value)}
                 className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded px-2.5 py-1.5 text-xs text-[#1E293B] focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
               >
-                {BITACORAS_INFO.map(b => (
-                  <option key={b.id} value={b.id}>{b.title} ({b.code})</option>
-                ))}
+                <optgroup label="📋 FORMATOS OPERACIONALES (F-OPR)">
+                  {BITACORAS_INFO.filter(b => !b.id.startsWith('evaluacion_360_') && !b.id.startsWith('mantenimiento_') && b.id !== 'limpieza_desinfeccion_planta' && b.id !== 'control_360_vehiculos').map(b => (
+                    <option key={b.id} value={b.id}>{b.title} ({b.code})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="🔍 EVALUACIONES Y AUDITORÍAS 360°">
+                  {BITACORAS_INFO.filter(b => b.id.startsWith('evaluacion_360_') || b.id === 'control_360_vehiculos').map(b => (
+                    <option key={b.id} value={b.id}>{b.title} ({b.code})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="🛠️ BITÁCORAS DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO">
+                  {BITACORAS_INFO.filter(b => b.id.startsWith('mantenimiento_') || b.id === 'limpieza_desinfeccion_planta').map(b => (
+                    <option key={b.id} value={b.id}>{b.title} ({b.code})</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 
