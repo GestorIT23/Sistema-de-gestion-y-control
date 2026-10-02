@@ -77,7 +77,7 @@ export default function BitacoraDisposicionVertedero({ onBack, userEmail }: Prop
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_disposicion_vertedero'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_disposicion_vertedero'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: IBitacoraDisposicionVertedero[] = [];
       querySnapshot.forEach((doc) => {

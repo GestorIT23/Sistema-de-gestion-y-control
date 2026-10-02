@@ -269,7 +269,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     evaluacion_360_compactadora: { code: 'BIOTRASH 4.2. F-OPR-000-21', name: 'EVALUACIÓN 360° DE COMPACTADORA DE PACAS' },
     evaluacion_360_trituradora: { code: 'BIOTRASH 4.2. F-OPR-000-22', name: 'EVALUACIÓN 360° DE TRITURADORA SHREDDER' },
     control_caldera: { code: 'BIOTRASH 4.2. F-OPR-000-23', name: 'BITÁCORA DIARIA DE OPERACIÓN Y CONTROL DE CALDERA' },
-    mantenimiento_incinerador: { code: 'BIOTRASH 4.2. BIT-MTO-INC-001', name: 'BITÁCORA DE MANTENIMIENTO INCINERADOR INDUSTRIAL RPBI' },
+    mantenimiento_incinerador: { code: 'BIOTRASH 4.2. BIT-MTO-INC-001', name: 'BITÁCORA DE MANTENIMIENTO INCINERADOR INDUSTRIAL DSH' },
     mantenimiento_lampinator: { code: 'BIOTRASH 4.2. BIT-MTO-LAMP-001', name: 'BITÁCORA DE MANTENIMIENTO MÁQUINA LAMPINATOR' },
     mantenimiento_trituradora: { code: 'BIOTRASH 4.2. BIT-MTO-TRIT-001', name: 'BITÁCORA DE MANTENIMIENTO TRITURADORA DE RESIDUOS' },
     mantenimiento_compactadora: { code: 'BIOTRASH 4.2. BIT-MTO-COMP-001', name: 'BITÁCORA DE MANTENIMIENTO COMPACTADORA / PRENSA' },
@@ -1649,7 +1649,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Modelo / Serie', value: data.modeloSerie || 'N/A' },
       { key: 'Ubicación en Planta', value: data.ubicacionPlanta || '' },
       { key: 'Fecha y Turno', value: `${data.fecha || ''} | Turno ${data.turno || 'Matutino'}` },
-      { key: 'Horómetro Actual', value: `${Number(data.horometroActual || 0).toLocaleString()} Horas` },
+      { key: 'Horómetro Actual', value: data.horometroActual !== undefined && data.horometroActual !== null && data.horometroActual !== '' ? `${Number(data.horometroActual).toLocaleString()} Horas` : '' },
       { key: 'Operador Responsable', value: data.operadorAsignado || '' },
       { key: 'Inspector SGI / Auditor', value: data.inspectorSgi || data.responsable || '' }
     ], false, 6.0);
@@ -1929,7 +1929,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
     drawDataTable(modHeadersCald, modWidthsCald, modDataCald, true, 4.2);
 
   } else if (tipo === 'mantenimiento_incinerador') {
-    // 24. Bitácora de Mantenimiento Incinerador Industrial RPBI (BIT-MTO-INC-001) - 1 PÁGINA COMPLETA
+    // 24. Bitácora de Mantenimiento Incinerador Industrial DSH (BIT-MTO-INC-001) - 1 PÁGINA COMPLETA
     drawSectionHeader('I. INFORMACIÓN GENERAL DEL SERVICIO Y EQUIPO TÉRMICO', true);
     drawGridInfo([
       { key: 'Folio Oficial', value: data.folio || 'MTO-INC-001' },
@@ -1937,7 +1937,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Incinerador Industrial'} (ID: ${data.equipoId || 'INC-01'})` },
       { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Programado' },
       { key: 'Horario Ejecución', value: `${data.horaInicio || '07:00'} - ${data.horaFin || '12:00'}` },
-      { key: 'Horas de Operación', value: `${Number(data.horasOperacion || 0).toLocaleString()} Horas` },
+      { key: 'Horas de Operación', value: data.horasOperacion !== undefined && data.horasOperacion !== null && data.horasOperacion !== '' ? `${Number(data.horasOperacion).toLocaleString()} Horas` : '' },
       { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
       { key: 'Supervisado Por', value: data.supervisadoPor || 'Ing. Manuel López — Gerente de Planta' }
     ], 5.6);
@@ -2020,7 +2020,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Desmercurizadora Lampinator'} (ID: ${data.equipoId || 'LAMP-01'})` },
       { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Programado' },
       { key: 'Horario Ejecución', value: `${data.horaInicio || '08:00'} - ${data.horaFin || '10:45'}` },
-      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Horómetro de Operación', value: data.horometro !== undefined && data.horometro !== null && data.horometro !== '' ? `${Number(data.horometro).toLocaleString()} Horas` : '' },
       { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
       { key: 'Operador de Turno', value: data.operadorTurno || '' }
     ], false, 6.2);
@@ -2096,7 +2096,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Trituradora Industrial Shredder'} (ID: ${data.equipoId || 'TRIT-01'})` },
       { key: 'Marca / Modelo / Serie', value: `${data.marcaModelo || 'Shredder Heavy'} | Serie: ${data.serie || 'S/N'}` },
       { key: 'Ubicación en Planta', value: data.ubicacionPlanta || 'Nave de Triturado DSH' },
-      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Horómetro de Operación', value: data.horometro !== undefined && data.horometro !== null && data.horometro !== '' ? `${Number(data.horometro).toLocaleString()} Horas` : '' },
       { key: 'Horas de Paro', value: `${data.horasParo || 0} Horas` },
       { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Semanal/Mensual' },
       { key: 'Candadeo LOTO Aplicado', value: data.lotoAplicado ? 'SÍ [CONFORME]' : 'NO' },
@@ -2164,7 +2164,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Equipo Intervenido', value: `${data.nombreEquipo || 'Compactadora de Residuos'} (ID: ${data.equipoId || 'COMP-01'})` },
       { key: 'Periodicidad del Mantenimiento', value: data.periodicidad || 'Semanal/Mensual (Técnico)' },
       { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo' },
-      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Horómetro de Operación', value: data.horometro !== undefined && data.horometro !== null && data.horometro !== '' ? `${Number(data.horometro).toLocaleString()} Horas` : '' },
       { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' }
     ], false, 6.0);
 
@@ -2231,7 +2231,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
       { key: 'Turno Operativo', value: data.turno || 'Turno 1' },
       { key: 'Autoclave Intervenida', value: String(data.equipoId || 'AUTO CLAVE 1') },
       { key: 'Tipo de Mantenimiento', value: data.tipoMantenimiento || 'Preventivo Periódico' },
-      { key: 'Horómetro de Operación', value: `${Number(data.horometro || 0).toLocaleString()} Horas` },
+      { key: 'Horómetro de Operación', value: data.horometro !== undefined && data.horometro !== null && data.horometro !== '' ? `${Number(data.horometro).toLocaleString()} Horas` : '' },
       { key: 'Técnico Responsable', value: data.tecnicoResponsable || '' },
       { key: 'Presión Vapor Caldera', value: `${data.presionVaporCalderaPsi || 75} PSI (Nominal: 70-80 PSI)` },
       { key: 'Presión de Cámara', value: `${data.presionCamaraPsi || 32} PSI (Nominal: 30-35 PSI)` },
@@ -2292,7 +2292,7 @@ export async function generateAndDownloadPDF(tipo: string, data: any): Promise<v
 
     drawSectionHeader('III. MATRIZ DE LIMPIEZA Y SANITIZACIÓN POR ZONAS DE PLANTA', true);
     const zonas = data.zonas || [
-      { area: 'Bahía de Descarga y Recepción RPBI', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: 'Cuadrilla' },
+      { area: 'Bahía de Descarga y Recepción DSH', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: 'Cuadrilla' },
       { area: 'Cuarto Frío / Almacenamiento Temporal', frecuencia: 'Diario', tipoLimpieza: 'Limpieza Profunda', hora: '07:00', estatus: 'Conforme', operador: 'Cuadrilla' },
       { area: 'Área de Autoclaves y Esterilización', frecuencia: 'Por Ciclo', tipoLimpieza: 'Desinfección de Choque', hora: '07:30', estatus: 'Conforme', operador: 'Cuadrilla' },
       { area: 'Área de Incineración DSH', frecuencia: 'Diario', tipoLimpieza: 'Rutinaria', hora: '08:00', estatus: 'Conforme', operador: 'Cuadrilla' },

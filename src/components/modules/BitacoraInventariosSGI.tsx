@@ -51,7 +51,7 @@ export default function BitacoraInventariosSGIModule({ onBack, userEmail }: Prop
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_inventarios_sgc'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_inventarios_sgc'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraInventariosSGI[] = [];
       querySnapshot.forEach((doc) => {

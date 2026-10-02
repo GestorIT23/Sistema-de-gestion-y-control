@@ -56,10 +56,10 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
     nombreEquipo: 'Trituradora Industrial Shredder Doble Eje 01',
     marcaModelo: 'Shred-Tech ST-50 Industrial Heavy Duty',
     serie: 'ST50-9844-GT',
-    ubicacionPlanta: 'Área de Pre-Tratamiento Mecánico RPBI',
-    horometro: 5340,
+    ubicacionPlanta: 'Área de Pre-Tratamiento Mecánico DSH',
+    horometro: '' as any,
     tipoMantenimiento: 'Preventivo Semanal/Mensual',
-    tecnicoResponsable: userEmail,
+    tecnicoResponsable: '',
     estadoCuchillas: 'Bueno',
     nivelAceiteReductor: 'Conforme',
     ruidosVibraciones: 'Normal',
@@ -75,14 +75,18 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
     horasParo: 0,
     lotoAplicado: true,
     estadoFinal: 'Operativo Conforme',
-    firmaTecnico: userEmail,
-    firmaSupervisor: 'Ing. Manuel López — Gerente de Planta'
+    firmaTecnico: '',
+    firmaSupervisor: ''
   });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
 
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_mantenimiento_trituradora'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_mantenimiento_trituradora'), orderBy('fecha', 'desc'), limit(5000));
       const snap = await getDocs(q);
       const docs: BitacoraMantenimientoTrituradora[] = [];
       snap.forEach(d => {
@@ -107,7 +111,7 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
       const docData = sanitizeBiotrashObject({
         ...formData,
         folio,
-        responsable: formData.tecnicoResponsable || userEmail
+        responsable: formData.tecnicoResponsable || ''
       });
 
       await addDoc(collection(db, 'bitacora_mantenimiento_trituradora'), docData);
@@ -136,12 +140,75 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
     }
   };
 
-  const handleExportPDF = () => {
-    if (registros.length === 0) {
+  const handleExportPDF = (registro?: BitacoraMantenimientoTrituradora) => {
+    const item = registro || (registros.length > 0 ? registros[0] : null);
+    if (!item) {
       alert("No hay registros para exportar.");
       return;
     }
-    generateAndDownloadPDF('mantenimiento_trituradora', registros[0]);
+    generateAndDownloadPDF('mantenimiento_trituradora', item);
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedIds.size === filteredRegistros.length && filteredRegistros.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRegistros.map(r => r.id!)));
+    }
+  };
+
+  const handleDownloadSelectedPDF = async () => {
+    const selectedItems = registros.filter(r => selectedIds.has(r.id!));
+    if (selectedItems.length === 0) {
+      alert("Seleccione al menos un registro para descargar sus reportes PDF.");
+      return;
+    }
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: selectedItems.length });
+    try {
+      for (let i = 0; i < selectedItems.length; i++) {
+        setDownloadProgress({ current: i + 1, total: selectedItems.length });
+        await generateAndDownloadPDF('mantenimiento_trituradora', selectedItems[i]);
+        if (i < selectedItems.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+    } catch (err: any) {
+      alert("Error al generar PDF: " + err.message);
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleDownloadAllFormularioPDF = async () => {
+    if (registros.length === 0) {
+      alert("No hay registros en esta bitácora para descargar.");
+      return;
+    }
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: registros.length });
+    try {
+      for (let i = 0; i < registros.length; i++) {
+        setDownloadProgress({ current: i + 1, total: registros.length });
+        await generateAndDownloadPDF('mantenimiento_trituradora', registros[i]);
+        if (i < registros.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+    } catch (err: any) {
+      alert("Error al descargar formulario completo: " + err.message);
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
+    }
   };
 
   const handleExportExcel = () => {
@@ -226,7 +293,7 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
 
       {/* Official SGI Header */}
       <FormHeader
-        titulo="BITÁCORA DE MANTENIMIENTO: TRITURADORA INDUSTRIAL SHREDDER RPBI"
+        titulo="BITÁCORA DE MANTENIMIENTO: TRITURADORA INDUSTRIAL SHREDDER DSH"
         codigo="BIOTRASH 4.2. BIT-MTO-TRIT-001"
         version="1.2"
         fechaVersion="28/09/2026"
@@ -571,18 +638,81 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
                 className="w-full text-xs font-semibold pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-slate-50"
               />
             </div>
-            <button
-              onClick={fetchRegistros}
-              className="p-2 border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-600 transition cursor-pointer"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Botón Descargar Seleccionados */}
+              <button
+                type="button"
+                onClick={handleDownloadSelectedPDF}
+                disabled={selectedIds.size === 0 || isBulkDownloading}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Genera y descarga los PDFs de los registros seleccionados"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Descargar Seleccionados ({selectedIds.size})
+              </button>
+
+              {/* Botón Descargar Todo por Formulario */}
+              <button
+                type="button"
+                onClick={handleDownloadAllFormularioPDF}
+                disabled={registros.length === 0 || isBulkDownloading}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Descarga en PDF todos los registros de esta bitácora"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Descargar Formulario PDF ({registros.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                Excel
+              </button>
+
+              <button
+                type="button"
+                onClick={fetchRegistros}
+                className="p-2 border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-600 transition cursor-pointer"
+                title="Actualizar datos"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
+
+          {/* Banner de selección activa */}
+          {selectedIds.size > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between text-xs text-blue-900">
+              <span className="font-semibold">
+                {selectedIds.size} {selectedIds.size === 1 ? 'registro seleccionado' : 'registros seleccionados'} para generar PDF
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="text-[11px] text-blue-700 underline font-semibold hover:text-blue-900 cursor-pointer"
+              >
+                Deseleccionar todos
+              </button>
+            </div>
+          )}
 
           <div className="overflow-x-auto border border-slate-200 rounded-lg">
             <table className="w-full text-xs text-left text-slate-700">
               <thead className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
                 <tr>
+                  <th className="p-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={filteredRegistros.length > 0 && selectedIds.size === filteredRegistros.length}
+                      onChange={handleToggleSelectAll}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                      title="Seleccionar todos"
+                    />
+                  </th>
                   <th className="p-3">Folio</th>
                   <th className="p-3">Fecha</th>
                   <th className="p-3">Equipo</th>
@@ -597,20 +727,28 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
               <tbody className="divide-y divide-slate-100">
                 {filteredRegistros.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-6 text-center text-slate-400 font-medium">
+                    <td colSpan={10} className="p-6 text-center text-slate-400 font-medium">
                       No se encontraron registros de mantenimiento.
                     </td>
                   </tr>
                 ) : (
                   filteredRegistros.map(r => (
-                    <tr key={r.id} className="hover:bg-slate-50/80 transition">
+                    <tr key={r.id} className={`hover:bg-slate-50/80 transition ${selectedIds.has(r.id!) ? 'bg-blue-50/40' : ''}`}>
+                      <td className="p-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(r.id!)}
+                          onChange={() => handleToggleSelect(r.id!)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                        />
+                      </td>
                       <td className="p-3 font-mono font-bold text-emerald-800">{r.folio || 'S/N'}</td>
                       <td className="p-3 font-semibold">{r.fecha}</td>
                       <td className="p-3">{r.equipoId}</td>
                       <td className="p-3">{r.tipoMantenimiento}</td>
-                      <td className="p-3">{r.horometro} hrs</td>
+                      <td className="p-3">{r.horometro !== '' && r.horometro !== undefined && r.horometro !== null ? `${r.horometro} hrs` : '—'}</td>
                       <td className="p-3 font-mono font-bold">{r.consumoAmperajeMotorA || 0} A</td>
-                      <td className="p-3">{r.tecnicoResponsable}</td>
+                      <td className="p-3">{r.tecnicoResponsable || '—'}</td>
                       <td className="p-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           r.estadoFinal === 'Operativo Conforme'
@@ -624,6 +762,15 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
                       </td>
                       <td className="p-3 text-right space-x-1">
                         <button
+                          type="button"
+                          onClick={() => handleExportPDF(r)}
+                          className="p-1 text-slate-500 hover:text-red-600 rounded hover:bg-slate-100 transition cursor-pointer"
+                          title="Descargar PDF Oficial"
+                        >
+                          <FileText className="w-4 h-4 inline" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setModalRegistro(r)}
                           className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-bold transition cursor-pointer"
                         >
@@ -631,6 +778,7 @@ export default function BitacoraMantenimientoTrituradora({ onBack, userEmail }: 
                         </button>
                         {isAuthorizedToDelete(userEmail) && (
                           <button
+                            type="button"
                             onClick={() => handleDelete(r.id)}
                             className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-[11px] font-bold transition cursor-pointer"
                           >

@@ -61,14 +61,16 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
   const [supervisorCargo, setSupervisorCargo] = useState('');
 
   // 4. Horómetro y Horas de Operación
-  const [lecturaInicialHorometro, setLecturaInicialHorometro] = useState<number>(0);
-  const [lecturaFinalHorometro, setLecturaFinalHorometro] = useState<number>(0);
+  const [lecturaInicialHorometro, setLecturaInicialHorometro] = useState<number | ''>('');
+  const [lecturaFinalHorometro, setLecturaFinalHorometro] = useState<number | ''>('');
   const [horaInicio, setHoraInicio] = useState('06:00');
   const [horaTermino, setHoraTermino] = useState('14:00');
   const [horasPausaInactividad, setHorasPausaInactividad] = useState<number>(0);
 
   // Calculated: Total operado (hrs)
-  const totalOperadoHoras = Math.max(0, Number((lecturaFinalHorometro - lecturaInicialHorometro).toFixed(2)));
+  const totalOperadoHoras = (lecturaInicialHorometro !== '' && lecturaFinalHorometro !== '')
+    ? Math.max(0, Number((Number(lecturaFinalHorometro) - Number(lecturaInicialHorometro)).toFixed(2)))
+    : 0;
 
   // Calculated: Horas Efectivas de Trabajo del Operador (Reloj)
   const getHorasEfectivas = () => {
@@ -139,7 +141,7 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
       const q = query(
         collection(db, 'bitacora_control_horas_cargador'), 
         orderBy('fechaRegistro', 'desc'), 
-        limit(15)
+        limit(3000)
       );
       const querySnapshot = await getDocs(q);
       const docs: BitacoraControlHorasCargador[] = [];
@@ -201,8 +203,8 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
       supervisorCargo: supervisorCargo || 'Supervisor de Planta',
 
       // Horas
-      lecturaInicialHorometro: Number(lecturaInicialHorometro) || 0,
-      lecturaFinalHorometro: Number(lecturaFinalHorometro) || 0,
+      lecturaInicialHorometro: lecturaInicialHorometro !== '' ? Number(lecturaInicialHorometro) : ('' as any),
+      lecturaFinalHorometro: lecturaFinalHorometro !== '' ? Number(lecturaFinalHorometro) : ('' as any),
       totalOperadoHoras,
       horaInicio,
       horaTermino,
@@ -475,8 +477,9 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                   type="number"
                   step="0.01"
                   min="0"
+                  placeholder="En blanco si no aplica"
                   value={lecturaInicialHorometro}
-                  onChange={(e) => setLecturaInicialHorometro(Number(e.target.value))}
+                  onChange={(e) => setLecturaInicialHorometro(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full text-xs bg-white border border-slate-200 rounded py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
                 />
               </div>
@@ -486,8 +489,9 @@ export default function BitacoraControlHorasCargadorModule({ onBack, userEmail }
                   type="number"
                   step="0.01"
                   min="0"
+                  placeholder="En blanco si no aplica"
                   value={lecturaFinalHorometro}
-                  onChange={(e) => setLecturaFinalHorometro(Number(e.target.value))}
+                  onChange={(e) => setLecturaFinalHorometro(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full text-xs bg-white border border-slate-200 rounded py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
                 />
               </div>

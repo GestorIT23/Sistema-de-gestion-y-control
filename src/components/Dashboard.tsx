@@ -427,7 +427,7 @@ export default function Dashboard({ onSelectModulo, currentUser }: Props) {
     },
     {
       id: 'mantenimiento_incinerador',
-      title: 'Mantenimiento Incinerador RPBI',
+      title: 'Mantenimiento Incinerador DSH',
       subtitle: 'LOTO, quemadores, refractarios, termocuplas y pruebas de combustión',
       code: 'BIOTRASH 4.2. BIT-MTO-INC-001',
       icon: <Wrench className="w-5 h-5 text-orange-600" />,

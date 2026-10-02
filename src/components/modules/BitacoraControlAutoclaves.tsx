@@ -147,7 +147,7 @@ export default function BitacoraControlAutoclavesModule({ onBack, userEmail }: P
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_control_autoclaves'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_control_autoclaves'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraControlAutoclaves[] = [];
       querySnapshot.forEach((doc) => {

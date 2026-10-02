@@ -55,8 +55,8 @@ export default function BitacoraMantenimientoAutoclaves({ onBack, userEmail }: P
     turno: 'Turno 1',
     equipoId: 'AUTO CLAVE 1',
     tipoMantenimiento: 'Preventivo Periódico',
-    horometro: 6120,
-    tecnicoResponsable: userEmail,
+    horometro: '' as any,
+    tecnicoResponsable: '',
     presionVaporCalderaPsi: 75,
     presionCamaraPsi: 35,
     temperaturaC: 134,
@@ -79,7 +79,7 @@ export default function BitacoraMantenimientoAutoclaves({ onBack, userEmail }: P
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_mantenimiento_autoclaves'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_mantenimiento_autoclaves'), orderBy('fecha', 'desc'), limit(3000));
       const snap = await getDocs(q);
       const docs: BitacoraMantenimientoAutoclaves[] = [];
       snap.forEach(d => {

@@ -53,10 +53,10 @@ export default function BitacoraMantenimientoCompactadora({ onBack, userEmail }:
     turno: 'Turno 1',
     equipoId: 'COMP-01',
     nombreEquipo: 'Prensa Compactadora Hidráulica Vertical 01',
-    horometro: 4180,
+    horometro: '' as any,
     periodicidad: 'Semanal/Mensual (Técnico)',
     tipoMantenimiento: 'Preventivo',
-    tecnicoResponsable: userEmail,
+    tecnicoResponsable: '',
     fugaFluidosDebajoPlato: 'Conforme',
     hermeticidadSellosPuerta: 'Conforme',
     limpiezaDesinfeccionTolva: 'Conforme',
@@ -77,7 +77,7 @@ export default function BitacoraMantenimientoCompactadora({ onBack, userEmail }:
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_mantenimiento_compactadora'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_mantenimiento_compactadora'), orderBy('fecha', 'desc'), limit(3000));
       const snap = await getDocs(q);
       const docs: BitacoraMantenimientoCompactadora[] = [];
       snap.forEach(d => {

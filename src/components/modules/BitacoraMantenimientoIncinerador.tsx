@@ -54,12 +54,12 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
   const [formData, setFormData] = useState<Partial<BitacoraMantenimientoIncinerador>>({
     fecha: new Date().toISOString().split('T')[0],
     equipoId: 'INC-01',
-    nombreEquipo: 'Incinerador Industrial de RPBI 01',
+    nombreEquipo: 'Incinerador Industrial de DSH 01',
     tipoMantenimiento: 'Preventivo Programado',
     horaInicio: '07:30',
     horaFin: '12:00',
-    horasOperacion: 4250,
-    tecnicoResponsable: userEmail,
+    horasOperacion: '' as any,
+    tecnicoResponsable: '',
     supervisadoPor: 'Ing. Manuel López — Gerente de Planta',
     lotoCandadeo: true,
     temperaturaMenor40: true,
@@ -96,14 +96,14 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
     tempConsignaSecundariaAlcanzada: true,
     tiroNegativoVerificado: true,
     estadoFinal: 'Operativo Conforme',
-    firmaTecnico: userEmail,
-    firmaSupervisor: 'Ing. Manuel López — Gerente de Planta'
+    firmaTecnico: '',
+    firmaSupervisor: ''
   });
 
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_mantenimiento_incinerador'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_mantenimiento_incinerador'), orderBy('fecha', 'desc'), limit(3000));
       const snap = await getDocs(q);
       const docs: BitacoraMantenimientoIncinerador[] = [];
       snap.forEach(d => {
@@ -246,7 +246,7 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
 
       {/* Official SGI Header */}
       <FormHeader
-        titulo="BITÁCORA DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO - INCINERADOR RPBI"
+        titulo="BITÁCORA DE MANTENIMIENTO PREVENTIVO Y CORRECTIVO - INCINERADOR DSH"
         codigo="BIOTRASH 4.2. BIT-MTO-INC-001"
         version="1.2"
         fechaVersion="28/09/2026"
@@ -629,7 +629,7 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-500/20 text-orange-300 border border-orange-400/30 uppercase tracking-wider mb-2">
                 <FileSpreadsheet className="w-3.5 h-3.5" /> Módulo de Carga Masiva Oficial SGI
               </span>
-              <h3 className="text-xl font-black text-white">Importación de Mantenimiento de Incinerador RPBI</h3>
+              <h3 className="text-xl font-black text-white">Importación de Mantenimiento de Incinerador DSH</h3>
               <p className="text-xs text-slate-300 max-w-2xl mt-1">
                 Descargue la plantilla estandarizada en Excel (.xlsx), complete los registros de servicios preventivos y correctivos del incinerador y súbala para sincronizarla directamente en la base de datos oficial SGI.
               </p>
@@ -815,7 +815,7 @@ export default function BitacoraMantenimientoIncinerador({ onBack, userEmail }: 
       {/* IT Bulk Deletion Tool */}
       <GestorItDeleteModuleRecords
         collectionName="bitacora_mantenimiento_incinerador"
-        moduleName="Bitácora de Mantenimiento Incinerador RPBI"
+        moduleName="Bitácora de Mantenimiento Incinerador DSH"
         userEmail={userEmail}
         onDeleted={fetchRegistros}
       />

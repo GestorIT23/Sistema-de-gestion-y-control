@@ -2000,7 +2000,7 @@ export function downloadControl360VehiculosTemplate() {
 }
 
 /**
- * Plantilla de Carga Masiva: Bitácora de Mantenimiento Incinerador RPBI
+ * Plantilla de Carga Masiva: Bitácora de Mantenimiento Incinerador DSH
  */
 export function downloadMantenimientoIncineradorTemplate() {
   const today = new Date().toISOString().split('T')[0];

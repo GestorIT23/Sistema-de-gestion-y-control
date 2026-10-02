@@ -131,7 +131,7 @@ export default function BitacoraChecklistDiarioPlanta({ onBack, userEmail }: Pro
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_checklist_diario_planta'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_checklist_diario_planta'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraChecklistDiarioPlanta[] = [];
       querySnapshot.forEach((doc) => {

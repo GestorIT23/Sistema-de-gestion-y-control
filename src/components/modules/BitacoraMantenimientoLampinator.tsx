@@ -56,8 +56,8 @@ export default function BitacoraMantenimientoLampinator({ onBack, userEmail }: P
     tipoMantenimiento: 'Preventivo Programado',
     horaInicio: '08:00',
     horaFin: '11:00',
-    horometro: 1850,
-    tecnicoResponsable: userEmail,
+    horometro: '' as any,
+    tecnicoResponsable: '',
     operadorTurno: 'Carlos Rodas (Operador Planta)',
     mascarillaVaporHg: true,
     pruebaFugaVaporHgPpm: 0.002,
@@ -91,7 +91,7 @@ export default function BitacoraMantenimientoLampinator({ onBack, userEmail }: P
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_mantenimiento_lampinator'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_mantenimiento_lampinator'), orderBy('fecha', 'desc'), limit(3000));
       const snap = await getDocs(q);
       const docs: BitacoraMantenimientoLampinator[] = [];
       snap.forEach(d => {

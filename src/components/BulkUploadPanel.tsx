@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { db } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, writeBatch } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { 
@@ -698,13 +698,49 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
       try {
         const data = new Uint8Array(evt.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        for (const sName of workbook.SheetNames) {
+          const ws = workbook.Sheets[sName];
+          const testData = XLSX.utils.sheet_to_json<any>(ws);
+          if (testData && testData.length > 0) {
+            worksheet = ws;
+            break;
+          }
+        }
         const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
 
         if (!jsonData || jsonData.length === 0) {
           throw new Error('El archivo de Excel no contiene datos.');
         }
+
+        const isRowEmpty = (row: any): boolean => {
+          if (!row || typeof row !== 'object') return true;
+          const values = Object.values(row).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+          return values.length === 0;
+        };
+
+        const cleanData = jsonData.filter((row: any) => !isRowEmpty(row));
+        if (cleanData.length === 0) {
+          throw new Error('El archivo de Excel no contiene filas con datos válidos.');
+        }
+
+        const getRowVal = (row: any, ...keys: string[]) => {
+          if (!row) return undefined;
+          for (const k of keys) {
+            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+              return row[k];
+            }
+          }
+          const rowKeys = Object.keys(row);
+          for (const k of keys) {
+            const cleanTarget = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const found = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTarget);
+            if (found && row[found] !== undefined && row[found] !== null && String(row[found]).trim() !== '') {
+              return row[found];
+            }
+          }
+          return undefined;
+        };
 
         const isYes = (val: any) => {
           if (!val) return false;
@@ -715,6 +751,12 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         const parseNum = (val: any) => {
           const n = parseFloat(val);
           return isNaN(n) ? 0 : n;
+        };
+
+        const parseNumOrBlank = (val: any) => {
+          if (val === null || val === undefined || String(val).trim() === '') return '';
+          const n = parseFloat(val);
+          return isNaN(n) ? '' : n;
         };
 
         const parseExcelDate = (val: any): string => {
@@ -772,13 +814,18 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
         };
 
         // Validate 6-month temporal span limit across rows
-        const dateFields = ['Fecha', 'fecha', 'FECHA', 'Fecha Visita', 'fechaVisita', 'Fecha Operacion', 'fechaOperacion'];
+        const dateFields = [
+          'Fecha', 'fecha', 'FECHA', 'Fecha (AAAA-MM-DD)', 'Fecha (YYYY-MM-DD)', 
+          'Fecha Visita', 'fechaVisita', 'Fecha Operacion', 'fechaOperacion', 
+          'Fecha Desinfección', 'Fecha del Servicio'
+        ];
         const extractedDates: Date[] = [];
 
-        jsonData.forEach((row: any) => {
+        cleanData.forEach((row: any) => {
           for (const df of dateFields) {
-            if (row[df]) {
-              const dStr = parseExcelDate(row[df]);
+            const val = getRowVal(row, df);
+            if (val) {
+              const dStr = parseExcelDate(val);
               const d = new Date(dStr);
               if (!isNaN(d.getTime())) {
                 extractedDates.push(d);
@@ -818,7 +865,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                 fecha: rowFecha,
                 turno: row.Turno || 'Matutino',
                 area: row.Area || 'Planta',
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 filas: []
               };
@@ -843,7 +890,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalContenedores: parseNum(row['Total Contenedores']),
                 estadoGeneral: {
@@ -874,7 +921,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalLibras: parseNum(row['Total Libras']),
                 totalPacas: parseNum(row['Total Pacas']),
@@ -904,7 +951,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 noBoletaAmsa: boletaAmsaGeneral,
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 totalViajes: parseNum(row['Total Viajes']),
@@ -938,7 +985,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 incinerador: row.Incinerador || 'Incinerador 1',
                 duracionProceso: row['Duracion Proceso'] || '4 horas',
@@ -971,7 +1018,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 enteGenerador: row['Ente Generador'] || '',
                 pesoTicketBascula: parseNum(row['Peso Ticket Bascula']),
@@ -1019,7 +1066,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 turno: row.Turno || 'Matutino',
                 filas: []
@@ -1048,7 +1095,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
                 areaFisica: row['Area Fisica'] || '',
                 filas: []
@@ -1076,9 +1123,9 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             if (!groups[key]) {
               groups[key] = {
                 fecha: rowFecha,
-                responsable: row.Responsable || userEmail,
+                responsable: row.Responsable || '',
                 observaciones: row.Observaciones || 'Carga masiva desde Excel',
-                responsableEntrega: row['Responsable Entrega'] || userEmail,
+                responsableEntrega: row['Responsable Entrega'] || '',
                 filas: []
               };
             }
@@ -1093,7 +1140,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                 tieneGuantes: isYes(row['Tiene Guantes (Si/No)']),
                 tieneCareta: isYes(row['Tiene Careta (Si/No)']),
                 motivoDotacion: row['Motivo Dotacion'] || 'Dotación',
-                firmaRecibido: row['Firma Recibido'] || 'SGI',
+                firmaRecibido: row['Firma Recibido'] || '',
                 usaUniformeCompleto: isYes(row['Usa Uniforme Completo (Si/No)']),
                 usaBotasSeguridad: isYes(row['Usa Botas Seguridad (Si/No)']),
                 cumpleLimpieza: isYes(row['Cumple Limpieza (Si/No)']),
@@ -1108,7 +1155,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               cuartoFrio: row['Cuarto Frio'] || 'Sección Fría',
               horaInspeccion: row['Hora Inspeccion'] || '08:00',
@@ -1141,7 +1188,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               noTrituradora: row['No Trituradora'] || 'Trituradora T-100',
               tiempoProceso: row['Tiempo Proceso'] || '120 minutos',
@@ -1166,7 +1213,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               noAutoclave: row['No Autoclave'] || '',
               pesoProceso: parseNum(row['Peso Proceso']),
@@ -1210,7 +1257,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               turno: row.Turno || 'Matutino',
               ubicacionBanos: row['Ubicacion Banos'] || 'Planta',
@@ -1237,7 +1284,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               observaciones: row.Observaciones || 'Carga masiva desde Excel',
               turno: row.Turno || 'Matutino',
               noReporte: String(row['No Reporte'] || ''),
@@ -1248,17 +1295,17 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               codigoEmpleado: String(row['Codigo Empleado'] || ''),
               areaAsignada: row['Area Asignada'] || '',
               supervisorCargo: row['Supervisor Cargo'] || '',
-              lecturaInicialHorometro: parseNum(row['Lectura Inicial Horometro']),
-              lecturaFinalHorometro: parseNum(row['Lectura Final Horometro']),
-              totalOperadoHoras: parseNum(row['Total Operado Horas']),
+              lecturaInicialHorometro: parseNumOrBlank(row['Lectura Inicial Horometro']),
+              lecturaFinalHorometro: parseNumOrBlank(row['Lectura Final Horometro']),
+              totalOperadoHoras: parseNumOrBlank(row['Total Operado Horas']),
               horaInicio: row['Hora Inicio'] || '07:00',
               horaTermino: row['Hora Termino'] || '17:00',
-              horasPausaInactividad: parseNum(row['Horas Pausa Inactividad']),
+              horasPausaInactividad: parseNumOrBlank(row['Horas Pausa Inactividad']),
               tipoActividadPrincipal: row['Tipo Actividad Principal'] || '',
               tipoMaterialTrabajado: row['Tipo Material Trabajado'] || '',
               descripcionActividades: row['Descripcion Actividades'] || '',
               nivelCombustibleInicio: row['Nivel Combustible Inicio'] || '',
-              litrosCargados: parseNum(row['Litros Cargados']),
+              litrosCargados: parseNumOrBlank(row['Litros Cargados']),
               nivelCombustibleFinal: row['Nivel Combustible Final'] || '',
               estadoEquipo: row['Estado Equipo (Bueno/Falla leve/Falla grave/Equipo parado)'] || 'Bueno — sin novedades',
               descripcionFallasObservaciones: row['Descripcion Fallas Observaciones'] || '',
@@ -1282,7 +1329,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           jsonData.forEach((row) => {
             recordsToSave.push({
               fecha: parseExcelDate(row.Fecha || row.fecha),
-              responsable: row.Responsable || userEmail,
+              responsable: row.Responsable || '',
               horaInicio: row['Hora Inicio'] || '08:00',
               horaFin: row['Hora Fin'] || '08:30',
               quimico: row.Quimico || 'Innibith',
@@ -1316,8 +1363,8 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
                 guantesNitriloNeopreno: isYes(row['EPP Guantes (Si/No)'])
               },
               observaciones: row.Observaciones || 'Carga masiva desinfección',
-              firmaOperador: row['Firma Operador'] || 'Operador SGI',
-              firmaSupervisor: row['Firma Supervisor'] || 'Supervisor SGI',
+              firmaOperador: row['Firma Operador'] || '',
+              firmaSupervisor: row['Firma Supervisor'] || '',
               elaboro: 'Gerente Comercial Industrial',
               reviso: 'Comité ISO',
               aprobo: 'Gerente General',
@@ -1338,8 +1385,8 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               fecha: parseExcelDate(row.Fecha),
               turno: row.Turno || 'Matutino',
               areaZona: row.Area || row['Area / Zona'] || 'Planta Principal',
-              inspector: row.Responsable || row.Inspector || userEmail,
-              responsable: row.Responsable || row.Inspector || userEmail,
+              inspector: row.Responsable || row.Inspector || '',
+              responsable: row.Responsable || row.Inspector || '',
               puntajeHse: parseNum(row['Puntaje HSE'] || 100),
               puntajeCalidad: parseNum(row['Puntaje Calidad'] || 100),
               puntajeMantenimiento: parseNum(row['Puntaje Mantenimiento'] || 100),
@@ -1351,7 +1398,7 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               seccionMantenimiento: [],
               seccion5s: [],
               firmas: {
-                inspector: row.Responsable || 'Inspector SGI',
+                inspector: row.Responsable || row.Inspector || '',
                 gerentePlanta: 'Ing. Manuel López — Gerente de Planta'
               }
             });
@@ -1384,11 +1431,11 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             recordsToSave.push({
               folio: `CAL-${Date.now().toString().slice(-6)}-${idx + 1}`,
               fecha: parseExcelDate(row.Fecha),
-              responsable: row['Operador Responsable'] || row.Operador || userEmail,
+              responsable: row['Operador Responsable'] || row.Operador || '',
               observaciones: row.Comentarios || row['Comentarios Operativos'] || 'Operación de caldera registrada vía carga masiva Excel',
               turnoSeleccionado: normalizedTurno,
               identificacionCaldera: row['Identificacion Caldera'] || row.Caldera || 'Caldera Clayton Mod. E-100 (Principal)',
-              operadorResponsable: row['Operador Responsable'] || row.Operador || userEmail,
+              operadorResponsable: row['Operador Responsable'] || row.Operador || '',
               turno1: {
                 presionVaporPsi: parseNum(row['T1 Presion Vapor (PSI)'] || row['T1 Presión Vapor PSI (80-120)'] || 105),
                 tempAguaAlimentacionC: parseNum(row['T1 Temp Agua Alimentacion (C)'] || row['T1 Temp Agua Alimentación °C (80-90)'] || 85),
@@ -1436,12 +1483,12 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               comentarios: row.Comentarios || row['Comentarios Operativos'] || 'Operación de caldera registrada vía carga masiva Excel',
               dictamenTecnico: row['Dictamen Tecnico'] || row['Dictamen Técnico'] || 'Caldera operando conforme a estándares del SGI',
               estadoOperacional: (row['Estado Caldera'] || 'Operativo / Conforme') as any,
-              firmaResponsable: row['Firma Operador'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              firmaResponsable: row['Firma Operador'] || '',
+              firmaSupervisor: row['Firma Supervisor'] || ''
             });
           });
         } else if (tipo === 'evaluacion_360_incinerador') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
             const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
             const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
             const secComb = parseNum(row['Puntaje Combustion'] || row['Puntaje Combustión'] || 95);
@@ -1450,22 +1497,27 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
             const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secComb*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
 
+            const insp = getRowVal(row, 'Inspector SGI', 'Inspector', 'Auditor') || '';
+            const opr = getRowVal(row, 'Operador Responsable', 'Operador Asignado', 'Operador') || '';
+            const sup = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual'));
+
             recordsToSave.push({
               folio: row.Folio || `EV360-INC-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
-              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° incinerador importada masivamente',
-              equipoId: row['Equipo ID'] || 'INC-01',
-              nombreEquipo: row['Nombre Equipo'] || 'Incinerador Pirolítico Industrial 01',
-              turno: (row.Turno || 'Matutino') as any,
-              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 3850),
-              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Juan Carlos Méndez',
-              inspectorSgi: row['Inspector SGI'] || userEmail,
-              tempCamaraPrimariaC: parseNum(row['Temp Camara Primaria (C)'] || row['Temp Cámara Primaria °C'] || 850),
-              tempCamaraSecundariaC: parseNum(row['Temp Camara Secundaria (C)'] || row['Temp Cámara Secundaria °C'] || 1050),
-              presionCombustibleBar: parseNum(row['Presion Combustible (Bar)'] || row['Presión Combustible Bar'] || 3.2),
-              opacidadHumoPorc: parseNum(row['Opacidad Humo (%)'] || row['Opacidad Humo %'] || 5),
-              tipoCombustible: row['Tipo Combustible'] || 'Diésel Bajo Azufre (LSD)',
+              fecha: parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA')),
+              responsable: insp || opr || '',
+              observaciones: getRowVal(row, 'Observaciones Generales', 'Observaciones') || 'Evaluación 360° incinerador importada masivamente',
+              equipoId: getRowVal(row, 'Equipo ID', 'Equipo ID (INC-01 / INC-02)', 'Equipo') || 'INC-01',
+              nombreEquipo: getRowVal(row, 'Nombre Equipo') || 'Incinerador Pirolítico Industrial 01',
+              turno: (getRowVal(row, 'Turno') || 'Matutino') as any,
+              horometroActual: horo,
+              operadorAsignado: opr,
+              inspectorSgi: insp,
+              tempCamaraPrimariaC: parseNumOrBlank(getRowVal(row, 'Temp Camara Primaria (C)', 'Temp Cámara Primaria °C')),
+              tempCamaraSecundariaC: parseNumOrBlank(getRowVal(row, 'Temp Camara Secundaria (C)', 'Temp Cámara Secundaria °C')),
+              presionCombustibleBar: parseNumOrBlank(getRowVal(row, 'Presion Combustible (Bar)', 'Presión Combustible Bar')),
+              opacidadHumoPorc: parseNumOrBlank(getRowVal(row, 'Opacidad Humo (%)', 'Opacidad Humo %')),
+              tipoCombustible: getRowVal(row, 'Tipo Combustible') || 'Diésel Bajo Azufre (LSD)',
               itemsSeguridad: DEFAULT_ITEMS_INCINERADOR.seguridad,
               itemsMecanico: DEFAULT_ITEMS_INCINERADOR.mecanico,
               itemsHidraulicoCombustion: DEFAULT_ITEMS_INCINERADOR.hidraulicoCombustion,
@@ -1479,19 +1531,19 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               puntajeBioseguridadLimpieza: secBio,
               puntajeOperatividad: secOpr,
               puntajeGlobal: secGlob,
-              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
-              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
-              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de horno térmico registrada vía carga masiva Excel',
+              veredictoOperacional: (getRowVal(row, 'Veredicto Operacional') || 'Aprobado para Operar') as any,
+              nivelRiesgo: (getRowVal(row, 'Nivel Riesgo') || 'Bajo') as any,
+              observacionesGenerales: getRowVal(row, 'Observaciones Generales') || 'Auditoría 360° de horno térmico registrada vía carga masiva Excel',
               accionesCorrectivas: [],
               firmas: {
-                inspector: row['Firma Inspector'] || userEmail,
-                operador: row['Firma Operador'] || 'Juan Carlos Méndez',
-                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+                inspector: getRowVal(row, 'Firma Inspector') || insp,
+                operador: getRowVal(row, 'Firma Operador') || opr,
+                supervisor: sup
               }
             });
           });
         } else if (tipo === 'evaluacion_360_tunel_lavado') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
             const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
             const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 100);
             const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 95);
@@ -1500,22 +1552,27 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             const secOpr = parseNum(row['Puntaje Operatividad'] || 95);
             const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
 
+            const insp = getRowVal(row, 'Inspector SGI', 'Inspector', 'Auditor') || '';
+            const opr = getRowVal(row, 'Operador Responsable', 'Operador Asignado', 'Operador') || '';
+            const sup = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual'));
+
             recordsToSave.push({
               folio: row.Folio || `EV360-TUN-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
-              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° túnel de lavado importada masivamente',
-              equipoId: row['Equipo ID'] || 'TUN-01',
-              nombreEquipo: row['Nombre Equipo'] || 'Túnel Hidro-Lavador Automático 01',
-              turno: (row.Turno || 'Matutino') as any,
-              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 2495),
-              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Carlos Eduardo Gómez',
-              inspectorSgi: row['Inspector SGI'] || userEmail,
-              presionBombaLavadoPsi: parseNum(row['Presion Bomba Lavado (PSI)'] || row['Presión Bomba Lavado PSI'] || 1850),
-              ppmDesinfectante: parseNum(row['PPM Desinfectante'] || 200),
-              temperaturaAguaC: parseNum(row['Temperatura Agua (C)'] || row['Temperatura Agua °C'] || 60),
-              velocidadCadenaMetrosMin: parseNum(row['Velocidad Cadena (m/min)'] || 3.5),
-              quimicoDosificado: row['Quimico Dosificado'] || row['Químico Dosificado'] || 'Amonio Cuaternario 5ta Gen / Ácido Peracético',
+              fecha: parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA')),
+              responsable: insp || opr || '',
+              observaciones: getRowVal(row, 'Observaciones Generales', 'Observaciones') || 'Evaluación 360° túnel de lavado importada masivamente',
+              equipoId: getRowVal(row, 'Equipo ID', 'Equipo ID (TUN-01)', 'Equipo') || 'TUN-01',
+              nombreEquipo: getRowVal(row, 'Nombre Equipo') || 'Túnel Hidro-Lavador Automático 01',
+              turno: (getRowVal(row, 'Turno') || 'Matutino') as any,
+              horometroActual: horo,
+              operadorAsignado: opr,
+              inspectorSgi: insp,
+              presionBombaLavadoPsi: parseNumOrBlank(getRowVal(row, 'Presion Bomba Lavado (PSI)', 'Presión Bomba Lavado PSI')),
+              ppmDesinfectante: parseNumOrBlank(getRowVal(row, 'PPM Desinfectante')),
+              temperaturaAguaC: parseNumOrBlank(getRowVal(row, 'Temperatura Agua (C)', 'Temperatura Agua °C')),
+              velocidadCadenaMetrosMin: parseNumOrBlank(getRowVal(row, 'Velocidad Cadena (m/min)')),
+              quimicoDosificado: getRowVal(row, 'Quimico Dosificado', 'Químico Dosificado') || 'Amonio Cuaternario 5ta Gen / Ácido Peracético',
               itemsSeguridad: DEFAULT_ITEMS_TUNEL_LAVADO.seguridad,
               itemsMecanico: DEFAULT_ITEMS_TUNEL_LAVADO.mecanico,
               itemsHidraulicoCombustion: DEFAULT_ITEMS_TUNEL_LAVADO.hidraulicoCombustion,
@@ -1529,19 +1586,19 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               puntajeBioseguridadLimpieza: secBio,
               puntajeOperatividad: secOpr,
               puntajeGlobal: secGlob,
-              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
-              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
-              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de túnel hidrolavador registrada vía carga masiva Excel',
+              veredictoOperacional: (getRowVal(row, 'Veredicto Operacional') || 'Aprobado para Operar') as any,
+              nivelRiesgo: (getRowVal(row, 'Nivel Riesgo') || 'Bajo') as any,
+              observacionesGenerales: getRowVal(row, 'Observaciones Generales') || 'Auditoría 360° de túnel hidrolavador registrada vía carga masiva Excel',
               accionesCorrectivas: [],
               firmas: {
-                inspector: row['Firma Inspector'] || userEmail,
-                operador: row['Firma Operador'] || 'Carlos Eduardo Gómez',
-                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+                inspector: getRowVal(row, 'Firma Inspector') || insp,
+                operador: getRowVal(row, 'Firma Operador') || opr,
+                supervisor: sup
               }
             });
           });
         } else if (tipo === 'evaluacion_360_compactadora') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
             const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
             const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
             const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 100);
@@ -1550,22 +1607,27 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
             const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
             const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
 
+            const insp = getRowVal(row, 'Inspector SGI', 'Inspector', 'Auditor') || '';
+            const opr = getRowVal(row, 'Operador Responsable', 'Operador Asignado', 'Operador') || '';
+            const sup = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual'));
+
             recordsToSave.push({
               folio: row.Folio || `EV360-COMP-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
-              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° compactadora importada masivamente',
-              equipoId: row['Equipo ID'] || 'COMP-01',
-              nombreEquipo: row['Nombre Equipo'] || 'Compactadora Hidráulica Vertical 01',
-              turno: (row.Turno || 'Matutino') as any,
-              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 4125),
-              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Marcos Tulio Juárez',
-              inspectorSgi: row['Inspector SGI'] || userEmail,
-              presionPrensadoPsi: parseNum(row['Presion Prensado (PSI)'] || row['Presión Prensado PSI'] || 2800),
-              temperaturaAceiteC: parseNum(row['Temperatura Aceite (C)'] || row['Temperatura Aceite °C'] || 48),
-              pesoPromedioPacaLbs: parseNum(row['Peso Promedio Paca (Lbs)'] || 450),
-              tiempoCicloPrensadoSeg: parseNum(row['Tiempo Ciclo Prensado (Seg)'] || 42),
-              tipoFleje: row['Tipo Fleje'] || 'Alambre Recocido Calibre 14 Alta Resistencia',
+              fecha: parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA')),
+              responsable: insp || opr || '',
+              observaciones: getRowVal(row, 'Observaciones Generales', 'Observaciones') || 'Evaluación 360° compactadora importada masivamente',
+              equipoId: getRowVal(row, 'Equipo ID', 'Equipo ID (COMP-01 / COMP-02)', 'Equipo') || 'COMP-01',
+              nombreEquipo: getRowVal(row, 'Nombre Equipo') || 'Compactadora Hidráulica Vertical 01',
+              turno: (getRowVal(row, 'Turno') || 'Matutino') as any,
+              horometroActual: horo,
+              operadorAsignado: opr,
+              inspectorSgi: insp,
+              presionPrensadoPsi: parseNumOrBlank(getRowVal(row, 'Presion Prensado (PSI)', 'Presión Prensado PSI')),
+              temperaturaAceiteC: parseNumOrBlank(getRowVal(row, 'Temperatura Aceite (C)', 'Temperatura Aceite °C')),
+              pesoPromedioPacaLbs: parseNumOrBlank(getRowVal(row, 'Peso Promedio Paca (Lbs)')),
+              tiempoCicloPrensadoSeg: parseNumOrBlank(getRowVal(row, 'Tiempo Ciclo Prensado (Seg)')),
+              tipoFleje: getRowVal(row, 'Tipo Fleje') || 'Alambre Recocido Calibre 14 Alta Resistencia',
               itemsSeguridad: DEFAULT_ITEMS_COMPACTADORA.seguridad,
               itemsMecanico: DEFAULT_ITEMS_COMPACTADORA.mecanico,
               itemsHidraulicoCombustion: DEFAULT_ITEMS_COMPACTADORA.hidraulicoCombustion,
@@ -1579,43 +1641,48 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               puntajeBioseguridadLimpieza: secBio,
               puntajeOperatividad: secOpr,
               puntajeGlobal: secGlob,
-              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
-              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
-              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de compactadora registrada vía carga masiva Excel',
+              veredictoOperacional: (getRowVal(row, 'Veredicto Operacional') || 'Aprobado para Operar') as any,
+              nivelRiesgo: (getRowVal(row, 'Nivel Riesgo') || 'Bajo') as any,
+              observacionesGenerales: getRowVal(row, 'Observaciones Generales') || 'Auditoría 360° de compactadora registrada vía carga masiva Excel',
               accionesCorrectivas: [],
               firmas: {
-                inspector: row['Firma Inspector'] || userEmail,
-                operador: row['Firma Operador'] || 'Marcos Tulio Juárez',
-                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+                inspector: getRowVal(row, 'Firma Inspector') || insp,
+                operador: getRowVal(row, 'Firma Operador') || opr,
+                supervisor: sup
               }
             });
           });
         } else if (tipo === 'evaluacion_360_trituradora') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
             const secSeg = parseNum(row['Puntaje Seguridad'] || 100);
             const secMec = parseNum(row['Puntaje Mecanico'] || row['Puntaje Mecánico'] || 95);
-            const secHid = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 95);
+            const secComb = parseNum(row['Puntaje Hidraulico'] || row['Puntaje Hidráulico'] || 95);
             const secElec = parseNum(row['Puntaje Electrico'] || row['Puntaje Eléctrico'] || 100);
             const secBio = parseNum(row['Puntaje Bioseguridad'] || 100);
             const secOpr = parseNum(row['Puntaje Operatividad'] || 100);
-            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secHid*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+            const secGlob = parseNum(row['Puntaje Global'] || Math.round((secSeg*0.25)+(secMec*0.20)+(secComb*0.20)+(secElec*0.15)+(secBio*0.10)+(secOpr*0.10)));
+
+            const insp = getRowVal(row, 'Inspector SGI', 'Inspector', 'Auditor') || '';
+            const opr = getRowVal(row, 'Operador Responsable', 'Operador Asignado', 'Operador') || '';
+            const sup = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual'));
 
             recordsToSave.push({
               folio: row.Folio || `EV360-TRIT-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Inspector SGI'] || row.Responsable || userEmail,
-              observaciones: row['Observaciones Generales'] || row.Observaciones || 'Evaluación 360° trituradora importada masivamente',
-              equipoId: row['Equipo ID'] || 'TRIT-01',
-              nombreEquipo: row['Nombre Equipo'] || 'Trituradora Shredder Industrial Doble Eje 01',
-              turno: (row.Turno || 'Matutino') as any,
-              horometroActual: parseNum(row['Horometro'] || row['Horómetro Actual'] || 5285),
-              operadorAsignado: row['Operador Responsable'] || row['Operador Asignado'] || 'Byron Estuardo Reyes',
-              inspectorSgi: row['Inspector SGI'] || userEmail,
-              amperajeMotorA: parseNum(row['Amperaje Motor (A)'] || 62),
-              velocidadRotacionRpm: parseNum(row['Velocidad Rotacion (RPM)'] || row['Velocidad Rotación RPM'] || 24),
-              tiempoRespuestaAutoReverseSeg: parseNum(row['Tiempo Auto-Reverse (Seg)'] || 1.2),
-              desgasteCuchillasMm: parseNum(row['Desgaste Cuchillas (mm)'] || 1.5),
-              capacidadProcesamientoLbsHr: parseNum(row['Capacidad Procesamiento (Lbs/Hr)'] || 2500),
+              fecha: parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA')),
+              responsable: insp || opr || '',
+              observaciones: getRowVal(row, 'Observaciones Generales', 'Observaciones') || 'Evaluación 360° trituradora importada masivamente',
+              equipoId: getRowVal(row, 'Equipo ID', 'Equipo ID (TRIT-01 / TRIT-02)', 'Equipo') || 'TRIT-01',
+              nombreEquipo: getRowVal(row, 'Nombre Equipo') || 'Trituradora Shredder Industrial Doble Eje 01',
+              turno: (getRowVal(row, 'Turno') || 'Matutino') as any,
+              horometroActual: horo,
+              operadorAsignado: opr,
+              inspectorSgi: insp,
+              amperajeMotorA: parseNumOrBlank(getRowVal(row, 'Amperaje Motor (A)', 'Amperaje Motor A')),
+              velocidadRotacionRpm: parseNumOrBlank(getRowVal(row, 'Velocidad Rotacion (RPM)', 'Velocidad Rotación RPM')),
+              tiempoRespuestaAutoReverseSeg: parseNumOrBlank(getRowVal(row, 'Tiempo Auto-Reverse (Seg)')),
+              desgasteCuchillasMm: parseNumOrBlank(getRowVal(row, 'Desgaste Cuchillas (mm)')),
+              capacidadProcesamientoLbsHr: parseNumOrBlank(getRowVal(row, 'Capacidad Procesamiento (Lbs/Hr)')),
               itemsSeguridad: DEFAULT_ITEMS_TRITURADORA.seguridad,
               itemsMecanico: DEFAULT_ITEMS_TRITURADORA.mecanico,
               itemsHidraulicoCombustion: DEFAULT_ITEMS_TRITURADORA.hidraulicoCombustion,
@@ -1624,314 +1691,405 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
               itemsOperatividad: DEFAULT_ITEMS_TRITURADORA.operatividad,
               puntajeSeguridad: secSeg,
               puntajeMecanico: secMec,
-              puntajeHidraulicoCombustion: secHid,
+              puntajeHidraulicoCombustion: secComb,
               puntajeElectricoControl: secElec,
               puntajeBioseguridadLimpieza: secBio,
               puntajeOperatividad: secOpr,
               puntajeGlobal: secGlob,
-              veredictoOperacional: (row['Veredicto Operacional'] || 'Aprobado para Operar') as any,
-              nivelRiesgo: (row['Nivel Riesgo'] || 'Bajo') as any,
-              observacionesGenerales: row['Observaciones Generales'] || 'Auditoría 360° de trituradora shredder registrada vía carga masiva Excel',
+              veredictoOperacional: (getRowVal(row, 'Veredicto Operacional') || 'Aprobado para Operar') as any,
+              nivelRiesgo: (getRowVal(row, 'Nivel Riesgo') || 'Bajo') as any,
+              observacionesGenerales: getRowVal(row, 'Observaciones Generales') || 'Auditoría 360° de trituradora shredder registrada vía carga masiva Excel',
               accionesCorrectivas: [],
               firmas: {
-                inspector: row['Firma Inspector'] || userEmail,
-                operador: row['Firma Operador'] || 'Byron Estuardo Reyes',
-                supervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+                inspector: getRowVal(row, 'Firma Inspector') || insp,
+                operador: getRowVal(row, 'Firma Operador') || opr,
+                supervisor: sup
               }
             });
           });
         } else if (tipo === 'control_360_vehiculos') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const cond = getRowVal(row, 'Conductor', 'Piloto Asignado', 'Piloto') || '';
+            const sup = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+
             recordsToSave.push({
               folio: row.Folio || `V360-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row.Responsable || row.Conductor || userEmail,
-              observaciones: row['Observaciones Salida'] || row.Observaciones || 'Inspección 360° de vehículo importada masivamente',
-              turno: (row.Turno || 'AM') as any,
-              centro: row['Centro Operaciones'] || row.Centro || 'VILLA NUEVA 1',
-              ruta: row.Ruta || 'VN1-BLA',
-              placa: row.Placa || 'C-442BTL',
-              estadoPlaca: (row['Estado Placa'] || 'Activa') as any,
-              tipoVehiculo: (row['Tipo Vehiculo'] || row['Tipo Vehículo'] || 'Camion') as any,
-              conductor: row.Conductor || row['Piloto Asignado'] || 'Marcos Danilo Arriola',
-              noLicencia: row['No Licencia'] || '2489-1092-0101',
-              tipoLicencia: row['Tipo Licencia'] || 'Tipo A Profesional',
-              telefono: row.Telefono || row['Teléfono'] || '5544-3322',
-              contenedoresRojosLimpiosVacios: parseNum(row['Contenedores Rojos Limpios Vacios'] || row['Contenedores Rojos Limpios Vacíos'] || 16),
+              fecha: parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA')),
+              responsable: cond || sup || '',
+              observaciones: getRowVal(row, 'Observaciones Salida', 'Observaciones') || 'Inspección 360° de vehículo importada masivamente',
+              turno: (getRowVal(row, 'Turno') || 'AM') as any,
+              centro: getRowVal(row, 'Centro Operaciones', 'Centro') || 'VILLA NUEVA 1',
+              ruta: getRowVal(row, 'Ruta') || 'VN1-BLA',
+              placa: getRowVal(row, 'Placa') || 'C-442BTL',
+              estadoPlaca: (getRowVal(row, 'Estado Placa') || 'Activa') as any,
+              tipoVehiculo: (getRowVal(row, 'Tipo Vehiculo', 'Tipo Vehículo') || 'Camion') as any,
+              conductor: cond,
+              noLicencia: getRowVal(row, 'No Licencia', 'Número Licencia') || '',
+              tipoLicencia: getRowVal(row, 'Tipo Licencia') || 'Tipo A Profesional',
+              telefono: getRowVal(row, 'Telefono', 'Teléfono') || '',
+              contenedoresRojosLimpiosVacios: parseNumOrBlank(getRowVal(row, 'Contenedores Rojos Limpios Vacios', 'Contenedores Rojos Limpios Vacíos')),
               checklistMecanico: {
-                frenos: isYes(row['Frenos Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                llantas: isYes(row['Llantas Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                luces: isYes(row['Luces Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                extintor: isYes(row['Extintor Vigente (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                cinturones: isYes(row['Cinturones Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
+                frenos: isYes(getRowVal(row, 'Frenos Conforme (Si/No)', 'Frenos Conforme') ?? true) ? 'OK' : 'Falla',
+                llantas: isYes(getRowVal(row, 'Llantas Conforme (Si/No)', 'Llantas Conforme') ?? true) ? 'OK' : 'Falla',
+                luces: isYes(getRowVal(row, 'Luces Conforme (Si/No)', 'Luces Conforme') ?? true) ? 'OK' : 'Falla',
+                extintor: isYes(getRowVal(row, 'Extintor Vigente (Si/No)', 'Extintor Vigente') ?? true) ? 'OK' : 'Falla',
+                cinturones: isYes(getRowVal(row, 'Cinturones Conforme (Si/No)', 'Cinturones Conforme') ?? true) ? 'OK' : 'Falla',
                 espejos: 'OK',
                 combustible: 'OK',
                 botiquin: 'OK'
               },
               checklistBioseguridad: {
-                selloHermetico: isYes(row['Sello Hermetico (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                biohazardVisible: isYes(row['Rotulo Biohazard Visible (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                desinfeccionPrevia: isYes(row['Desinfeccion Previa Realizada (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                kitDerrame: isYes(row['Kit Antiderrame Conforme (Si/No)'] ?? true) ? 'OK' : 'Falla',
-                eppCompleto: isYes(row['EPP Completo (Si/No)'] ?? true) ? 'OK' : 'Falla'
+                selloHermetico: isYes(getRowVal(row, 'Sello Hermetico (Si/No)', 'Sello Hermetico') ?? true) ? 'OK' : 'Falla',
+                biohazardVisible: isYes(getRowVal(row, 'Rotulo Biohazard Visible (Si/No)', 'Rotulo Biohazard Visible') ?? true) ? 'OK' : 'Falla',
+                desinfeccionPrevia: isYes(getRowVal(row, 'Desinfeccion Previa Realizada (Si/No)', 'Desinfeccion Previa Realizada') ?? true) ? 'OK' : 'Falla',
+                kitDerrame: isYes(getRowVal(row, 'Kit Antiderrame Conforme (Si/No)', 'Kit Antiderrame Conforme') ?? true) ? 'OK' : 'Falla',
+                eppCompleto: isYes(getRowVal(row, 'EPP Completo (Si/No)', 'EPP Completo') ?? true) ? 'OK' : 'Falla'
               },
-              horaSalida: row['Hora Salida'] || '06:30',
-              kmSalida: parseNum(row['KM Salida'] || 128450),
-              obsSalida: row['Observaciones Salida'] || 'Vehículo despachado conforme a checklist 360',
+              horaSalida: getRowVal(row, 'Hora Salida', 'Hora Salida (HH:MM)') || '06:30',
+              kmSalida: parseNumOrBlank(getRowVal(row, 'KM Salida', 'Kilometraje Salida')),
+              obsSalida: getRowVal(row, 'Observaciones Salida') || 'Vehículo despachado conforme a checklist 360',
               todosCriticosAprobados: true,
-              horaLlegadaPlanta: row['Hora Llegada Planta'] || '14:15',
-              kmLlegada: parseNum(row['KM Llegada'] || 128540),
-              kmRecorridos: Math.max(0, parseNum(row['KM Llegada'] || 128540) - parseNum(row['KM Salida'] || 128450)),
-              horaLlegadaFinal: row['Hora Llegada Planta'] || '14:15',
-              pesoEntregadoLbs: parseNum(row['Peso Entregado Lbs'] || 2450),
-              recibidoPorPlanta: row['Recibido Por Planta'] || 'Receptor Planta BIOTRASH',
+              horaLlegadaPlanta: getRowVal(row, 'Hora Llegada Planta') || '14:15',
+              kmLlegada: parseNumOrBlank(getRowVal(row, 'KM Llegada')),
+              kmRecorridos: '',
+              horaLlegadaFinal: getRowVal(row, 'Hora Llegada Planta') || '14:15',
+              pesoEntregadoLbs: parseNumOrBlank(getRowVal(row, 'Peso Entregado Lbs')),
+              recibidoPorPlanta: getRowVal(row, 'Recibido Por Planta') || '',
               descargaCompleta: true,
               limpiezaInterior: true,
-              desinfectanteUtilizado: row['Desinfectante Utilizado'] || 'Amonio Cuaternario al 10%',
+              desinfectanteUtilizado: getRowVal(row, 'Desinfectante Utilizado') || 'Amonio Cuaternario al 10%',
               tiempoContactoMinutos: 15,
               horaFinDesinfeccion: '14:45',
-              novedadesRuta: row['Novedades Ruta'] || 'Ruta completada sin incidencias mecánicas ni biológicas',
-              firmaConductor: row['Firma Conductor'] || row.Conductor || 'Marcos Danilo Arriola',
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              novedadesRuta: getRowVal(row, 'Novedades Ruta') || 'Ruta completada sin incidencias mecánicas ni biológicas',
+              firmaConductor: getRowVal(row, 'Firma Conductor') || cond,
+              firmaSupervisor: sup
             });
           });
         } else if (tipo === 'mantenimiento_incinerador') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rowFecha = parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA'));
+            const tecnico = getRowVal(row, 'Tecnico Responsable', 'Técnico Responsable', 'Tecnico', 'Técnico', 'Firma Tecnico', 'Firma Técnico') || '';
+            const supervisor = getRowVal(row, 'Supervisado Por', 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horómetro (Horas Operación)', 'Horas Operacion'));
+            const eqId = getRowVal(row, 'Equipo ID', 'Equipo ID (INC-01 / INC-02)', 'Equipo') || 'INC-01';
+            const desc = getRowVal(row, 'Descripcion Trabajos y Repuestos', 'Descripción Trabajos y Repuestos', 'Descripcion', 'Descripción') || '';
+
             recordsToSave.push({
               folio: row.Folio || `MTO-INC-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              observaciones: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento preventivo de incinerador importado masivamente',
-              equipoId: row['Equipo ID'] || 'INC-01',
-              nombreEquipo: (row['Equipo ID'] === 'INC-02') ? 'Incinerador Pirolítico Industrial 02' : 'Incinerador Pirolítico Industrial 01',
-              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Programado') as any,
-              horaInicio: row['Hora Inicio'] || '07:00',
-              horaFin: row['Hora Fin'] || '11:30',
-              horasOperacion: parseNum(row['Horometro'] || row['Horómetro (Horas Operación)'] || 4200),
-              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              supervisadoPor: row['Supervisado Por'] || 'Ing. Manuel López — Gerente de Planta',
-              lotoCandadeo: isYes(row['LOTO Candadeo'] ?? true),
-              temperaturaMenor40: isYes(row['Temperatura Menor 40C'] ?? true),
-              purgaCorteCombustible: isYes(row['Purga Corte Combustible'] ?? true),
-              ventilacionCamaras: isYes(row['Ventilacion Camaras'] ?? true),
+              fecha: rowFecha,
+              responsable: tecnico || supervisor || '',
+              observaciones: desc || 'Mantenimiento preventivo de incinerador importado masivamente',
+              equipoId: eqId,
+              nombreEquipo: (eqId === 'INC-02') ? 'Incinerador Industrial de DSH 02' : 'Incinerador Industrial de DSH 01',
+              tipoMantenimiento: (getRowVal(row, 'Tipo Mantenimiento') || 'Preventivo Programado') as any,
+              horaInicio: getRowVal(row, 'Hora Inicio', 'Hora Inicio (HH:MM)') || '07:00',
+              horaFin: getRowVal(row, 'Hora Fin', 'Hora Fin (HH:MM)') || '11:30',
+              horasOperacion: horo,
+              tecnicoResponsable: tecnico,
+              supervisadoPor: supervisor,
+              lotoCandadeo: isYes(getRowVal(row, 'LOTO Candadeo', 'LOTO Candadeo (Si/No)') ?? true),
+              temperaturaMenor40: isYes(getRowVal(row, 'Temperatura Menor 40C', 'Temperatura Menor 40C (Si/No)') ?? true),
+              purgaCorteCombustible: isYes(getRowVal(row, 'Purga Corte Combustible', 'Purga Corte Combustible (Si/No)') ?? true),
+              ventilacionCamaras: isYes(getRowVal(row, 'Ventilacion Camaras', 'Ventilacion Camaras (Si/No)') ?? true),
               checklistCamaras: {
-                revestimientoCamaraPrimaria: row['Estado Refractario Camara Primaria'] || 'Bueno',
-                revestimientoCamaraSecundaria: row['Estado Refractario Camara Secundaria'] || 'Bueno',
-                sellosPuertas: row['Estado Sellos Puertas'] || 'Bueno',
+                revestimientoCamaraPrimaria: getRowVal(row, 'Estado Refractario Camara Primaria') || 'Bueno',
+                revestimientoCamaraSecundaria: getRowVal(row, 'Estado Refractario Camara Secundaria') || 'Bueno',
+                sellosPuertas: getRowVal(row, 'Estado Sellos Puertas') || 'Bueno',
                 mirillasInspeccion: 'Bueno',
                 estructuraExteriorCarter: 'Bueno'
               },
               checklistCombustion: {
-                boquillasInyectores: row['Estado Boquillas Inyectores'] || 'Bueno',
-                electrodosIgnicion: row['Estado Electrodos Ignicion'] || 'Bueno',
-                detectoresLlama: row['Estado Detectores Llama'] || 'Bueno',
+                boquillasInyectores: getRowVal(row, 'Estado Boquillas Inyectores') || 'Bueno',
+                electrodosIgnicion: getRowVal(row, 'Estado Electrodos Ignicion') || 'Bueno',
+                detectoresLlama: getRowVal(row, 'Estado Detectores Llama') || 'Bueno',
                 filtrosCombustible: 'Bueno',
                 valvulasSolenoides: 'Bueno',
                 valvulaCorteSlamOff: 'Bueno'
               },
               checklistInstrumentacion: {
-                termocuplaCamaraPrimaria: row['Estado Termocuplas'] || 'Bueno',
-                termocuplaCamaraSecundaria: row['Estado Termocuplas'] || 'Bueno',
-                manometrosPresion: row['Estado Manometros'] || 'Bueno',
+                termocuplaCamaraPrimaria: getRowVal(row, 'Estado Termocuplas') || 'Bueno',
+                termocuplaCamaraSecundaria: getRowVal(row, 'Estado Termocuplas') || 'Bueno',
+                manometrosPresion: getRowVal(row, 'Estado Manometros') || 'Bueno',
                 panelPlcAlarmas: 'Bueno'
               },
               repuestosUtilizados: [
                 {
                   cantidad: 1,
                   codigo: 'MTO-REP-01',
-                  descripcion: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento preventivo e insumos',
+                  descripcion: desc || 'Mantenimiento preventivo e insumos',
                   causaReemplazo: 'Servicio programado'
                 }
               ],
-              descripcionTrabajos: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento preventivo e inspección general de componentes',
-              pruebasHermeticidad: isYes(row['Pruebas Hermeticidad'] ?? true),
-              pruebasInterlocks: isYes(row['Pruebas Interlocks'] ?? true),
-              modulacionLlama: isYes(row['Modulacion Llama'] ?? true),
+              descripcionTrabajos: desc || 'Mantenimiento preventivo e inspección general de componentes',
+              pruebasHermeticidad: isYes(getRowVal(row, 'Pruebas Hermeticidad') ?? true),
+              pruebasInterlocks: isYes(getRowVal(row, 'Pruebas Interlocks') ?? true),
+              modulacionLlama: isYes(getRowVal(row, 'Modulacion Llama') ?? true),
               tempConsignaSecundariaAlcanzada: true,
               tiroNegativoVerificado: true,
-              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
-              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              estadoFinal: (getRowVal(row, 'Estado Final') || 'Operativo Conforme') as any,
+              firmaTecnico: tecnico,
+              firmaSupervisor: supervisor
             });
           });
         } else if (tipo === 'mantenimiento_lampinator') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rowFecha = parseExcelDate(getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'fecha', 'FECHA'));
+            const tecnico = getRowVal(row, 'Tecnico Responsable', 'Técnico Responsable', 'Tecnico', 'Técnico', 'Firma Tecnico', 'Firma Técnico') || '';
+            const supervisor = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horómetro (Horas)', 'Horas Operacion'));
+            const desc = getRowVal(row, 'Descripcion Trabajos y Repuestos', 'Descripción Trabajos y Repuestos', 'Descripcion', 'Descripción') || '';
+
             recordsToSave.push({
               folio: row.Folio || `MTO-LAMP-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              observaciones: row['Descripcion Trabajos y Repuestos'] || row['Descripción Trabajos y Repuestos'] || 'Mantenimiento Lampinator importado masivamente',
-              equipoId: row['Equipo ID'] || 'LAMP-01',
+              fecha: rowFecha,
+              responsable: tecnico || supervisor || '',
+              observaciones: desc || 'Mantenimiento Lampinator importado masivamente',
+              equipoId: getRowVal(row, 'Equipo ID', 'Equipo ID (LAMP-01)') || 'LAMP-01',
               nombreEquipo: 'Máquina Desmercurizadora Lampinator 01',
-              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Programado') as any,
-              horaInicio: row['Hora Inicio'] || '08:00',
-              horaFin: row['Hora Fin'] || '10:45',
-              horometro: parseNum(row['Horometro'] || row['Horómetro (Horas)'] || 1850),
-              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              operadorTurno: row['Operador Turno'] || 'Carlos Rodas',
-              mascarillaVaporHg: isYes(row['Mascarilla Vapor Hg 3M'] ?? true),
-              pruebaFugaVaporHgPpm: parseNum(row['Fuga Vapor Hg Ppm'] || 0.002),
-              protocoloLoto: isYes(row['Protocolo LOTO'] ?? true),
+              tipoMantenimiento: (getRowVal(row, 'Tipo Mantenimiento') || 'Preventivo Programado') as any,
+              horaInicio: getRowVal(row, 'Hora Inicio', 'Hora Inicio (HH:MM)') || '08:00',
+              horaFin: getRowVal(row, 'Hora Fin', 'Hora Fin (HH:MM)') || '10:45',
+              horometro: horo,
+              tecnicoResponsable: tecnico,
+              operadorTurno: getRowVal(row, 'Operador Turno', 'Operador') || '',
+              mascarillaVaporHg: isYes(getRowVal(row, 'Mascarilla Vapor Hg 3M', 'Mascarilla Vapor Hg 3M (Si/No)') ?? true),
+              pruebaFugaVaporHgPpm: parseNumOrBlank(getRowVal(row, 'Fuga Vapor Hg Ppm', 'Fuga Vapor Hg PPM')),
+              protocoloLoto: isYes(getRowVal(row, 'Protocolo LOTO', 'Protocolo LOTO (Si/No)') ?? true),
               checklistFiltracion: {
-                diferencialPresionHepa: row['Filtro HEPA Presion Diferencial'] || 'Conforme',
-                moduloCarbonActivadoHg: row['Modulo Carbon Activado Hg'] || 'Conforme',
-                prefiltrosPolvo: row['Prefiltros Polvo'] || 'Conforme'
+                diferencialPresionHepa: getRowVal(row, 'Filtro HEPA Presion Diferencial') || 'Conforme',
+                moduloCarbonActivadoHg: getRowVal(row, 'Modulo Carbon Activado Hg') || 'Conforme',
+                prefiltrosPolvo: getRowVal(row, 'Prefiltros Polvo') || 'Conforme'
               },
               checklistMecanico: {
-                desgasteMartillosCuchillas: row['Desgaste Martillos Trituracion'] || 'Conforme',
-                hermeticidadEmpaquesTolva: row['Hermeticidad Empaques Tolva'] || 'Conforme'
+                desgasteMartillosCuchillas: getRowVal(row, 'Desgaste Martillos Trituracion') || 'Conforme',
+                hermeticidadEmpaquesTolva: getRowVal(row, 'Hermeticidad Empaques Tolva') || 'Conforme'
               },
               checklistExtraccion: {
-                nivelLlenadoTamborVidrio: row['Nivel Tambor Vidrio y Fósforo'] || 'Conforme',
-                inspeccionManguerasSuccion: row['Mangueras Succion Vacio'] || 'Conforme'
+                nivelLlenadoTamborVidrio: getRowVal(row, 'Nivel Tambor Vidrio y Fósforo') || 'Conforme',
+                inspeccionManguerasSuccion: getRowVal(row, 'Mangueras Succion Vacio') || 'Conforme'
               },
               checklistSeguridad: {
-                parosEmergenciaInterlocks: row['Paros Emergencia Interlocks'] || 'Conforme',
+                parosEmergenciaInterlocks: getRowVal(row, 'Paros Emergencia Interlocks') || 'Conforme',
                 medidoresDepresionVacio: 'Conforme'
               },
               repuestosUtilizados: [
                 {
                   cantidad: 1,
                   codigo: 'LAMP-FIL-01',
-                  repuesto: 'Prefiltro de partículas / Sellos herméticos',
+                  repuesto: desc || 'Prefiltro de partículas / Sellos herméticos',
                   causa: 'Mantenimiento periódico'
                 }
               ],
-              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
-              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              estadoFinal: (getRowVal(row, 'Estado Final') || 'Operativo Conforme') as any,
+              firmaTecnico: tecnico,
+              firmaSupervisor: supervisor
             });
           });
         } else if (tipo === 'mantenimiento_trituradora') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rawFecha = getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'Fecha (YYYY-MM-DD)', 'fecha', 'FECHA');
+            const tecnico = getRowVal(row, 'Tecnico Responsable', 'Técnico Responsable', 'Tecnico', 'Técnico', 'Firma Tecnico', 'Firma Técnico') || '';
+            const supervisor = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable', 'Supervisado Por') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual', 'Horómetro (Horas Operación)'));
+            const eqId = getRowVal(row, 'Equipo ID', 'Equipo ID (TRIT-01 / TRIT-02)', 'Equipo') || 'TRIT-01';
+            const desc = getRowVal(row, 'Descripcion Trabajos y Repuestos', 'Descripción Trabajos y Repuestos', 'Descripcion', 'Descripción') || '';
+            const cuchillas = getRowVal(row, 'Estado Cuchillas', 'Estado Cuchillas (Bueno/Regular/Malo)');
+            const tipoMto = getRowVal(row, 'Tipo Mantenimiento', 'Tipo Mantenimiento (Rutinario Diario / Preventivo Semanal/Mensual / Correctivo)');
+
+            // Skip row if it has no date AND no technical data, or if it's a summary/footer row
+            if (!rawFecha && !tecnico && !supervisor && horo === '' && !desc && !cuchillas && !tipoMto) {
+              return;
+            }
+            if (rawFecha && (String(rawFecha).toLowerCase().includes('total') || String(rawFecha).toLowerCase().includes('nota') || String(rawFecha).toLowerCase().includes('firma'))) {
+              return;
+            }
+
+            const rowFecha = parseExcelDate(rawFecha);
+
             recordsToSave.push({
               folio: row.Folio || `MTO-TRIT-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento trituradora importado masivamente',
-              turno: (row.Turno || 'Turno 1') as any,
-              equipoId: row['Equipo ID'] || 'TRIT-01',
+              fecha: rowFecha,
+              responsable: tecnico || supervisor || '',
+              observaciones: desc || 'Mantenimiento trituradora importado masivamente',
+              turno: (getRowVal(row, 'Turno', 'Turno (Turno 1 / Turno 2 / Turno 3)') || 'Turno 1') as any,
+              equipoId: eqId,
               nombreEquipo: 'Trituradora Industrial Shredder Doble Eje',
               marcaModelo: 'Shred-Tech ST-50',
               serie: 'ST50-9844-GT',
-              ubicacionPlanta: 'Área de Pre-Tratamiento Mecánico',
-              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 5340),
-              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Semanal/Mensual') as any,
-              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              estadoCuchillas: row['Estado Cuchillas'] || 'Bueno',
-              nivelAceiteReductor: row['Nivel Aceite Reductor'] || 'Conforme',
-              ruidosVibraciones: row['Ruidos o Vibraciones'] || 'Normal',
-              limpiezaDesinfeccion: isYes(row['Limpieza y Desinfección Interna'] ?? true) ? 'Realizada' : 'Pendiente',
-              pruebaAutoReverse: isYes(row['Prueba Auto-Reverse'] ?? true) ? 'Operativo' : 'Falla',
-              engraseRodamientos: isYes(row['Engrase Rodamientos'] ?? true) ? 'Completado' : 'Pendiente',
+              ubicacionPlanta: 'Área de Pre-Tratamiento Mecánico DSH',
+              horometro: horo,
+              tipoMantenimiento: (tipoMto || 'Preventivo Semanal/Mensual') as any,
+              tecnicoResponsable: tecnico,
+              estadoCuchillas: cuchillas || 'Bueno',
+              nivelAceiteReductor: getRowVal(row, 'Nivel Aceite Reductor', 'Nivel Aceite Reductor (Conforme/Bajo/Critico)') || 'Conforme',
+              ruidosVibraciones: getRowVal(row, 'Ruidos o Vibraciones', 'Ruidos o Vibraciones (Normal/Anormal)') || 'Normal',
+              limpiezaDesinfeccion: isYes(getRowVal(row, 'Limpieza y Desinfección Interna', 'Limpieza y Desinfección Interna (Si/No)') ?? true) ? 'Realizada' : 'Pendiente',
+              pruebaAutoReverse: isYes(getRowVal(row, 'Prueba Auto-Reverse', 'Prueba Auto-Reverse (Si/No)') ?? true) ? 'Operativo' : 'Falla',
+              engraseRodamientos: isYes(getRowVal(row, 'Engrase Rodamientos', 'Engrase Rodamientos (Si/No)') ?? true) ? 'Completado' : 'Pendiente',
               tensionFajasCadenas: 'Conforme',
-              consumoAmperajeMotorA: parseNum(row['Consumo Amperaje Motor A'] || 62.5),
-              presionSistemaHidraulicoPsi: parseNum(row['Presion Hidraulica Empuje PSI'] || 2100),
-              anomaliasDetectadas: 'Sin anomalías críticas registradas',
-              descripcionTrabajo: row['Descripcion Trabajos y Repuestos'] || 'Engrase general y verificación de holguras de corte',
+              consumoAmperajeMotorA: parseNumOrBlank(getRowVal(row, 'Consumo Amperaje Motor A', 'Consumo Amperaje Motor A (50-75)')),
+              presionSistemaHidraulicoPsi: parseNumOrBlank(getRowVal(row, 'Presion Hidraulica Empuje PSI', 'Presion Hidraulica Empuje PSI (1800-2500)')),
+              anomaliasDetectadas: '',
+              descripcionTrabajo: desc || 'Mantenimiento y revisión operativa',
               repuestosUtilizados: [],
-              horasParo: parseNum(row['Horas Paro'] || 0),
-              lotoAplicado: isYes(row['LOTO Aplicado'] ?? true),
-              estadoFinal: (row['Estado Final'] || 'Operativo Conforme') as any,
-              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              horasParo: parseNumOrBlank(getRowVal(row, 'Horas Paro')),
+              lotoAplicado: isYes(getRowVal(row, 'LOTO Aplicado', 'LOTO Aplicado (Si/No)') ?? true),
+              estadoFinal: (getRowVal(row, 'Estado Final', 'Estado Final (Operativo Conforme / Requiere Mantenimiento / Fuera de Servicio)') || 'Operativo Conforme') as any,
+              firmaTecnico: tecnico,
+              firmaSupervisor: supervisor
             });
           });
         } else if (tipo === 'mantenimiento_compactadora') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rawFecha = getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'Fecha (YYYY-MM-DD)', 'fecha', 'FECHA');
+            const tecnico = getRowVal(row, 'Tecnico Responsable', 'Técnico Responsable', 'Tecnico', 'Técnico', 'Firma Tecnico', 'Firma Técnico') || '';
+            const supervisor = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual', 'Horas Operacion'));
+            const eqId = getRowVal(row, 'Equipo ID', 'Equipo ID (COMP-01 / COMP-02)', 'Equipo') || 'COMP-01';
+            const desc = getRowVal(row, 'Descripcion Trabajos y Repuestos', 'Descripción Trabajos y Repuestos', 'Descripcion', 'Descripción') || '';
+            const tipoMto = getRowVal(row, 'Tipo Mantenimiento', 'Tipo Mantenimiento (Preventivo / Correctivo / Emergencia)');
+
+            if (!rawFecha && !tecnico && !supervisor && horo === '' && !desc && !tipoMto) {
+              return;
+            }
+            if (rawFecha && (String(rawFecha).toLowerCase().includes('total') || String(rawFecha).toLowerCase().includes('nota') || String(rawFecha).toLowerCase().includes('firma'))) {
+              return;
+            }
+
+            const rowFecha = parseExcelDate(rawFecha);
+
             recordsToSave.push({
               folio: row.Folio || `MTO-COMP-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento compactadora importado masivamente',
-              turno: (row.Turno || 'Turno 1') as any,
-              equipoId: row['Equipo ID'] || 'COMP-01',
+              fecha: rowFecha,
+              responsable: tecnico || supervisor || '',
+              observaciones: desc || 'Mantenimiento compactadora importado masivamente',
+              turno: (getRowVal(row, 'Turno', 'Turno (Turno 1 / Turno 2 / Turno 3)') || 'Turno 1') as any,
+              equipoId: eqId,
               nombreEquipo: 'Prensa Compactadora Hidráulica Vertical 01',
-              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 4180),
-              periodicidad: (row.Periodicidad || 'Semanal/Mensual (Técnico)') as any,
-              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo') as any,
-              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              fugaFluidosDebajoPlato: (row['Fugas Fluidos Debajo Plato'] || 'Conforme') as any,
-              hermeticidadSellosPuerta: (row['Hermeticidad Sellos Puerta'] || 'Conforme') as any,
-              limpiezaDesinfeccionTolva: (row['Limpieza Desinfección Tolva'] || 'Conforme') as any,
-              parosEmergenciaFotoceldas: (row['Paros Emergencia y Fotoceldas'] || 'Conforme') as any,
-              ruidosMotorHidraulico: (row['Ruidos Motor Hidráulico'] || 'Conforme') as any,
-              inspeccionManguerasCilindros: row['Inspeccion Mangueras y Cilindros'] || 'Bueno',
-              nivelAceiteHidraulicoIso68: row['Nivel Aceite ISO 68'] || 'Conforme',
-              engraseChumacerasGuias: isYes(row['Engrase Guias y Chumaceras'] ?? true) ? 'Realizado' : 'Pendiente',
-              filtrosAireRespiradero: row['Filtros Aire Respiradero'] || 'Bueno',
-              empaqueRetencionLixiviados: row['Empaque Retencion Lixiviados'] || 'Bueno',
-              accionCorrectiva: row['Descripcion Trabajos y Repuestos'] || 'Ajustes y lubricación preventiva conforme',
-              protocoloBioseguridadEpp: isYes(row['Protocolo Bioseguridad y EPP'] ?? true),
-              estadoFinal: (row['Estado Final'] || 'Aprobado para Operar') as any,
-              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              horometro: horo,
+              periodicidad: (getRowVal(row, 'Periodicidad', 'Periodicidad (Diario (Operador) / Semanal/Mensual (Técnico) / Semestral/Anual (Especialista))') || 'Semanal/Mensual (Técnico)') as any,
+              tipoMantenimiento: (tipoMto || 'Preventivo') as any,
+              tecnicoResponsable: tecnico,
+              fugaFluidosDebajoPlato: (getRowVal(row, 'Fugas Fluidos Debajo Plato', 'Fugas Fluidos Debajo Plato (Conforme/No Conforme)') || 'Conforme') as any,
+              hermeticidadSellosPuerta: (getRowVal(row, 'Hermeticidad Sellos Puerta', 'Hermeticidad Sellos Puerta (Conforme/No Conforme)') || 'Conforme') as any,
+              limpiezaDesinfeccionTolva: (getRowVal(row, 'Limpieza Desinfección Tolva', 'Limpieza Desinfección Tolva (Conforme/No Conforme)') || 'Conforme') as any,
+              parosEmergenciaFotoceldas: (getRowVal(row, 'Paros Emergencia y Fotoceldas', 'Paros Emergencia y Fotoceldas (Conforme/No Conforme)') || 'Conforme') as any,
+              ruidosMotorHidraulico: (getRowVal(row, 'Ruidos Motor Hidráulico', 'Ruidos Motor Hidráulico (Conforme/No Conforme)') || 'Conforme') as any,
+              inspeccionManguerasCilindros: getRowVal(row, 'Inspeccion Mangueras y Cilindros', 'Inspeccion Mangueras y Cilindros (Bueno/Regular/Malo)') || 'Bueno',
+              nivelAceiteHidraulicoIso68: getRowVal(row, 'Nivel Aceite ISO 68', 'Nivel Aceite ISO 68 (Conforme/Bajo/Critico)') || 'Conforme',
+              engraseChumacerasGuias: isYes(getRowVal(row, 'Engrase Guias y Chumaceras', 'Engrase Guias y Chumaceras (Si/No)') ?? true) ? 'Realizado' : 'Pendiente',
+              filtrosAireRespiradero: getRowVal(row, 'Filtros Aire Respiradero', 'Filtros Aire Respiradero (Bueno/Regular/Saturado)') || 'Bueno',
+              empaqueRetencionLixiviados: getRowVal(row, 'Empaque Retencion Lixiviados', 'Empaque Retencion Lixiviados (Bueno/Desgastado/Con Fuga)') || 'Bueno',
+              accionCorrectiva: desc || 'Ajustes y lubricación preventiva conforme',
+              protocoloBioseguridadEpp: isYes(getRowVal(row, 'Protocolo Bioseguridad y EPP', 'Protocolo Bioseguridad y EPP (Si/No)') ?? true),
+              estadoFinal: (getRowVal(row, 'Estado Final', 'Estado Final (Aprobado para Operar / Condicionado / Fuera de Servicio)') || 'Aprobado para Operar') as any,
+              firmaTecnico: tecnico,
+              firmaSupervisor: supervisor
             });
           });
         } else if (tipo === 'mantenimiento_autoclaves') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rawFecha = getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'Fecha (YYYY-MM-DD)', 'fecha', 'FECHA');
+            const tecnico = getRowVal(row, 'Tecnico Responsable', 'Técnico Responsable', 'Tecnico', 'Técnico', 'Firma Tecnico', 'Firma Técnico') || '';
+            const supervisor = getRowVal(row, 'Firma Supervisor', 'Supervisor', 'Supervisor Responsable') || '';
+            const horo = parseNumOrBlank(getRowVal(row, 'Horometro', 'Horómetro Actual', 'Horometro Actual', 'Horas Operacion'));
+            const eqId = getRowVal(row, 'Equipo ID', 'Equipo ID (AUTO CLAVE 1 / AUTO CLAVE 2 / AUTO CLAVE 3)', 'Equipo') || 'AUTO CLAVE 1';
+            const desc = getRowVal(row, 'Descripcion Trabajos y Repuestos', 'Descripción Trabajos y Repuestos', 'Descripcion', 'Descripción') || '';
+
+            if (!rawFecha && !tecnico && !supervisor && horo === '' && !desc) {
+              return;
+            }
+            if (rawFecha && (String(rawFecha).toLowerCase().includes('total') || String(rawFecha).toLowerCase().includes('nota') || String(rawFecha).toLowerCase().includes('firma'))) {
+              return;
+            }
+
+            const rowFecha = parseExcelDate(rawFecha);
+
             recordsToSave.push({
               folio: row.Folio || `MTO-AUTO-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              observaciones: row['Descripcion Trabajos y Repuestos'] || 'Mantenimiento autoclaves importado masivamente',
-              turno: (row.Turno || 'Turno 1') as any,
-              equipoId: (row['Equipo ID'] || 'AUTO CLAVE 1') as any,
-              tipoMantenimiento: (row['Tipo Mantenimiento'] || 'Preventivo Periódico') as any,
-              horometro: parseNum(row['Horometro'] || row['Horómetro Actual'] || 6120),
-              tecnicoResponsable: row['Tecnico Responsable'] || row['Técnico Responsable'] || userEmail,
-              presionVaporCalderaPsi: parseNum(row['Presion Vapor Caldera PSI'] || 75),
-              presionCamaraPsi: parseNum(row['Presion Camara PSI'] || 35),
-              temperaturaC: parseNum(row['Temperatura C'] || 134),
-              tiempoCicloMin: parseNum(row['Tiempo Ciclo Min'] || 50),
-              pruebaVacioResultado: (row['Prueba Vacio'] || 'Conforme') as any,
-              drenajeCondensadosTrampa: (row['Drenaje Condensados Trampa'] || 'Conforme') as any,
-              estadoEmpaquePuerta: (row['Estado Empaque Puerta'] || 'Excelente') as any,
-              valvulasSeguridadAlivio: row['Valvulas Seguridad y Alivio'] || 'Bueno',
-              manometrosCalibracion: row['Manometros Calibrados'] || 'Bueno',
-              transmisoresPt100: row['Transmisores Temp PT100'] || 'Bueno',
-              filtroCanastaDescarga: row['Filtro Canasta Descarga'] || 'Limpio',
-              engraseBrazosCierre: isYes(row['Engrase Brazos Cierre'] ?? true) ? 'Realizado' : 'Pendiente',
-              descripcionIntervencion: row['Descripcion Trabajos y Repuestos'] || 'Inspección de empaquetaduras y calibración de instrumentos',
+              fecha: rowFecha,
+              responsable: tecnico || supervisor || '',
+              observaciones: desc || 'Mantenimiento autoclaves importado masivamente',
+              turno: (getRowVal(row, 'Turno', 'Turno (Turno 1 / Turno 2 / Turno 3)') || 'Turno 1') as any,
+              equipoId: eqId as any,
+              tipoMantenimiento: (getRowVal(row, 'Tipo Mantenimiento', 'Tipo Mantenimiento (Inspección Operativa Turno / Preventivo Periódico / Correctivo y Calibración)') || 'Preventivo Periódico') as any,
+              horometro: horo,
+              tecnicoResponsable: tecnico,
+              presionVaporCalderaPsi: parseNumOrBlank(getRowVal(row, 'Presion Vapor Caldera PSI', 'Presión Vapor Caldera PSI')),
+              presionCamaraPsi: parseNumOrBlank(getRowVal(row, 'Presion Camara PSI', 'Presión Cámara PSI')),
+              temperaturaC: parseNumOrBlank(getRowVal(row, 'Temperatura C', 'Temperatura °C')),
+              tiempoCicloMin: parseNumOrBlank(getRowVal(row, 'Tiempo Ciclo Min', 'Tiempo Ciclo Minutos')),
+              pruebaVacioResultado: (getRowVal(row, 'Prueba Vacio', 'Prueba Vacío (Conforme/No Conforme)') || 'Conforme') as any,
+              drenajeCondensadosTrampa: (getRowVal(row, 'Drenaje Condensados Trampa', 'Drenaje Condensados Trampa (Conforme/No Conforme)') || 'Conforme') as any,
+              estadoEmpaquePuerta: (getRowVal(row, 'Estado Empaque Puerta', 'Estado Empaque Puerta (Excelente/Bueno/Desgastado/Fuga Detectada)') || 'Excelente') as any,
+              valvulasSeguridadAlivio: getRowVal(row, 'Valvulas Seguridad y Alivio', 'Válvulas Seguridad y Alivio (Bueno/Regular/Malo)') || 'Bueno',
+              manometrosCalibracion: getRowVal(row, 'Manometros Calibrados', 'Manómetros Calibrados (Bueno/Regular/Descalibrado)') || 'Bueno',
+              transmisoresPt100: getRowVal(row, 'Transmisores Temp PT100', 'Transmisores Temp PT100 (Bueno/Regular/Falla)') || 'Bueno',
+              filtroCanastaDescarga: getRowVal(row, 'Filtro Canasta Descarga', 'Filtro Canasta Descarga (Limpio/Obstruido/Dañado)') || 'Limpio',
+              engraseBrazosCierre: isYes(getRowVal(row, 'Engrase Brazos Cierre', 'Engrase Brazos Cierre (Si/No)') ?? true) ? 'Realizado' : 'Pendiente',
+              descripcionIntervencion: desc || 'Inspección de empaquetaduras y calibración de instrumentos',
               repuestosCalibraciones: 'Ninguno',
-              estadoFinal: (row['Estado Final'] || 'Operativa al 100%') as any,
-              firmaTecnico: row['Firma Tecnico'] || row['Firma Técnico'] || userEmail,
-              firmaSupervisor: row['Firma Supervisor'] || 'Ing. Manuel López — Gerente de Planta'
+              estadoFinal: (getRowVal(row, 'Estado Final', 'Estado Final (Operativa al 100% / Observaciones Menores / Fuera de Servicio)') || 'Operativa al 100%') as any,
+              firmaTecnico: tecnico,
+              firmaSupervisor: supervisor
             });
           });
         } else if (tipo === 'limpieza_desinfeccion_planta') {
-          jsonData.forEach((row: any, idx: number) => {
+          cleanData.forEach((row: any, idx: number) => {
+            const rawFecha = getRowVal(row, 'Fecha', 'Fecha (AAAA-MM-DD)', 'Fecha (YYYY-MM-DD)', 'fecha', 'FECHA', 'Fecha Desinfección', 'Fecha Limpieza', 'Dia', 'Día');
+            const supervisor = getRowVal(row, 'Supervisor Responsable', 'Supervisor', 'SUPERVISOR', 'Firma Supervisor HSE', 'Firma Supervisor', 'Supervisado Por') || '';
+            const operadorLider = getRowVal(row, 'Firma Operador Lider', 'Operador Lider', 'Operador Líder', 'Operador', 'Operador Responsable', 'Lider') || '';
+            const cuadrilla = getRowVal(row, 'Cuadrilla Operadores', 'Cuadrilla', 'Operadores', 'Personal') || '';
+            const productoQuimico = getRowVal(row, 'Producto Quimico Desinfectante', 'Producto Químico Desinfectante', 'Producto Quimico', 'Producto Químico', 'Producto', 'Quimico Desinfectante', 'Químico Desinfectante', 'Desinfectante') || '';
+            const loteQuimico = getRowVal(row, 'Lote Quimico', 'Lote Químico', 'Lote') || '';
+            const concObj = parseNumOrBlank(getRowVal(row, 'Concentracion Objetivo PPM', 'Concentración Objetivo PPM', 'PPM Objetivo', 'Concentracion Objetivo', 'Objetivo PPM'));
+            const concMed = parseNumOrBlank(getRowVal(row, 'Concentracion Medida PPM', 'Concentración Medida PPM', 'PPM Medida', 'Concentracion Medida', 'Medida PPM'));
+            const horaPrep = getRowVal(row, 'Hora Preparacion', 'Hora Preparación', 'Hora Preparacion (HH:MM)', 'Hora', 'Horario') || '';
+            const veredicto = getRowVal(row, 'Veredicto Cumplimiento', 'Veredicto Cumplimiento (Cumplimiento Total (100%) / Cumplimiento Parcial / No Conforme)', 'Veredicto', 'Cumplimiento') || 'Cumplimiento Total (100%)';
+            const novedades = getRowVal(row, 'Novedades y Desviaciones', 'Novedades', 'Desviaciones', 'Observaciones') || '';
+            const acciones = getRowVal(row, 'Acciones Correctivas Inmediatas', 'Acciones Correctivas', 'Accion Correctiva') || '';
+
+            // Skip row if it has no date and no sanitation data, or if it's a summary/footer row
+            if (!rawFecha && !supervisor && !operadorLider && !cuadrilla && !productoQuimico && concObj === '' && concMed === '' && !novedades) {
+              return;
+            }
+            if (rawFecha && (String(rawFecha).toLowerCase().includes('total') || String(rawFecha).toLowerCase().includes('nota') || String(rawFecha).toLowerCase().includes('firma'))) {
+              return;
+            }
+
+            const rowFecha = parseExcelDate(rawFecha);
+
             recordsToSave.push({
               folio: row.Folio || `LIM-DES-${Date.now().toString().slice(-4)}${idx + 1}`,
-              fecha: parseExcelDate(row.Fecha),
-              responsable: row['Supervisor Responsable'] || userEmail,
-              observaciones: row['Novedades y Desviaciones'] || 'Control de limpieza y desinfección de planta importado masivamente',
-              turno: (row.Turno || 'Mañana') as any,
-              supervisorResponsable: row['Supervisor Responsable'] || userEmail,
-              cuadrillaOperadores: row['Cuadrilla Operadores'] || 'Cuadrilla Operativa de Planta',
-              productoQuimico: row['Producto Quimico Desinfectante'] || 'Amonio Cuaternario 5ta Generación',
-              loteProducto: row['Lote Quimico'] || 'L-AQ-2026-09',
-              concentracionObjetivoPpm: parseNum(row['Concentracion Objetivo PPM'] || 400),
-              concentracionMedidaPpm: parseNum(row['Concentracion Medida PPM'] || 405),
-              horaPreparacion: row['Hora Preparacion'] || '06:15',
+              fecha: rowFecha,
+              responsable: supervisor || operadorLider || '',
+              observaciones: novedades || 'Control de limpieza y desinfección de planta',
+              turno: (getRowVal(row, 'Turno', 'Turno (Mañana / Tarde / Noche)') || 'Mañana') as any,
+              supervisorResponsable: supervisor,
+              cuadrillaOperadores: cuadrilla,
+              productoQuimico: productoQuimico,
+              loteProducto: loteQuimico,
+              concentracionObjetivoPpm: concObj,
+              concentracionMedidaPpm: concMed,
+              horaPreparacion: horaPrep,
               zonas: [
-                { area: 'Bahía de Descarga RPBI', frecuencia: 'Diaria', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
-                { area: 'Cuarto Frío de Almacenamiento', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '07:00', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
-                { area: 'Área de Autoclaves', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '07:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
-                { area: 'Área de Incineración', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '08:00', estatus: 'Conforme', operador: 'Cuadrilla Planta' },
-                { area: 'Túnel de Lavado de Contenedores', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '08:30', estatus: 'Conforme', operador: 'Cuadrilla Planta' }
+                { area: 'Bahía de Descarga DSH', frecuencia: 'Diaria', tipoLimpieza: 'Desinfección de Choque', hora: '06:30', estatus: 'Conforme', operador: cuadrilla || 'Cuadrilla Planta' },
+                { area: 'Cuarto Frío de Almacenamiento', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '07:00', estatus: 'Conforme', operador: cuadrilla || 'Cuadrilla Planta' },
+                { area: 'Área de Autoclaves', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '07:30', estatus: 'Conforme', operador: cuadrilla || 'Cuadrilla Planta' },
+                { area: 'Área de Incineración DSH', frecuencia: 'Diaria', tipoLimpieza: 'Rutinaria', hora: '08:00', estatus: 'Conforme', operador: cuadrilla || 'Cuadrilla Planta' },
+                { area: 'Túnel de Lavado de Contenedores', frecuencia: 'Diaria', tipoLimpieza: 'Limpieza Profunda', hora: '08:30', estatus: 'Conforme', operador: cuadrilla || 'Cuadrilla Planta' }
               ],
-              eppGuantesNitrilo: isYes(row['EPP Completo Verificado'] ?? true),
-              eppBotasImpermeables: isYes(row['EPP Completo Verificado'] ?? true),
-              eppTrajeTyvekMandil: isYes(row['EPP Completo Verificado'] ?? true),
-              eppRespiradorVapores: isYes(row['EPP Completo Verificado'] ?? true),
-              eppCaretaFacial: isYes(row['EPP Completo Verificado'] ?? true),
-              panosMopasLímpias: isYes(row['Disponibilidad Insumos y Panos'] ?? true),
-              desviacionesNovedades: row['Novedades y Desviaciones'] || 'Desinfección ejecutada conforme a cronograma SGI',
-              accionesCorrectivas: row['Acciones Correctivas Inmediatas'] || 'Ninguna requerida',
-              veredictoCumplimiento: (row['Veredicto Cumplimiento'] || 'Cumplimiento Total (100%)') as any,
-              firmaOperadorLider: row['Firma Operador Lider'] || 'Operador Líder de Limpieza',
-              firmaSupervisorHse: row['Firma Supervisor HSE'] || 'Ing. Astrid Guzmán — Supervisora HSE'
+              eppGuantesNitrilo: isYes(getRowVal(row, 'EPP Completo Verificado', 'EPP Completo Verificado (Si/No)') ?? true),
+              eppBotasImpermeables: isYes(getRowVal(row, 'EPP Completo Verificado', 'EPP Completo Verificado (Si/No)') ?? true),
+              eppTrajeTyvekMandil: isYes(getRowVal(row, 'EPP Completo Verificado', 'EPP Completo Verificado (Si/No)') ?? true),
+              eppRespiradorVapores: isYes(getRowVal(row, 'EPP Completo Verificado', 'EPP Completo Verificado (Si/No)') ?? true),
+              eppCaretaFacial: isYes(getRowVal(row, 'EPP Completo Verificado', 'EPP Completo Verificado (Si/No)') ?? true),
+              panosMopasLímpias: isYes(getRowVal(row, 'Disponibilidad Insumos y Panos', 'Disponibilidad Insumos y Panos (Si/No)') ?? true),
+              desviacionesNovedades: novedades,
+              accionesCorrectivas: acciones,
+              veredictoCumplimiento: veredicto as any,
+              firmaOperadorLider: operadorLider,
+              firmaSupervisorHse: supervisor
             });
           });
         }
@@ -1942,21 +2100,28 @@ export default function BulkUploadPanel({ tipo, userEmail, onSuccess }: Props) {
           colName = 'bitacora_inventarios_sgc';
         }
 
-        // Save records sequentially or in parallel batches
+        // Save records using atomic write batches (up to 400 operations per batch)
+        const uploadTimestamp = new Date().toISOString();
+        const CHUNK_SIZE = 400;
         let count = 0;
-        for (const record of recordsToSave) {
-          const docWithMeta = {
-            ...record,
-            fechaRegistro: new Date().toISOString(),
-            elaboro: 'Gerente Comercial Industrial',
-            reviso: 'Comité ISO',
-            aprobo: 'Gerente General',
-            cambioControl: [
-              { version: '1.2', fecha: new Date().toISOString().split('T')[0], seccion: 'Carga Masiva', cambio: 'Importación masiva desde archivo Excel SGI', solicitante: 'Auditor de Calidad' }
-            ]
-          };
-          await addDoc(collection(db, colName), docWithMeta);
-          count++;
+        for (let i = 0; i < recordsToSave.length; i += CHUNK_SIZE) {
+          const chunk = recordsToSave.slice(i, i + CHUNK_SIZE);
+          const batch = writeBatch(db);
+          for (const record of chunk) {
+            const docRef = doc(collection(db, colName));
+            batch.set(docRef, {
+              ...record,
+              fechaRegistro: uploadTimestamp, // ALWAYS date and time of file upload!
+              elaboro: 'Gerente Comercial Industrial',
+              reviso: 'Comité ISO',
+              aprobo: 'Gerente General',
+              cambioControl: [
+                { version: '1.2', fecha: uploadTimestamp.split('T')[0], seccion: 'Carga Masiva', cambio: 'Importación masiva desde archivo Excel SGI', solicitante: 'Auditor de Calidad' }
+              ]
+            });
+            count++;
+          }
+          await batch.commit();
         }
 
         setFeedback({

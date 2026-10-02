@@ -58,7 +58,7 @@ export default function BitacoraDisposicionPirolisis({ onBack, userEmail }: Prop
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_disposicion_pirolisis'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_disposicion_pirolisis'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: IBitacoraDisposicionPirolisis[] = [];
       querySnapshot.forEach((doc) => {

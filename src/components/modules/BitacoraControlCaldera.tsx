@@ -169,7 +169,7 @@ export default function BitacoraControlCaldera({ onBack, userEmail }: Props) {
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_control_caldera'), orderBy('fechaRegistro', 'desc'), limit(30));
+      const q = query(collection(db, 'bitacora_control_caldera'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraControlCaldera[] = [];
       querySnapshot.forEach((docSnap) => {

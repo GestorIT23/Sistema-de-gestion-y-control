@@ -64,7 +64,7 @@ export default function BitacoraInsumosQuimicosModule({ onBack, userEmail }: Pro
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_insumos_quimicos'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_insumos_quimicos'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraInsumosQuimicos[] = [];
       querySnapshot.forEach((doc) => {

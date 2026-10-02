@@ -80,10 +80,10 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [turno, setTurno] = useState<'Matutino' | 'Vespertino' | 'Nocturno'>('Matutino');
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(EQUIPOS_TRITURADORA[0]);
-  const [horometroActual, setHorometroActual] = useState(5280);
-  const [operadorAsignado, setOperadorAsignado] = useState('Byron Estuardo Reyes (Operador Trituradora Shredder)');
-  const [inspectorSgi, setInspectorSgi] = useState(userEmail || 'Auditor SGI Mantenimiento');
-  const [observacionesGenerales, setObservacionesGenerales] = useState('Evaluación 360 integral de trituradora industrial shredder de doble eje para reducción de volumen.');
+  const [horometroActual, setHorometroActual] = useState<number | ''>('');
+  const [operadorAsignado, setOperadorAsignado] = useState('');
+  const [inspectorSgi, setInspectorSgi] = useState(userEmail || '');
+  const [observacionesGenerales, setObservacionesGenerales] = useState('');
 
   // Equipment specific operational parameters
   const [amperajeMotorA, setAmperajeMotorA] = useState(62);
@@ -115,7 +115,7 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_evaluacion_360_trituradora'), orderBy('fechaRegistro', 'desc'), limit(30));
+      const q = query(collection(db, 'bitacora_evaluacion_360_trituradora'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: Evaluacion360Trituradora[] = [];
       querySnapshot.forEach((docSnap) => {
@@ -232,7 +232,7 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
         ubicacionPlanta: equipoSeleccionado.ubicacion,
         fecha,
         turno,
-        horometroActual: Number(horometroActual) || 0,
+        horometroActual: horometroActual !== '' ? Number(horometroActual) : ('' as any),
         operadorAsignado,
         inspectorSgi,
         fechaRegistro: new Date().toISOString(),
@@ -529,7 +529,8 @@ export default function BitacoraEvaluacion360Trituradora({ onBack, userEmail, on
                 <input 
                   type="number" 
                   value={horometroActual} 
-                  onChange={e => setHorometroActual(Number(e.target.value))} 
+                  onChange={e => setHorometroActual(e.target.value === '' ? '' : Number(e.target.value))} 
+                  placeholder="Dejar en blanco si no aplica"
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg"
                 />
               </div>

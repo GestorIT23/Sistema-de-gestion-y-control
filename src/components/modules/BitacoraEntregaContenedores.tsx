@@ -52,7 +52,7 @@ export default function BitacoraEntregaContenedores({ onBack, userEmail }: Props
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_entrega_contenedores'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_entrega_contenedores'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: IBitacoraEntregaContenedores[] = [];
       querySnapshot.forEach((doc) => {

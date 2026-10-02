@@ -55,7 +55,7 @@ const BITACORAS_INFO = [
   { id: 'evaluacion_360_compactadora', title: 'Evaluación 360° de Compactadora de Pacas', col: 'bitacora_evaluacion_360_compactadora', code: 'F-OPR-000-21' },
   { id: 'evaluacion_360_trituradora', title: 'Evaluación 360° de Trituradora Shredder', col: 'bitacora_evaluacion_360_trituradora', code: 'F-OPR-000-22' },
   { id: 'control_caldera', title: 'Bitácora Diaria de Operación y Control de Caldera', col: 'bitacora_control_caldera', code: 'F-OPR-000-23' },
-  { id: 'mantenimiento_incinerador', title: 'Mantenimiento Incinerador Industrial RPBI', col: 'bitacora_mantenimiento_incinerador', code: 'BIT-MTO-INC-001' },
+  { id: 'mantenimiento_incinerador', title: 'Mantenimiento Incinerador Industrial DSH', col: 'bitacora_mantenimiento_incinerador', code: 'BIT-MTO-INC-001' },
   { id: 'mantenimiento_lampinator', title: 'Mantenimiento Máquina Lampinator', col: 'bitacora_mantenimiento_lampinator', code: 'BIT-MTO-LAMP-001' },
   { id: 'mantenimiento_trituradora', title: 'Mantenimiento Trituradora de Residuos', col: 'bitacora_mantenimiento_trituradora', code: 'BIT-MTO-TRIT-001' },
   { id: 'mantenimiento_compactadora', title: 'Mantenimiento Compactadora / Prensa', col: 'bitacora_mantenimiento_compactadora', code: 'BIT-MTO-COMP-001' },
@@ -90,6 +90,8 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
   const [clearConfirmText, setClearConfirmText] = useState('');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
   // Custom Logo Configuration state
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -183,7 +185,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
         ? BITACORAS_INFO.filter(b => b.id !== 'all') 
         : BITACORAS_INFO.filter(b => b.id === selectedBitacora);
 
-      const limitPerCollection = selectedBitacora === 'all' ? 300 : 1500;
+      const limitPerCollection = selectedBitacora === 'all' ? 500 : 3500;
 
       for (const info of collectionsToQuery) {
         try {
@@ -246,7 +248,9 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
         }
       });
 
-      setResults(sortRecordsByDateDesc(filtered));
+      const sorted = sortRecordsByDateDesc(filtered);
+      setResults(sorted);
+      setSelectedLogIds(new Set());
     } catch (e: any) {
       console.error(e);
       setMsg({ 
@@ -255,6 +259,81 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const next = new Set(selectedLogIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedLogIds(next);
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedLogIds.size === results.length && results.length > 0) {
+      setSelectedLogIds(new Set());
+    } else {
+      setSelectedLogIds(new Set(results.map(r => r.id)));
+    }
+  };
+
+  const handleDownloadSelectedPDFs = async () => {
+    const selectedItems = results.filter(r => selectedLogIds.has(r.id));
+    if (selectedItems.length === 0) {
+      setMsg({ text: 'Seleccione al menos un registro para generar sus PDF.', type: 'error' });
+      return;
+    }
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: selectedItems.length });
+    try {
+      for (let i = 0; i < selectedItems.length; i++) {
+        const item = selectedItems[i];
+        setDownloadProgress({ current: i + 1, total: selectedItems.length });
+        await generateAndDownloadPDF(item.tipo, item);
+        if (i < selectedItems.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+      setMsg({ text: `Se han generado y descargado exitosamente ${selectedItems.length} reportes oficiales en PDF.`, type: 'success' });
+    } catch (err: any) {
+      setMsg({ text: `Error al generar PDF: ${err.message || err}`, type: 'error' });
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleDownloadFormularioPDF = async () => {
+    if (results.length === 0) {
+      setMsg({ text: 'No hay registros cargados para descargar.', type: 'error' });
+      return;
+    }
+    const targetRecords = selectedBitacora === 'all'
+      ? results
+      : results.filter(r => r.tipo === selectedBitacora);
+
+    if (targetRecords.length === 0) {
+      setMsg({ text: 'No se encontraron registros para el formulario seleccionado.', type: 'error' });
+      return;
+    }
+
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: targetRecords.length });
+    try {
+      for (let i = 0; i < targetRecords.length; i++) {
+        const item = targetRecords[i];
+        setDownloadProgress({ current: i + 1, total: targetRecords.length });
+        await generateAndDownloadPDF(item.tipo, item);
+        if (i < targetRecords.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+      setMsg({ text: `Descarga por formulario completada: ${targetRecords.length} PDFs generados y descargados.`, type: 'success' });
+    } catch (err: any) {
+      setMsg({ text: `Error al descargar formulario en PDF: ${err.message || err}`, type: 'error' });
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
     }
   };
 
@@ -386,13 +465,36 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowClearConfirm(true)}
             className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[11px] font-bold px-3 py-1.5 rounded flex items-center gap-1.5 transition"
           >
             <Trash2 className="w-3.5 h-3.5" /> Vaciar Todo
           </button>
+
+          {/* GENERAR PDF DE SELECCIONADOS */}
+          <button
+            onClick={handleDownloadSelectedPDFs}
+            disabled={selectedLogIds.size === 0 || isBulkDownloading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-[11px] font-bold px-3.5 py-1.5 rounded flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+            title="Genera y descarga en PDF los registros marcados con casilla"
+          >
+            <FileText className="w-3.5 h-3.5 text-blue-100" />
+            Descargar Seleccionados ({selectedLogIds.size})
+          </button>
+
+          {/* DESCARGAR TODO POR FORMULARIO */}
+          <button
+            onClick={handleDownloadFormularioPDF}
+            disabled={results.length === 0 || isBulkDownloading}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-[11px] font-bold px-3.5 py-1.5 rounded flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+            title="Descarga en PDF todos los registros pertenecientes al formulario activo"
+          >
+            <Download className="w-3.5 h-3.5 text-indigo-100" />
+            Descargar por Formulario
+          </button>
+
           <button
             onClick={handleDownloadAllPDFs}
             disabled={results.length === 0 || downloadProgress !== null}
@@ -401,7 +503,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
           >
             {downloadProgress ? (
               <>
-                <RefreshCcw className="w-3.5 h-3.5 animate-spin text-red-105" />
+                <RefreshCcw className="w-3.5 h-3.5 animate-spin text-red-100" />
                 Descargando ({downloadProgress.current}/{downloadProgress.total})
               </>
             ) : (
@@ -688,6 +790,37 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
               <span className="text-[10px] text-gray-500 font-mono">SGI Live Database Integration</span>
             </div>
 
+            {/* Banner when records are selected */}
+            {selectedLogIds.size > 0 && (
+              <div className="bg-blue-50 border-b border-blue-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-900">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <span className="font-bold">
+                    {selectedLogIds.size} {selectedLogIds.size === 1 ? 'registro seleccionado' : 'registros seleccionados'}
+                  </span>
+                  <span className="text-[11px] text-blue-700 hidden sm:inline">
+                    — listos para exportar individualmente en formato oficial PDF
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDownloadSelectedPDFs}
+                    disabled={isBulkDownloading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] px-3 py-1 rounded transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Descargar Seleccionados ({selectedLogIds.size})
+                  </button>
+                  <button
+                    onClick={() => setSelectedLogIds(new Set())}
+                    className="bg-white border border-blue-300 hover:bg-blue-100 text-blue-700 font-bold text-[11px] px-2.5 py-1 rounded transition cursor-pointer"
+                  >
+                    Deseleccionar
+                  </button>
+                </div>
+              </div>
+            )}
+
             {loading ? (
               <div className="p-12 text-center text-xs text-gray-500 font-mono flex flex-col items-center justify-center gap-2">
                 <RefreshCcw className="w-5 h-5 text-[#3B82F6] animate-spin" />
@@ -702,6 +835,15 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-[#F1F5F9] border-b border-[#CBD5E1] text-[#475569] font-bold uppercase text-[9px] tracking-wider">
+                      <th className="px-3 py-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={results.length > 0 && selectedLogIds.size === results.length}
+                          onChange={handleToggleSelectAll}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                          title="Seleccionar / Deseleccionar todos"
+                        />
+                      </th>
                       <th className="px-4 py-3">Fecha</th>
                       <th className="px-4 py-3">Código</th>
                       <th className="px-4 py-3">Bitácora / Formato SGI</th>
@@ -716,6 +858,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                   <tbody className="divide-y divide-[#E2E8F0]">
                     {results.map((log: any, idx: number) => {
                       const isExpanded = expandedLog === log.id;
+                      const isSelected = selectedLogIds.has(log.id);
                       
                       // Helper to extract primary weight info
                       const getPesoPrincipal = (item: any) => {
@@ -761,7 +904,15 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
 
                       return (
                         <React.Fragment key={log.id || idx}>
-                          <tr className={`hover:bg-[#F8FAFC] transition-colors ${isExpanded ? 'bg-blue-50/25' : ''}`}>
+                          <tr className={`hover:bg-[#F8FAFC] transition-colors ${isSelected ? 'bg-blue-50/50' : isExpanded ? 'bg-blue-50/25' : ''}`}>
+                            <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleSelect(log.id)}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                              />
+                            </td>
                             <td className="px-4 py-3 font-mono text-slate-600 whitespace-nowrap">
                               {log.fecha}
                             </td>
@@ -808,7 +959,7 @@ export default function ReportesModule({ onBack, userEmail }: Props) {
                           </tr>
                           {isExpanded && (
                             <tr>
-                              <td colSpan={6} className="bg-[#F8FAFC] p-4 border-b border-[#CBD5E1]">
+                              <td colSpan={7} className="bg-[#F8FAFC] p-4 border-b border-[#CBD5E1]">
                                 <div className="space-y-4 font-sans">
                                   
                                   {/* General Metadata Box */}

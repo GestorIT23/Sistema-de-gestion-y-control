@@ -223,7 +223,7 @@ export default function BitacoraControl360Vehiculos({ onBack, userEmail }: Props
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_control_360_vehiculos'), orderBy('fechaRegistro', 'desc'), limit(50));
+      const q = query(collection(db, 'bitacora_control_360_vehiculos'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const snap = await getDocs(q);
       const list: BitacoraControl360Vehiculos[] = [];
       snap.forEach(d => {

@@ -67,7 +67,7 @@ export default function BitacoraControlIncineracionModule({ onBack, userEmail }:
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_control_incineracion'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_control_incineracion'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraControlIncineracion[] = [];
       querySnapshot.forEach((doc) => {

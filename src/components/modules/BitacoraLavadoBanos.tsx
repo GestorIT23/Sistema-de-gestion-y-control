@@ -59,7 +59,7 @@ export default function BitacoraLavadoBanosModule({ onBack, userEmail }: Props) 
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_lavado_banos'), orderBy('fechaRegistro', 'desc'), limit(15));
+      const q = query(collection(db, 'bitacora_lavado_banos'), orderBy('fechaRegistro', 'desc'), limit(3000));
       const querySnapshot = await getDocs(q);
       const docs: BitacoraLavadoBanos[] = [];
       querySnapshot.forEach((doc) => {

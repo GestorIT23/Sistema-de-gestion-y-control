@@ -41,7 +41,7 @@ interface Props {
 }
 
 const ZONAS_DEFAULT = [
-  { area: 'Bahía de Descarga y Recepción RPBI', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque' as const, hora: '06:30', estatus: 'Conforme' as const, operador: 'Mario Pérez' },
+  { area: 'Bahía de Descarga y Recepción DSH', frecuencia: 'Por Turno', tipoLimpieza: 'Desinfección de Choque' as const, hora: '06:30', estatus: 'Conforme' as const, operador: 'Mario Pérez' },
   { area: 'Cuarto Frío / Almacenamiento Temporal', frecuencia: 'Diario', tipoLimpieza: 'Limpieza Profunda' as const, hora: '07:00', estatus: 'Conforme' as const, operador: 'Mario Pérez' },
   { area: 'Área de Autoclaves y Esterilización', frecuencia: 'Por Ciclo', tipoLimpieza: 'Desinfección de Choque' as const, hora: '07:30', estatus: 'Conforme' as const, operador: 'Luis Gómez' },
   { area: 'Área de Incineración DSH', frecuencia: 'Diario', tipoLimpieza: 'Rutinaria' as const, hora: '08:00', estatus: 'Conforme' as const, operador: 'Luis Gómez' },
@@ -81,14 +81,18 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
     desviacionesNovedades: 'Desinfección de choque completada con tiempo de contacto mínimo de 15 minutos en bahía de descarga.',
     accionesCorrectivas: 'Ninguna requerida, parámetros en cumplimiento estricto.',
     veredictoCumplimiento: 'Cumplimiento Total (100%)',
-    firmaOperadorLider: 'Mario Pérez — Operador Líder',
-    firmaSupervisorHse: 'Ing. Astrid Guzmán — Supervisora HSE'
+    firmaOperadorLider: '',
+    firmaSupervisorHse: ''
   });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
 
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'bitacora_limpieza_desinfeccion_planta'), orderBy('fecha', 'desc'), limit(100));
+      const q = query(collection(db, 'bitacora_limpieza_desinfeccion_planta'), orderBy('fecha', 'desc'), limit(5000));
       const snap = await getDocs(q);
       const docs: BitacoraLimpiezaDesinfeccionPlanta[] = [];
       snap.forEach(d => {
@@ -113,7 +117,7 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
       const docData = sanitizeBiotrashObject({
         ...formData,
         folio,
-        responsable: formData.supervisorResponsable || userEmail,
+        responsable: formData.supervisorResponsable || '',
         observaciones: formData.desviacionesNovedades || 'Control diario de sanitización registrado'
       });
 
@@ -124,6 +128,68 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
       setTimeout(() => setFeedback(null), 5000);
     } catch (err: any) {
       setFeedback({ text: `Error al guardar registro: ${err.message}`, type: 'error' });
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedIds.size === filteredRegistros.length && filteredRegistros.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRegistros.map(r => r.id!)));
+    }
+  };
+
+  const handleDownloadSelectedPDF = async () => {
+    const selectedItems = registros.filter(r => selectedIds.has(r.id!));
+    if (selectedItems.length === 0) {
+      alert("Seleccione al menos un registro para descargar sus reportes PDF.");
+      return;
+    }
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: selectedItems.length });
+    try {
+      for (let i = 0; i < selectedItems.length; i++) {
+        setDownloadProgress({ current: i + 1, total: selectedItems.length });
+        await generateAndDownloadPDF('limpieza_desinfeccion_planta', selectedItems[i]);
+        if (i < selectedItems.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+    } catch (err: any) {
+      alert("Error al generar PDF: " + err.message);
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleDownloadAllFormularioPDF = async () => {
+    if (registros.length === 0) {
+      alert("No hay registros en esta bitácora para descargar.");
+      return;
+    }
+    setIsBulkDownloading(true);
+    setDownloadProgress({ current: 0, total: registros.length });
+    try {
+      for (let i = 0; i < registros.length; i++) {
+        setDownloadProgress({ current: i + 1, total: registros.length });
+        await generateAndDownloadPDF('limpieza_desinfeccion_planta', registros[i]);
+        if (i < registros.length - 1) {
+          await new Promise(res => setTimeout(res, 500));
+        }
+      }
+    } catch (err: any) {
+      alert("Error al descargar formulario completo: " + err.message);
+    } finally {
+      setIsBulkDownloading(false);
+      setDownloadProgress(null);
     }
   };
 
@@ -642,23 +708,65 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Botón Descargar Seleccionados */}
                 <button
+                  type="button"
+                  onClick={handleDownloadSelectedPDF}
+                  disabled={selectedIds.size === 0 || isBulkDownloading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-md transition shadow-xs cursor-pointer"
+                  title="Genera y descarga en PDF los registros seleccionados"
+                >
+                  <FileText className="w-4 h-4" />
+                  Descargar Seleccionados ({selectedIds.size})
+                </button>
+
+                {/* Botón Descargar Formulario Completo */}
+                <button
+                  type="button"
+                  onClick={handleDownloadAllFormularioPDF}
+                  disabled={registros.length === 0 || isBulkDownloading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 rounded-md transition shadow-xs cursor-pointer"
+                  title="Descarga en PDF todos los registros de este formulario"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar Formulario PDF ({registros.length})
+                </button>
+
+                <button
+                  type="button"
                   onClick={exportToExcel}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-md hover:bg-emerald-100"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-md hover:bg-emerald-100 cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   Exportar Excel
                 </button>
                 <button
+                  type="button"
                   onClick={fetchRegistros}
-                  className="p-1.5 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md bg-white hover:bg-gray-50"
+                  className="p-1.5 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer"
                   title="Actualizar datos"
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
             </div>
+
+            {/* Banner de selección activa */}
+            {selectedIds.size > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between text-xs text-blue-900">
+                <span className="font-semibold">
+                  {selectedIds.size} {selectedIds.size === 1 ? 'registro seleccionado' : 'registros seleccionados'} para generar PDF oficial
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-[11px] text-blue-700 underline font-semibold hover:text-blue-900 cursor-pointer"
+                >
+                  Deseleccionar todos
+                </button>
+              </div>
+            )}
 
             {/* Search Filter */}
             <div className="relative">
@@ -677,6 +785,15 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
               <table className="min-w-full divide-y divide-gray-200 text-xs">
                 <thead className="bg-gray-50 font-semibold text-gray-600">
                   <tr>
+                    <th className="py-2.5 px-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={filteredRegistros.length > 0 && selectedIds.size === filteredRegistros.length}
+                        onChange={handleToggleSelectAll}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                        title="Seleccionar todos"
+                      />
+                    </th>
                     <th className="py-2.5 px-3 text-left">Folio</th>
                     <th className="py-2.5 px-3 text-left">Fecha</th>
                     <th className="py-2.5 px-3 text-left">Turno</th>
@@ -690,20 +807,28 @@ export default function BitacoraLimpiezaDesinfeccionPlanta({ onBack, userEmail }
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredRegistros.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-gray-500 italic">
+                      <td colSpan={9} className="py-8 text-center text-gray-500 italic">
                         {loading ? 'Cargando registros...' : 'No se encontraron registros de limpieza y desinfección.'}
                       </td>
                     </tr>
                   ) : (
                     filteredRegistros.map(r => (
-                      <tr key={r.id} className="hover:bg-gray-50">
+                      <tr key={r.id} className={`hover:bg-gray-50 ${selectedIds.has(r.id!) ? 'bg-blue-50/40' : ''}`}>
+                        <td className="py-2.5 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(r.id!)}
+                            onChange={() => handleToggleSelect(r.id!)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                          />
+                        </td>
                         <td className="py-2.5 px-3 font-mono font-bold text-gray-900">{r.folio || r.id?.slice(0, 8)}</td>
                         <td className="py-2.5 px-3 text-gray-600">{r.fecha}</td>
                         <td className="py-2.5 px-3 font-semibold text-gray-800">{r.turno}</td>
-                        <td className="py-2.5 px-3 text-gray-700">{r.supervisorResponsable}</td>
-                        <td className="py-2.5 px-3 text-gray-700">{r.productoQuimico}</td>
+                        <td className="py-2.5 px-3 text-gray-700">{r.supervisorResponsable || '—'}</td>
+                        <td className="py-2.5 px-3 text-gray-700">{r.productoQuimico || '—'}</td>
                         <td className="py-2.5 px-3 text-center font-mono">
-                          {r.concentracionObjetivoPpm} / <span className="font-bold text-emerald-600">{r.concentracionMedidaPpm}</span>
+                          {r.concentracionObjetivoPpm !== '' && r.concentracionObjetivoPpm !== undefined ? r.concentracionObjetivoPpm : '—'} / <span className="font-bold text-emerald-600">{r.concentracionMedidaPpm !== '' && r.concentracionMedidaPpm !== undefined ? r.concentracionMedidaPpm : '—'}</span>
                         </td>
                         <td className="py-2.5 px-3 text-center">
                           <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
